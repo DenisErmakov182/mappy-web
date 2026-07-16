@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+:root {
+  /* Токены из дизайн-системы Mappy (Figma) */
+  --mappy-pink: #ff2056;
+  --mappy-brand-subtle: rgba(255, 32, 86, 0.11);
+  --mappy-surface-primary: #f9fafb;
+  --mappy-surface-secondary: #f3f4f6;
+  --mappy-surface-canvas: #ffffff;
+  --mappy-text-primary: #1e2939;
+  --mappy-text-secondary: #4a5565;
+  --mappy-divider: rgba(3, 7, 18, 0.04);
+  --mappy-gradient-cta: linear-gradient(180deg, #ffa1ad 0%, #ff2056 99%);
+  color-scheme: light;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+    margin: 0;
+    overscroll-behavior: none;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    background: #fff;
+    color: var(--mappy-text-primary);
+    letter-spacing: -0.02em;
+  }
+
+  input,
+  button,
+  textarea {
+    font-family: inherit;
+    letter-spacing: inherit;
+  }
+
+  button {
+    cursor: pointer;
+    border: none;
+    background: none;
+    padding: 0;
+  }
+}
+
+/* Градиентный блюр над картой: сверху — от заливки к прозрачному, снизу — наоборот */
+.blur-edge-top,
+.blur-edge-bottom {
+  pointer-events: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 127px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.blur-edge-top {
+  top: 0;
+  background: linear-gradient(to bottom, #f3f4f6 0%, rgba(255, 255, 255, 0) 100%);
+  mask-image: linear-gradient(to bottom, black 30%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 30%, transparent 100%);
+}
+
+.blur-edge-bottom {
+  bottom: 0;
+  background: linear-gradient(to top, #f3f4f6 0%, rgba(255, 255, 255, 0) 100%);
+  mask-image: linear-gradient(to top, black 30%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to top, black 30%, transparent 100%);
+}
+
+.cta-gradient {
+  background: var(--mappy-gradient-cta);
+  color: #fff;
+}
+
+.cta-gradient:disabled {
+  background: #ffe4ea;
+  color: #ffb1c3;
+}

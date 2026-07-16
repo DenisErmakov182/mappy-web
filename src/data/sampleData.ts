@@ -1,0 +1,53 @@
+import type { Place } from "../types";
+import sampleCafe from "../assets/photos/sample-cafe.jpg";
+
+export const samplePlaces: Place[] = [
+  {
+    id: "1",
+    title: "Вкусное Кафе",
+    address: "Земфировская, 54",
+    latitude: 48.8566,
+    longitude: 2.3522,
+    rating: 5,
+    categories: ["food", "culture"],
+    note: "Супер классное место, много интересных элементов интерьера",
+    status: "been",
+    photoUrls: [sampleCafe, sampleCafe, sampleCafe, sampleCafe],
+  },
+  {
+    id: "2",
+    title: "Чайная где вкусный пуэр",
+    address: "Земфировская, 54",
+    latitude: 48.8606,
+    longitude: 2.3376,
+    rating: 4,
+    categories: ["food"],
+    note: "Приятная атмосфера, большой выбор чая",
+    status: "planning",
+    photoUrls: [sampleCafe],
+  },
+  {
+    id: "3",
+    title: "Городской парк",
+    address: "Парковая аллея, 12",
+    latitude: 48.8496,
+    longitude: 2.3626,
+    rating: 3,
+    categories: ["nature", "sports"],
+    note: "Отличное место для пробежки утром",
+    status: "been",
+    photoUrls: [],
+  },
+  {
+    id: "4",
+    title: "Винтажный маркет",
+    address: "Старый Арбат, 8",
+    latitude: 48.8656,
+    longitude: 2.3212,
+    rating: 2,
+    categories: ["shopping", "monuments"],
+    note: "Можно найти интересные вещи, но дорого",
+    status: "planning",
+    photoUrls: [],
+  },
+];
