@@ -1,9 +1,19 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Friend } from "../types";
+import { fetchFriends, addFriendByPhone, type ApiFriend } from "../lib/api";
 import { CtaButton, Sheet } from "./primitives";
 import friendsEmptyIllustration from "../assets/illustrations/friends-empty.png";
 import pinMap from "../assets/illustrations/pin-map.png";
 import searchIcon from "../assets/icons/search-icon.svg";
+
+function toFriend(f: ApiFriend): Friend {
+  return {
+    id: f.id,
+    name: f.name ?? f.username ?? "Без имени",
+    username: f.username ?? "",
+    avatarUrl: f.avatarUrl ?? undefined,
+  };
+}
 
 /*
  * Экран друзей по макетам 1489:17535 (пусто) и 1489:17465 (полный).
@@ -13,6 +23,12 @@ export function FriendsScreen() {
   const [friends, setFriends] = useState<Friend[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [query, setQuery] = useState("");
+
+  useEffect(() => {
+    fetchFriends()
+      .then((list) => setFriends(list.map(toFriend)))
+      .catch(() => {});
+  }, []);
 
   const visibleFriends = query.trim()
     ? friends.filter(
@@ -187,6 +203,23 @@ function Avatar({ name }: { name: string }) {
 
 function AddFriendSheet({ onAdd, onClose }: { onAdd: (friend: Friend) => void; onClose: () => void }) {
   const [value, setValue] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const submit = async () => {
+    if (!value.trim() || loading) return;
+    setLoading(true);
+    setError("");
+    try {
+      const friend = await addFriendByPhone(value.trim());
+      onAdd(toFriend(friend));
+      onClose();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Не удалось добавить друга");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Sheet onClose={onClose}>
@@ -197,20 +230,20 @@ function AddFriendSheet({ onAdd, onClose }: { onAdd: (friend: Friend) => void; o
         <input
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          placeholder="Номер телефона или ник"
+          onKeyDown={(e) => e.key === "Enter" && submit()}
+          placeholder="Номер телефона"
+          inputMode="tel"
           className="w-full h-[46px] px-4 rounded-[14px] text-[16px] outline-none mb-4 placeholder:text-[#99a1af]"
           style={{ backgroundColor: "var(--mappy-surface-primary)", color: "var(--mappy-text-primary)" }}
           autoFocus
         />
-        <CtaButton
-          onClick={() => {
-            if (!value.trim()) return;
-            onAdd({ id: crypto.randomUUID(), name: value.trim(), username: value.trim().replace(/^@/, "") });
-            onClose();
-          }}
-          disabled={!value.trim()}
-        >
-          Добавить
+        {error && (
+          <p className="text-[13px] text-center mb-3" style={{ color: "#fb2c36" }}>
+            {error}
+          </p>
+        )}
+        <CtaButton onClick={submit} disabled={!value.trim() || loading}>
+          {loading ? "Добавляем…" : "Добавить"}
         </CtaButton>
       </div>
     </Sheet>

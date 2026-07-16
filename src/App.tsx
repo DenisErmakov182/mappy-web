@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { TabBar, type AppTab } from "./components/TabBar";
 import { SearchFilterBar } from "./components/SearchFilterBar";
 import { FilterSheet } from "./components/FilterSheet";
@@ -10,7 +10,19 @@ import { PlaceRowCard } from "./components/PlaceRowCard";
 import { NotesList } from "./components/NotesList";
 import { FriendsScreen } from "./components/FriendsScreen";
 import { SearchOverlay } from "./components/SearchOverlay";
-import { samplePlaces } from "./data/sampleData";
+import { AuthScreen } from "./components/AuthScreen";
+import {
+  getToken,
+  setToken as persistToken,
+  clearToken,
+  getMe,
+  fetchPlaces,
+  createPlace,
+  updatePlace,
+  deletePlace,
+  type ApiUser,
+  type PlaceInput,
+} from "./lib/api";
 import {
   emptyFilters,
   filtersAreEmpty,
@@ -19,9 +31,59 @@ import {
   type PlaceFilters,
 } from "./types";
 
+function toPlaceInput(place: Place): PlaceInput {
+  return {
+    title: place.title,
+    address: place.address,
+    latitude: place.latitude,
+    longitude: place.longitude,
+    rating: place.rating,
+    categories: place.categories,
+    note: place.note,
+    status: place.status,
+    photoUrls: place.photoUrls,
+  };
+}
+
 export default function App() {
+  const [token, setToken] = useState<string | null>(() => getToken());
+  const [user, setUser] = useState<ApiUser | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  useEffect(() => {
+    if (!token) {
+      setAuthChecked(true);
+      return;
+    }
+    getMe()
+      .then((u) => setUser(u))
+      .catch(() => {
+        clearToken();
+        setToken(null);
+      })
+      .finally(() => setAuthChecked(true));
+  }, [token]);
+
+  if (!authChecked) return null;
+
+  if (!token || !user) {
+    return (
+      <AuthScreen
+        onAuthenticated={(newToken, newUser) => {
+          persistToken(newToken);
+          setToken(newToken);
+          setUser(newUser);
+        }}
+      />
+    );
+  }
+
+  return <MapApp />;
+}
+
+function MapApp() {
   const [tab, setTab] = useState<AppTab>("map");
-  const [places, setPlaces] = useState<Place[]>(samplePlaces);
+  const [places, setPlaces] = useState<Place[]>([]);
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<PlaceFilters>(emptyFilters());
   const [showFilters, setShowFilters] = useState(false);
@@ -34,6 +96,14 @@ export default function App() {
   const [editingPlace, setEditingPlace] = useState<Place | null>(null);
   const [flyTo, setFlyTo] = useState<{ lat: number; lng: number; ts: number } | null>(null);
   const [locating, setLocating] = useState(false);
+
+  useEffect(() => {
+    fetchPlaces()
+      .then(setPlaces)
+      .catch(() => {
+        // временно недоступен бэкенд — карта просто останется пустой
+      });
+  }, []);
 
   const locateMe = () => {
     if (!navigator.geolocation) return;
@@ -180,7 +250,10 @@ export default function App() {
       {showAddPlace && (
         <AddPlaceSheet
           coordinate={center}
-          onSave={(place) => setPlaces((prev) => [...prev, place])}
+          onSave={async (place) => {
+            const saved = await createPlace(toPlaceInput(place));
+            setPlaces((prev) => [...prev, saved]);
+          }}
           onClose={() => setShowAddPlace(false)}
         />
       )}
@@ -193,7 +266,8 @@ export default function App() {
             setEditingPlace(detailPlace);
             setDetailPlace(null);
           }}
-          onDelete={() => {
+          onDelete={async () => {
+            await deletePlace(detailPlace.id);
             setPlaces((prev) => prev.filter((p) => p.id !== detailPlace.id));
             setSelectedPlace(null);
             setDetailPlace(null);
@@ -206,8 +280,9 @@ export default function App() {
         <AddPlaceSheet
           coordinate={{ lat: editingPlace.latitude, lng: editingPlace.longitude }}
           initialPlace={editingPlace}
-          onSave={(updated) => {
-            setPlaces((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+          onSave={async (updated) => {
+            const saved = await updatePlace(editingPlace.id, toPlaceInput(updated));
+            setPlaces((prev) => prev.map((p) => (p.id === saved.id ? saved : p)));
             setSelectedPlace(null);
           }}
           onClose={() => setEditingPlace(null)}

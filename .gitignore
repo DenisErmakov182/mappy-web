@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Локальный адрес API для разработки — на проде задаётся в настройках Timeweb App Platform
+.env
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

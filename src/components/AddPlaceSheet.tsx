@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Place, PlaceCategory, VisitStatus } from "../types";
 import { categoryLabel } from "../types";
 import { reverseGeocode } from "../lib/geocode";
+import { uploadPhoto } from "../lib/api";
 import { CategoryIcon } from "./CategoryIcon";
 import { CategoriesSheet } from "./CategoriesSheet";
 import { Sheet, CtaButton, StarIcon } from "./primitives";
@@ -10,6 +11,11 @@ import stickerCafe from "../assets/photos/sticker-cafe.png";
 import stickerRestaurant from "../assets/photos/sticker-restaurant.png";
 
 const MAX_PHOTOS = 10;
+
+interface PhotoSlot {
+  url: string; // blob-превью для новых или уже загруженный URL для существующих
+  file?: File; // задано только для ещё не загруженных на S3 фото
+}
 
 /*
  * Добавление места по макету 1489:16353 (+ флоу фото 1489:18077 → 1489:16383):
@@ -23,7 +29,7 @@ export function AddPlaceSheet({
 }: {
   coordinate: { lat: number; lng: number };
   initialPlace?: Place;
-  onSave: (place: Place) => void;
+  onSave: (place: Place) => Promise<void>;
   onClose: () => void;
 }) {
   const [title, setTitle] = useState(initialPlace?.title ?? "");
@@ -32,9 +38,13 @@ export function AddPlaceSheet({
   const [rating, setRating] = useState(initialPlace?.rating ?? 0);
   const [categories, setCategories] = useState<Set<PlaceCategory>>(new Set(initialPlace?.categories));
   const [note, setNote] = useState(initialPlace?.note ?? "");
-  const [photos, setPhotos] = useState<string[]>(initialPlace?.photoUrls ?? []);
+  const [photos, setPhotos] = useState<PhotoSlot[]>(
+    (initialPlace?.photoUrls ?? []).map((url) => ({ url })),
+  );
   const [showCategories, setShowCategories] = useState(false);
   const [addressLoading, setAddressLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Адрес подтягивается автоматически из координат точки (обратный геокодинг)
@@ -65,7 +75,7 @@ export function AddPlaceSheet({
     const next = [...photos];
     for (const file of Array.from(files)) {
       if (next.length >= MAX_PHOTOS) break;
-      next.push(URL.createObjectURL(file));
+      next.push({ url: URL.createObjectURL(file), file });
     }
     setPhotos(next);
   };
@@ -74,21 +84,33 @@ export function AddPlaceSheet({
     setPhotos((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSave = () => {
-    if (!title.trim()) return;
-    onSave({
-      id: initialPlace?.id ?? crypto.randomUUID(),
-      title: title.trim(),
-      address: address.trim(),
-      latitude: initialPlace?.latitude ?? coordinate.lat,
-      longitude: initialPlace?.longitude ?? coordinate.lng,
-      rating,
-      categories: [...categories],
-      note: note.trim(),
-      status,
-      photoUrls: photos,
-    });
-    onClose();
+  const handleSave = async () => {
+    if (!title.trim() || saving) return;
+    setSaving(true);
+    setSaveError("");
+    try {
+      // Новые фото (с file) загружаем в S3, уже сохранённые URL оставляем как есть
+      const photoUrls = await Promise.all(
+        photos.map((p) => (p.file ? uploadPhoto(p.file) : Promise.resolve(p.url))),
+      );
+      await onSave({
+        id: initialPlace?.id ?? "",
+        title: title.trim(),
+        address: address.trim(),
+        latitude: initialPlace?.latitude ?? coordinate.lat,
+        longitude: initialPlace?.longitude ?? coordinate.lng,
+        rating,
+        categories: [...categories],
+        note: note.trim(),
+        status,
+        photoUrls,
+      });
+      onClose();
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : "Не удалось сохранить место");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const inputStyle = {
@@ -222,7 +244,7 @@ export function AddPlaceSheet({
               {Array.from({ length: MAX_PHOTOS }).map((_, i) =>
                 photos[i] ? (
                   <div key={i} className="relative aspect-square">
-                    <img src={photos[i]} alt="" className="w-full h-full object-cover rounded-[10px]" />
+                    <img src={photos[i].url} alt="" className="w-full h-full object-cover rounded-[10px]" />
                     <button
                       onClick={() => removePhoto(i)}
                       className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-white shadow flex items-center justify-center"
@@ -296,8 +318,13 @@ export function AddPlaceSheet({
           />
         </div>
 
-        <CtaButton onClick={handleSave} disabled={!title.trim()}>
-          {initialPlace ? "Сохранить" : "Добавить точку"}
+        {saveError && (
+          <p className="text-[13px] text-center" style={{ color: "#fb2c36" }}>
+            {saveError}
+          </p>
+        )}
+        <CtaButton onClick={handleSave} disabled={!title.trim() || saving}>
+          {saving ? "Сохраняем…" : initialPlace ? "Сохранить" : "Добавить точку"}
         </CtaButton>
       </div>
 
