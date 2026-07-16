@@ -45,7 +45,7 @@ export interface ApiUser {
 }
 
 export function requestCode(phone: string) {
-  return request<{ ok: true; channel: string }>("/auth/request-code", {
+  return request<{ ok: true; channel: string; deepLink?: string }>("/auth/request-code", {
     method: "POST",
     body: JSON.stringify({ phone }),
   });

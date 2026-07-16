@@ -9,6 +9,7 @@ const inputStyle = {
 
 const channelLabel: Record<string, string> = {
   telegram: "из Telegram",
+  telegram_bot: "из Telegram-бота",
   sms: "из SMS",
   dev: "подтверждения",
 };
@@ -22,6 +23,7 @@ export function AuthScreen({
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
   const [channel, setChannel] = useState<string | null>(null);
+  const [deepLink, setDeepLink] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -32,6 +34,7 @@ export function AuthScreen({
     try {
       const res = await requestCode(phone.trim());
       setChannel(res.channel);
+      setDeepLink(res.deepLink ?? null);
       setStep("code");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Не удалось отправить код");
@@ -99,6 +102,16 @@ export function AuthScreen({
             >
               Введите код {channelLabel[channel ?? "dev"]}
             </p>
+            {deepLink && (
+              <a
+                href={deepLink}
+                target="_blank"
+                rel="noreferrer"
+                className="cta-gradient w-full h-14 rounded-[14px] flex items-center justify-center gap-1 text-[16px] font-medium shrink-0"
+              >
+                Открыть Telegram и получить код
+              </a>
+            )}
             <input
               value={code}
               onChange={(e) => setCode(e.target.value)}
