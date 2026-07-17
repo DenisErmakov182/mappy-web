@@ -38,23 +38,30 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
 export interface ApiUser {
   id: string;
-  phone: string;
+  email: string;
   username: string | null;
   name: string | null;
   avatarUrl: string | null;
 }
 
-export function requestCode(phone: string) {
-  return request<{ ok: true; channel: string; deepLink?: string }>("/auth/request-code", {
+export function requestCode(email: string) {
+  return request<{ ok: true }>("/auth/request-code", {
     method: "POST",
-    body: JSON.stringify({ phone }),
+    body: JSON.stringify({ email }),
   });
 }
 
-export function verifyCode(phone: string, code: string) {
+export function verifyCode(email: string, code: string) {
   return request<{ token: string; isNew: boolean; user: ApiUser }>("/auth/verify-code", {
     method: "POST",
-    body: JSON.stringify({ phone, code }),
+    body: JSON.stringify({ email, code }),
+  });
+}
+
+export function setUsername(username: string) {
+  return request<ApiUser>("/auth/username", {
+    method: "POST",
+    body: JSON.stringify({ username }),
   });
 }
 
@@ -117,8 +124,8 @@ export interface ApiFriend {
 export function fetchFriends() {
   return request<ApiFriend[]>("/friends");
 }
-export function addFriendByPhone(phone: string) {
-  return request<ApiFriend>("/friends", { method: "POST", body: JSON.stringify({ phone }) });
+export function addFriendByUsername(username: string) {
+  return request<ApiFriend>("/friends", { method: "POST", body: JSON.stringify({ username }) });
 }
 export function removeFriend(id: string) {
   return request<{ ok: true }>(`/friends/${id}`, { method: "DELETE" });

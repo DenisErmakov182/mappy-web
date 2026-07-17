@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { requestCode, verifyCode, type ApiUser } from "../lib/api";
+import { requestCode, verifyCode, setUsername as apiSetUsername, type ApiUser } from "../lib/api";
 import { CtaButton } from "./primitives";
 
 const inputStyle = {
@@ -7,34 +7,29 @@ const inputStyle = {
   color: "var(--mappy-text-primary)",
 } as const;
 
-const channelLabel: Record<string, string> = {
-  telegram: "из Telegram",
-  telegram_bot: "из Telegram-бота",
-  sms: "из SMS",
-  dev: "подтверждения",
-};
-
 export function AuthScreen({
   onAuthenticated,
 }: {
   onAuthenticated: (token: string, user: ApiUser) => void;
 }) {
-  const [step, setStep] = useState<"phone" | "code">("phone");
-  const [phone, setPhone] = useState("");
+  const [step, setStep] = useState<"email" | "code" | "username">("email");
+  const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
-  const [channel, setChannel] = useState<string | null>(null);
-  const [deepLink, setDeepLink] = useState<string | null>(null);
+  const [username, setUsernameInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const submitPhone = async () => {
-    if (!phone.trim()) return;
+  // Сохраняем токен/юзера сразу после verify-code, чтобы шаг выбора ника мог
+  // сходить в API (он требует авторизации), а сам onAuthenticated вызвать в конце.
+  const [pendingToken, setPendingToken] = useState<string | null>(null);
+  const [pendingUser, setPendingUser] = useState<ApiUser | null>(null);
+
+  const submitEmail = async () => {
+    if (!email.trim()) return;
     setLoading(true);
     setError("");
     try {
-      const res = await requestCode(phone.trim());
-      setChannel(res.channel);
-      setDeepLink(res.deepLink ?? null);
+      await requestCode(email.trim());
       setStep("code");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Не удалось отправить код");
@@ -48,10 +43,32 @@ export function AuthScreen({
     setLoading(true);
     setError("");
     try {
-      const res = await verifyCode(phone.trim(), code.trim());
-      onAuthenticated(res.token, res.user);
+      const res = await verifyCode(email.trim(), code.trim());
+      if (res.user.username) {
+        onAuthenticated(res.token, res.user);
+      } else {
+        // Токен нужно сохранить сразу — следующий запрос (выбор ника) авторизован
+        setPendingToken(res.token);
+        setPendingUser(res.user);
+        setStep("username");
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Неверный код");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const submitUsername = async () => {
+    if (!username.trim() || !pendingToken || !pendingUser) return;
+    setLoading(true);
+    setError("");
+    try {
+      localStorage.setItem("mappy_token", pendingToken);
+      const user = await apiSetUsername(username.trim());
+      onAuthenticated(pendingToken, user);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Не удалось сохранить ник");
     } finally {
       setLoading(false);
     }
@@ -67,20 +84,20 @@ export function AuthScreen({
           Mappy
         </h1>
 
-        {step === "phone" ? (
+        {step === "email" && (
           <>
             <p
               className="text-[15px] text-center mb-2"
               style={{ color: "var(--mappy-text-secondary)" }}
             >
-              Введите номер телефона для входа
+              Введите email для входа
             </p>
             <input
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && submitPhone()}
-              placeholder="+7 900 000-00-00"
-              inputMode="tel"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && submitEmail()}
+              placeholder="you@example.com"
+              inputMode="email"
               className="h-[50px] px-4 rounded-[14px] text-[16px] outline-none placeholder:text-[#99a1af]"
               style={inputStyle}
               autoFocus
@@ -90,28 +107,20 @@ export function AuthScreen({
                 {error}
               </p>
             )}
-            <CtaButton onClick={submitPhone} disabled={!phone.trim() || loading}>
+            <CtaButton onClick={submitEmail} disabled={!email.trim() || loading}>
               {loading ? "Отправляем…" : "Получить код"}
             </CtaButton>
           </>
-        ) : (
+        )}
+
+        {step === "code" && (
           <>
             <p
               className="text-[15px] text-center mb-2"
               style={{ color: "var(--mappy-text-secondary)" }}
             >
-              Введите код {channelLabel[channel ?? "dev"]}
+              Введите код из письма на {email}
             </p>
-            {deepLink && (
-              <a
-                href={deepLink}
-                target="_blank"
-                rel="noreferrer"
-                className="cta-gradient w-full h-14 rounded-[14px] flex items-center justify-center gap-1 text-[16px] font-medium shrink-0"
-              >
-                Открыть Telegram и получить код
-              </a>
-            )}
             <input
               value={code}
               onChange={(e) => setCode(e.target.value)}
@@ -133,15 +142,43 @@ export function AuthScreen({
             </CtaButton>
             <button
               onClick={() => {
-                setStep("phone");
+                setStep("email");
                 setCode("");
                 setError("");
               }}
               className="text-[14px] text-center"
               style={{ color: "var(--mappy-pink)" }}
             >
-              Изменить номер
+              Изменить email
             </button>
+          </>
+        )}
+
+        {step === "username" && (
+          <>
+            <p
+              className="text-[15px] text-center mb-2"
+              style={{ color: "var(--mappy-text-secondary)" }}
+            >
+              Придумай никнейм — по нему друзья будут тебя находить
+            </p>
+            <input
+              value={username}
+              onChange={(e) => setUsernameInput(e.target.value.replace(/\s/g, ""))}
+              onKeyDown={(e) => e.key === "Enter" && submitUsername()}
+              placeholder="nickname"
+              className="h-[50px] px-4 rounded-[14px] text-[16px] outline-none placeholder:text-[#99a1af]"
+              style={inputStyle}
+              autoFocus
+            />
+            {error && (
+              <p className="text-[13px] text-center" style={{ color: "#fb2c36" }}>
+                {error}
+              </p>
+            )}
+            <CtaButton onClick={submitUsername} disabled={!username.trim() || loading}>
+              {loading ? "Сохраняем…" : "Продолжить"}
+            </CtaButton>
           </>
         )}
       </div>

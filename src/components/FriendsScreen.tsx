@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Friend } from "../types";
-import { fetchFriends, addFriendByPhone, type ApiFriend } from "../lib/api";
+import { fetchFriends, addFriendByUsername, type ApiFriend } from "../lib/api";
 import { CtaButton, Sheet } from "./primitives";
 import friendsEmptyIllustration from "../assets/illustrations/friends-empty.png";
 import pinMap from "../assets/illustrations/pin-map.png";
@@ -54,7 +54,7 @@ export function FriendsScreen() {
               проверенные места
             </p>
             <img src={friendsEmptyIllustration} alt="" className="w-[215px] mx-auto mb-5" />
-            <CtaButton onClick={() => setShowAdd(true)}>Добавить по номеру телефона</CtaButton>
+            <CtaButton onClick={() => setShowAdd(true)}>Добавить по нику</CtaButton>
           </div>
         ) : (
           <div className="bg-white rounded-[24px] px-4 py-4">
@@ -211,7 +211,7 @@ function AddFriendSheet({ onAdd, onClose }: { onAdd: (friend: Friend) => void; o
     setLoading(true);
     setError("");
     try {
-      const friend = await addFriendByPhone(value.trim());
+      const friend = await addFriendByUsername(value.trim());
       onAdd(toFriend(friend));
       onClose();
     } catch (e) {
@@ -229,10 +229,9 @@ function AddFriendSheet({ onAdd, onClose }: { onAdd: (friend: Friend) => void; o
         </h2>
         <input
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(e) => setValue(e.target.value.replace(/^@/, ""))}
           onKeyDown={(e) => e.key === "Enter" && submit()}
-          placeholder="Номер телефона"
-          inputMode="tel"
+          placeholder="Никнейм"
           className="w-full h-[46px] px-4 rounded-[14px] text-[16px] outline-none mb-4 placeholder:text-[#99a1af]"
           style={{ backgroundColor: "var(--mappy-surface-primary)", color: "var(--mappy-text-primary)" }}
           autoFocus
