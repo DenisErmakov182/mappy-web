@@ -138,10 +138,10 @@ export function AuthScreen({
   };
 
   return (
-    <div className="fixed inset-0 flex flex-col justify-center px-5 bg-white">
-      <div className="flex flex-col gap-6 max-w-sm mx-auto w-full">
-        {step === "email" && (
-          <>
+    <div className="fixed inset-0 flex flex-col px-5 bg-white">
+      {step === "email" && (
+        <>
+          <div className="flex flex-col gap-6 max-w-sm mx-auto w-full pt-[110px]">
             <div className="flex flex-col items-center gap-2 text-center" style={{ letterSpacing: TRACKING }}>
               <h1 className="text-[28px] leading-[32px] font-semibold" style={{ color: COLOR_HEADER }}>
                 {intent === "login" ? "Войдите в аккаунт" : "Создайте аккаунт"}
@@ -166,63 +166,60 @@ export function AuthScreen({
               </div>
             </div>
 
-            <div className="flex flex-col gap-2">
-              <div className="flex flex-col gap-1.5">
-                <input
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    if (emailError) setEmailError("");
-                  }}
-                  onKeyDown={(e) => e.key === "Enter" && submitEmail()}
-                  placeholder="Почта"
-                  inputMode="email"
-                  className="h-[50px] px-4 rounded-[14px] text-[16px] font-medium outline-none placeholder:text-[#99a1af]"
-                  style={emailError ? inputErrorStyle : inputStyle}
-                  autoFocus
-                />
-                {emailError && <FieldError text={emailError} />}
-              </div>
+            <div className="flex flex-col gap-1.5">
+              <input
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (emailError) setEmailError("");
+                }}
+                onKeyDown={(e) => e.key === "Enter" && submitEmail()}
+                placeholder="Почта"
+                inputMode="email"
+                className="h-[50px] px-4 rounded-[14px] text-[16px] font-medium outline-none placeholder:text-[#99a1af]"
+                style={emailError ? inputErrorStyle : inputStyle}
+                autoFocus
+              />
+              {emailError && <FieldError text={emailError} />}
             </div>
+          </div>
 
-            <div className="flex flex-col gap-6">
-              <CtaButton
-                onClick={submitEmail}
-                disabled={loading || (intent === "register" && !agreed)}
-              >
-                {loading ? "Отправляем…" : intent === "login" ? "Дальше" : "Создать"}
-              </CtaButton>
-
-              {intent === "register" && (
-                <div className="flex gap-2 items-start justify-center">
-                  <button
-                    onClick={() => setAgreed(!agreed)}
-                    className="w-3.5 h-3.5 mt-0.5 rounded-[2px] shrink-0"
-                    style={{
-                      border: "1px solid rgba(3,7,18,0.08)",
-                      backgroundColor: agreed ? COLOR_BRAND : "transparent",
-                    }}
-                    aria-label="Согласие с условиями"
-                  />
-                  <p
-                    className="text-[14px] leading-[18px] text-center"
-                    style={{ color: COLOR_SECONDARY, letterSpacing: TRACKING }}
-                  >
-                    Я согласен с <span style={{ color: COLOR_BRAND }}>Условиями использования</span> и{" "}
-                    <span style={{ color: COLOR_BRAND }}>Политикой конфиденциальности</span>
-                  </p>
-                </div>
-              )}
-            </div>
-          </>
-        )}
-
-        {step === "code" && (
-          <>
-            <p
-              className="text-[15px] text-center mb-2"
-              style={{ color: "var(--mappy-text-secondary)" }}
+          <div className="flex flex-col gap-6 max-w-sm mx-auto w-full mt-auto pb-[120px]">
+            <CtaButton
+              onClick={submitEmail}
+              disabled={loading || (intent === "register" && !agreed)}
             >
+              {loading ? "Отправляем…" : intent === "login" ? "Дальше" : "Создать"}
+            </CtaButton>
+
+            {intent === "register" && (
+              <div className="flex gap-2 items-start justify-center">
+                <button
+                  onClick={() => setAgreed(!agreed)}
+                  className="w-3.5 h-3.5 mt-0.5 rounded-[2px] shrink-0"
+                  style={{
+                    border: "1px solid rgba(3,7,18,0.08)",
+                    backgroundColor: agreed ? COLOR_BRAND : "transparent",
+                  }}
+                  aria-label="Согласие с условиями"
+                />
+                <p
+                  className="text-[14px] leading-[18px] text-center"
+                  style={{ color: COLOR_SECONDARY, letterSpacing: TRACKING }}
+                >
+                  Я согласен с <span style={{ color: COLOR_BRAND }}>Условиями использования</span> и{" "}
+                  <span style={{ color: COLOR_BRAND }}>Политикой конфиденциальности</span>
+                </p>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {step === "code" && (
+        <>
+          <div className="flex flex-col gap-6 max-w-sm mx-auto w-full pt-[110px]">
+            <p className="text-[15px] text-center" style={{ color: COLOR_SECONDARY }}>
               Введите код из письма на {email}
             </p>
             <input
@@ -237,10 +234,13 @@ export function AuthScreen({
               autoFocus
             />
             {error && (
-              <p className="text-[13px] text-center" style={{ color: "#fb2c36" }}>
+              <p className="text-[13px] text-center" style={{ color: COLOR_DANGER }}>
                 {error}
               </p>
             )}
+          </div>
+
+          <div className="flex flex-col gap-6 max-w-sm mx-auto w-full mt-auto pb-[120px]">
             <CtaButton onClick={submitCode} disabled={!code.trim() || loading}>
               {loading ? "Проверяем…" : "Подтвердить"}
             </CtaButton>
@@ -251,15 +251,17 @@ export function AuthScreen({
                 setError("");
               }}
               className="text-[14px] text-center"
-              style={{ color: "var(--mappy-pink)" }}
+              style={{ color: COLOR_BRAND }}
             >
               Изменить email
             </button>
-          </>
-        )}
+          </div>
+        </>
+      )}
 
-        {step === "profile" && (
-          <>
+      {step === "profile" && (
+        <>
+          <div className="flex flex-col gap-6 max-w-sm mx-auto w-full pt-[110px]">
             <div className="flex flex-col items-center gap-2 text-center" style={{ letterSpacing: TRACKING }}>
               <h1 className="text-[28px] leading-[32px] font-semibold" style={{ color: COLOR_HEADER }}>
                 Познакомимся ближе!
@@ -318,12 +320,15 @@ export function AuthScreen({
                 {error}
               </p>
             )}
+          </div>
+
+          <div className="flex flex-col gap-6 max-w-sm mx-auto w-full mt-auto pb-[120px]">
             <CtaButton onClick={submitProfile} disabled={loading}>
               {loading ? "Сохраняем…" : "Дальше"}
             </CtaButton>
-          </>
-        )}
-      </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
