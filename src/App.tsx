@@ -120,12 +120,18 @@ function MapApp({ user, onLogout }: { user: ApiUser; onLogout: () => void }) {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setLocating(false);
+        setCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setFlyTo({ lat: pos.coords.latitude, lng: pos.coords.longitude, ts: Date.now() });
       },
       () => setLocating(false),
       { enableHighAccuracy: true, timeout: 10000 },
     );
   };
+
+  useEffect(() => {
+    locateMe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const visiblePlaces = useMemo(() => {
     return places.filter((place) => {
