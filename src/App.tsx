@@ -105,13 +105,25 @@ function MapApp({ user, onLogout }: { user: ApiUser; onLogout: () => void }) {
   const [editingPlace, setEditingPlace] = useState<Place | null>(null);
   const [flyTo, setFlyTo] = useState<{ lat: number; lng: number; ts: number } | null>(null);
   const [locating, setLocating] = useState(false);
+  const [placesError, setPlacesError] = useState(false);
+  const [loadingPlaces, setLoadingPlaces] = useState(false);
+
+  const loadPlaces = () => {
+    setLoadingPlaces(true);
+    setPlacesError(false);
+    fetchPlaces()
+      .then((data) => {
+        setPlaces(data);
+        setLoadingPlaces(false);
+      })
+      .catch(() => {
+        setPlacesError(true);
+        setLoadingPlaces(false);
+      });
+  };
 
   useEffect(() => {
-    fetchPlaces()
-      .then(setPlaces)
-      .catch(() => {
-        // временно недоступен бэкенд — карта просто останется пустой
-      });
+    loadPlaces();
   }, []);
 
   const locateMe = () => {
@@ -180,6 +192,20 @@ function MapApp({ user, onLogout }: { user: ApiUser; onLogout: () => void }) {
             hasActiveFilters={!filtersAreEmpty(filters)}
             onFilterTap={() => setShowFilters(true)}
           />
+        </div>
+      )}
+
+      {/* Баннер ошибки загрузки мест — данные не потеряны, просто не подгрузились */}
+      {placesError && (
+        <div className="absolute top-[max(env(safe-area-inset-top),12px)] left-4 right-4 z-50 mt-14 flex items-center justify-between gap-3 rounded-2xl bg-[#1e2939] px-4 py-3 text-sm text-white">
+          <span>Не удалось загрузить места</span>
+          <button
+            onClick={loadPlaces}
+            disabled={loadingPlaces}
+            className="shrink-0 rounded-full bg-white/15 px-3 py-1.5 font-medium"
+          >
+            {loadingPlaces ? "Загрузка…" : "Повторить"}
+          </button>
         </div>
       )}
 
