@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { requestCode, verifyCode, setUsername as apiSetUsername, type ApiUser } from "../lib/api";
+import { requestCode, verifyCode, completeProfile, type ApiUser } from "../lib/api";
 import { CtaButton } from "./primitives";
 
 const inputStyle = {
@@ -12,14 +12,16 @@ export function AuthScreen({
 }: {
   onAuthenticated: (token: string, user: ApiUser) => void;
 }) {
-  const [step, setStep] = useState<"email" | "code" | "username">("email");
+  const [step, setStep] = useState<"email" | "code" | "profile">("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [username, setUsernameInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Сохраняем токен/юзера сразу после verify-code, чтобы шаг выбора ника мог
+  // Сохраняем токен/юзера сразу после verify-code, чтобы шаг профиля мог
   // сходить в API (он требует авторизации), а сам onAuthenticated вызвать в конце.
   const [pendingToken, setPendingToken] = useState<string | null>(null);
   const [pendingUser, setPendingUser] = useState<ApiUser | null>(null);
@@ -47,10 +49,10 @@ export function AuthScreen({
       if (res.user.username) {
         onAuthenticated(res.token, res.user);
       } else {
-        // Токен нужно сохранить сразу — следующий запрос (выбор ника) авторизован
+        // Токен нужно сохранить сразу — следующий запрос (профиль) авторизован
         setPendingToken(res.token);
         setPendingUser(res.user);
-        setStep("username");
+        setStep("profile");
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Неверный код");
@@ -59,16 +61,16 @@ export function AuthScreen({
     }
   };
 
-  const submitUsername = async () => {
-    if (!username.trim() || !pendingToken || !pendingUser) return;
+  const submitProfile = async () => {
+    if (!firstName.trim() || !lastName.trim() || !username.trim() || !pendingToken || !pendingUser) return;
     setLoading(true);
     setError("");
     try {
       localStorage.setItem("mappy_token", pendingToken);
-      const user = await apiSetUsername(username.trim());
+      const user = await completeProfile(firstName.trim(), lastName.trim(), username.trim());
       onAuthenticated(pendingToken, user);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Не удалось сохранить ник");
+      setError(e instanceof Error ? e.message : "Не удалось сохранить профиль");
     } finally {
       setLoading(false);
     }
@@ -154,29 +156,46 @@ export function AuthScreen({
           </>
         )}
 
-        {step === "username" && (
+        {step === "profile" && (
           <>
             <p
               className="text-[15px] text-center mb-2"
               style={{ color: "var(--mappy-text-secondary)" }}
             >
-              Придумай никнейм — по нему друзья будут тебя находить
+              Расскажи немного о себе
             </p>
             <input
-              value={username}
-              onChange={(e) => setUsernameInput(e.target.value.replace(/\s/g, ""))}
-              onKeyDown={(e) => e.key === "Enter" && submitUsername()}
-              placeholder="nickname"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder="Имя"
               className="h-[50px] px-4 rounded-[14px] text-[16px] outline-none placeholder:text-[#99a1af]"
               style={inputStyle}
               autoFocus
+            />
+            <input
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              placeholder="Фамилия"
+              className="h-[50px] px-4 rounded-[14px] text-[16px] outline-none placeholder:text-[#99a1af]"
+              style={inputStyle}
+            />
+            <input
+              value={username}
+              onChange={(e) => setUsernameInput(e.target.value.replace(/\s/g, ""))}
+              onKeyDown={(e) => e.key === "Enter" && submitProfile()}
+              placeholder="Никнейм"
+              className="h-[50px] px-4 rounded-[14px] text-[16px] outline-none placeholder:text-[#99a1af]"
+              style={inputStyle}
             />
             {error && (
               <p className="text-[13px] text-center" style={{ color: "#fb2c36" }}>
                 {error}
               </p>
             )}
-            <CtaButton onClick={submitUsername} disabled={!username.trim() || loading}>
+            <CtaButton
+              onClick={submitProfile}
+              disabled={!firstName.trim() || !lastName.trim() || !username.trim() || loading}
+            >
               {loading ? "Сохраняем…" : "Продолжить"}
             </CtaButton>
           </>

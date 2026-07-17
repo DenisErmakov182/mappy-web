@@ -40,6 +40,8 @@ export interface ApiUser {
   id: string;
   email: string;
   username: string | null;
+  firstName: string | null;
+  lastName: string | null;
   name: string | null;
   avatarUrl: string | null;
 }
@@ -58,10 +60,10 @@ export function verifyCode(email: string, code: string) {
   });
 }
 
-export function setUsername(username: string) {
-  return request<ApiUser>("/auth/username", {
+export function completeProfile(firstName: string, lastName: string, username: string) {
+  return request<ApiUser>("/auth/profile", {
     method: "POST",
-    body: JSON.stringify({ username }),
+    body: JSON.stringify({ firstName, lastName, username }),
   });
 }
 
