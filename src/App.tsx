@@ -31,6 +31,25 @@ import {
   type PlaceFilters,
 } from "./types";
 
+const LAST_LOCATION_KEY = "mappy_last_location";
+
+function getStoredLocation(): { lat: number; lng: number } | null {
+  try {
+    const raw = localStorage.getItem(LAST_LOCATION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function storeLocation(lat: number, lng: number) {
+  try {
+    localStorage.setItem(LAST_LOCATION_KEY, JSON.stringify({ lat, lng }));
+  } catch {
+    // localStorage недоступен (приватный режим и т.п.) — не критично
+  }
+}
+
 function toPlaceInput(place: Place): PlaceInput {
   return {
     title: place.title,
@@ -100,7 +119,7 @@ function MapApp({ user, onLogout }: { user: ApiUser; onLogout: () => void }) {
   const [showSearch, setShowSearch] = useState(false);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [detailPlace, setDetailPlace] = useState<Place | null>(null);
-  const [center, setCenter] = useState({ lat: 48.8566, lng: 2.3522 });
+  const [center, setCenter] = useState(() => getStoredLocation() ?? { lat: 48.8566, lng: 2.3522 });
   const [isMapMoving, setIsMapMoving] = useState(false);
   const [editingPlace, setEditingPlace] = useState<Place | null>(null);
   const [flyTo, setFlyTo] = useState<{ lat: number; lng: number; ts: number } | null>(null);
@@ -126,14 +145,18 @@ function MapApp({ user, onLogout }: { user: ApiUser; onLogout: () => void }) {
     loadPlaces();
   }, []);
 
-  const locateMe = () => {
+  const locateMe = (silent = false) => {
     if (!navigator.geolocation) return;
-    setLocating(true);
+    if (!silent) setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setLocating(false);
-        setCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setFlyTo({ lat: pos.coords.latitude, lng: pos.coords.longitude, ts: Date.now() });
+        const { latitude: lat, longitude: lng } = pos.coords;
+        storeLocation(lat, lng);
+        setCenter({ lat, lng });
+        // При автозапуске карта уже открыта примерно в нужном месте (сохранённые
+        // координаты) — анимированный перелёт нужен только по ручному нажатию кнопки.
+        if (!silent) setFlyTo({ lat, lng, ts: Date.now() });
       },
       () => setLocating(false),
       { enableHighAccuracy: true, timeout: 10000 },
@@ -141,7 +164,7 @@ function MapApp({ user, onLogout }: { user: ApiUser; onLogout: () => void }) {
   };
 
   useEffect(() => {
-    locateMe();
+    locateMe(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
