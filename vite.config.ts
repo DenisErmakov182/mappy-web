@@ -18,7 +18,7 @@ export default defineConfig({
         name: 'Mappy',
         short_name: 'Mappy',
         description: 'Сохраняй интересные места в поездках',
-        theme_color: '#FF2056',
+        theme_color: '#FFFFFF',
         background_color: '#ffffff',
         display: 'standalone',
         start_url: '/',
