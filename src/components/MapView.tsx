@@ -18,7 +18,7 @@ interface Props {
   places: Place[];
   center: { lat: number; lng: number };
   onCenterChange: (center: { lat: number; lng: number }) => void;
-  onSelectPlace: (place: Place) => void;
+  onSelectPlace: (places: Place[]) => void;
   onMovingChange?: (moving: boolean) => void;
   /* Перелёт камеры (например, к геолокации); ts — чтобы триггерить повторные перелёты в ту же точку */
   flyTo?: { lat: number; lng: number; ts: number } | null;
@@ -118,17 +118,13 @@ export function MapView({ places, center, onCenterChange, onSelectPlace, onMovin
       markersRef.current.forEach((m) => m.remove());
       markersRef.current = clusterPlaces(map, placesRef.current).map((group) => {
         const anchor = group[0];
+        // Клик по одиночному пину или по кластеру одинаково открывает карточку(и)
+        // выбранных мест — при нескольких местах в одной точке между ними можно
+        // свайпнуть в самой карточке, поэтому зум тут не нужен.
         const el =
           group.length === 1
-            ? buildPinElement(group[0], () => callbacksRef.current.onSelectPlace(group[0]))
-            : buildClusterElement(group.length, () => {
-                // Тап по кластеру приближает карту, пока пины не разойдутся.
-                map.easeTo({
-                  center: [anchor.longitude, anchor.latitude],
-                  zoom: map.getZoom() + 2,
-                  duration: 400,
-                });
-              });
+            ? buildPinElement(group[0], () => callbacksRef.current.onSelectPlace(group))
+            : buildClusterElement(group.length, () => callbacksRef.current.onSelectPlace(group));
         return new maplibregl.Marker({ element: el, anchor: "bottom", offset: [4, -14] })
           .setLngLat([anchor.longitude, anchor.latitude])
           .addTo(map);

@@ -117,7 +117,7 @@ function MapApp({ user, onLogout }: { user: ApiUser; onLogout: () => void }) {
   const [showFilters, setShowFilters] = useState(false);
   const [showAddPlace, setShowAddPlace] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
-  const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
+  const [selectedPlaces, setSelectedPlaces] = useState<Place[]>([]);
   const [detailPlace, setDetailPlace] = useState<Place | null>(null);
   const [center, setCenter] = useState(() => getStoredLocation() ?? { lat: 48.8566, lng: 2.3522 });
   const [isMapMoving, setIsMapMoving] = useState(false);
@@ -186,7 +186,7 @@ function MapApp({ user, onLogout }: { user: ApiUser; onLogout: () => void }) {
             places={visiblePlaces}
             center={center}
             onCenterChange={setCenter}
-            onSelectPlace={setSelectedPlace}
+            onSelectPlace={setSelectedPlaces}
             onMovingChange={setIsMapMoving}
             flyTo={flyTo}
           />
@@ -233,14 +233,14 @@ function MapApp({ user, onLogout }: { user: ApiUser; onLogout: () => void }) {
       )}
 
       {/* Главный пин в центре карты — тап добавляет место в этой точке */}
-      {tab === "map" && !selectedPlace && (
+      {tab === "map" && selectedPlaces.length === 0 && (
         <CenterPin isMoving={isMapMoving} onClick={() => setShowAddPlace(true)} />
       )}
 
       {/* Кнопка «Где я»: перелёт к геолокации пользователя */}
       {tab === "map" && (
         <button
-          onClick={locateMe}
+          onClick={() => locateMe()}
           className="absolute right-4 bottom-[110px] w-12 h-12 rounded-full bg-white flex items-center justify-center"
           aria-label="Моё местоположение"
         >
@@ -263,16 +263,20 @@ function MapApp({ user, onLogout }: { user: ApiUser; onLogout: () => void }) {
         </button>
       )}
 
-      {/* Плавающая карточка выбранного места над таббаром */}
-      {tab === "map" && selectedPlace && (
-        <div className="absolute left-4 right-4 bottom-[100px]">
-          <PlaceRowCard
-            place={selectedPlace}
-            onClick={() => {
-              setDetailPlace(selectedPlace);
-              setSelectedPlace(null);
-            }}
-          />
+      {/* Плавающая карточка выбранного места (или свайпер, если мест в одной точке несколько) над таббаром */}
+      {tab === "map" && selectedPlaces.length > 0 && (
+        <div className="absolute left-4 right-4 bottom-[100px] flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-smooth [&::-webkit-scrollbar]:hidden">
+          {selectedPlaces.map((place) => (
+            <div key={place.id} className="w-full shrink-0 snap-center">
+              <PlaceRowCard
+                place={place}
+                onClick={() => {
+                  setDetailPlace(place);
+                  setSelectedPlaces([]);
+                }}
+              />
+            </div>
+          ))}
         </div>
       )}
 
@@ -282,7 +286,7 @@ function MapApp({ user, onLogout }: { user: ApiUser; onLogout: () => void }) {
           selection={tab}
           onSelect={(t) => {
             setTab(t);
-            setSelectedPlace(null);
+            setSelectedPlaces([]);
           }}
         />
       </div>
@@ -295,7 +299,7 @@ function MapApp({ user, onLogout }: { user: ApiUser; onLogout: () => void }) {
           onSubmit={setQuery}
           onSelectPlace={(place) => {
             setCenter({ lat: place.latitude, lng: place.longitude });
-            setSelectedPlace(place);
+            setSelectedPlaces([place]);
             setTab("map");
           }}
           onClose={() => setShowSearch(false)}
@@ -333,7 +337,7 @@ function MapApp({ user, onLogout }: { user: ApiUser; onLogout: () => void }) {
           onDelete={async () => {
             await deletePlace(detailPlace.id);
             setPlaces((prev) => prev.filter((p) => p.id !== detailPlace.id));
-            setSelectedPlace(null);
+            setSelectedPlaces([]);
             setDetailPlace(null);
           }}
         />
@@ -347,7 +351,7 @@ function MapApp({ user, onLogout }: { user: ApiUser; onLogout: () => void }) {
           onSave={async (updated) => {
             const saved = await updatePlace(editingPlace.id, toPlaceInput(updated));
             setPlaces((prev) => prev.map((p) => (p.id === saved.id ? saved : p)));
-            setSelectedPlace(null);
+            setSelectedPlaces([]);
           }}
           onClose={() => setEditingPlace(null)}
         />
