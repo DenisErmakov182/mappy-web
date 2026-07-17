@@ -13,7 +13,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: false,
-      includeAssets: ['icons/main-pin.png'],
+      includeAssets: ['favicon.ico', 'favicon.png', 'icons/apple-touch-icon.png'],
       manifest: {
         name: 'Mappy',
         short_name: 'Mappy',
@@ -25,7 +25,7 @@ export default defineConfig({
         icons: [
           { src: '/icons/app-icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: '/icons/app-icon-512.png', sizes: '512x512', type: 'image/png' },
-          { src: '/icons/app-icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: '/icons/app-icon-512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
     }),
