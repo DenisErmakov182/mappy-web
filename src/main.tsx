@@ -8,6 +8,7 @@ import App from './App.tsx'
 // новый билд — без этого service worker обновлялся в фоне, но открытая
 // вкладка/PWA продолжала работать на старом закэшированном JS бесконечно.
 const updateSW = registerSW({
+  immediate: true,
   onNeedRefresh() {
     updateSW(true)
   },
