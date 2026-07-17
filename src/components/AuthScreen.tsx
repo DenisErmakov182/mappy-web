@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { requestCode, verifyCode, completeProfile, type ApiUser } from "../lib/api";
 import { CtaButton } from "./primitives";
+
+const RESEND_COOLDOWN_SEC = 25;
 
 // Токены взяты из макета (node 1564-15087/15115/16601, 1569-36106/36183)
 const COLOR_HEADER = "#232323";
@@ -49,7 +51,10 @@ export function AuthScreen({
   const [step, setStep] = useState<"email" | "code" | "profile">("email");
   const [intent, setIntent] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
-  const [code, setCode] = useState("");
+  const [codeDigits, setCodeDigits] = useState(["", "", "", ""]);
+  const [resendIn, setResendIn] = useState(0);
+  const [resending, setResending] = useState(false);
+  const digitRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [username, setUsernameInput] = useState("");
@@ -79,6 +84,8 @@ export function AuthScreen({
     setEmailError("");
     try {
       await requestCode(email.trim());
+      setCodeDigits(["", "", "", ""]);
+      setResendIn(RESEND_COOLDOWN_SEC);
       setStep("code");
     } catch (e) {
       setEmailError(e instanceof Error ? e.message : "Не удалось отправить код");
@@ -87,12 +94,36 @@ export function AuthScreen({
     }
   };
 
-  const submitCode = async () => {
-    if (!code.trim()) return;
+  // Тикающий таймер до разблокировки повторной отправки кода
+  useEffect(() => {
+    if (step !== "code" || resendIn <= 0) return;
+    const id = setInterval(() => setResendIn((s) => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(id);
+  }, [step, resendIn > 0]);
+
+  const resendCode = async () => {
+    if (resending || resendIn > 0) return;
+    setResending(true);
+    setError("");
+    try {
+      await requestCode(email.trim());
+      setCodeDigits(["", "", "", ""]);
+      setResendIn(RESEND_COOLDOWN_SEC);
+      digitRefs.current[0]?.focus();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Не удалось отправить код");
+    } finally {
+      setResending(false);
+    }
+  };
+
+  const submitCode = async (fullCode?: string) => {
+    const value = fullCode ?? codeDigits.join("");
+    if (value.length < 4) return;
     setLoading(true);
     setError("");
     try {
-      const res = await verifyCode(email.trim(), code.trim());
+      const res = await verifyCode(email.trim(), value);
       if (res.user.username) {
         onAuthenticated(res.token, res.user);
       } else {
@@ -103,8 +134,42 @@ export function AuthScreen({
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Неверный код");
+      setCodeDigits(["", "", "", ""]);
+      digitRefs.current[0]?.focus();
     } finally {
       setLoading(false);
+    }
+  };
+
+  const setDigit = (index: number, raw: string) => {
+    const digits = raw.replace(/\D/g, "");
+    if (error) setError("");
+
+    // Вставка/автозаполнение (iOS подставляет весь код целиком в одно поле)
+    if (digits.length > 1) {
+      const next = digits.slice(0, 4).split("");
+      while (next.length < 4) next.push("");
+      setCodeDigits(next);
+      const firstEmpty = next.findIndex((d) => !d);
+      if (firstEmpty === -1) submitCode(next.join(""));
+      else digitRefs.current[firstEmpty]?.focus();
+      return;
+    }
+
+    const next = [...codeDigits];
+    next[index] = digits;
+    setCodeDigits(next);
+    if (digits && index < 3) {
+      digitRefs.current[index + 1]?.focus();
+    }
+    if (digits && index === 3 && next.every(Boolean)) {
+      submitCode(next.join(""));
+    }
+  };
+
+  const onDigitKeyDown = (index: number, e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !codeDigits[index] && index > 0) {
+      digitRefs.current[index - 1]?.focus();
     }
   };
 
@@ -218,43 +283,77 @@ export function AuthScreen({
 
       {step === "code" && (
         <>
-          <div className="flex flex-col gap-6 max-w-sm mx-auto w-full pt-[110px]">
-            <p className="text-[15px] text-center" style={{ color: COLOR_SECONDARY }}>
-              Введите код из письма на {email}
-            </p>
-            <input
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && submitCode()}
-              placeholder="0000"
-              inputMode="numeric"
-              maxLength={4}
-              className="h-[56px] px-4 rounded-[14px] text-[26px] tracking-[10px] text-center outline-none placeholder:text-[#99a1af]"
-              style={inputStyle}
-              autoFocus
-            />
-            {error && (
-              <p className="text-[13px] text-center" style={{ color: COLOR_DANGER }}>
-                {error}
+          <div className="flex flex-col items-center gap-[30px] max-w-[324px] mx-auto w-full pt-[110px]">
+            <div className="flex flex-col items-center gap-2.5 text-center" style={{ letterSpacing: TRACKING }}>
+              <h1 className="text-[28px] leading-[32px] font-semibold" style={{ color: COLOR_HEADER }}>
+                Введите код
+              </h1>
+              <p className="text-[16px] leading-[20px] w-[272px]" style={{ color: COLOR_HEADER }}>
+                Он поступит к вам на почту
+                <br />
+                {email}
               </p>
-            )}
+            </div>
+
+            <div className="flex flex-col items-center gap-1.5 w-full">
+              <div className="flex gap-3 items-center w-full">
+                {codeDigits.map((digit, i) => (
+                  <input
+                    key={i}
+                    ref={(el) => {
+                      digitRefs.current[i] = el;
+                    }}
+                    value={digit}
+                    onChange={(e) => setDigit(i, e.target.value)}
+                    onKeyDown={(e) => onDigitKeyDown(i, e)}
+                    inputMode="numeric"
+                    maxLength={1}
+                    disabled={loading}
+                    className="flex-1 min-w-0 w-0 h-[66px] rounded-[14px] text-[26px] font-medium text-center outline-none disabled:opacity-60"
+                    style={error ? inputErrorStyle : inputStyle}
+                    autoFocus={i === 0}
+                  />
+                ))}
+              </div>
+              {error && <FieldError text={error} />}
+            </div>
+
+            <div className="flex flex-col items-center gap-[30px]">
+              {resendIn > 0 ? (
+                <p
+                  className="flex gap-1 text-[14px] leading-[18px]"
+                  style={{ color: "rgba(4,4,19,0.55)", letterSpacing: TRACKING }}
+                >
+                  Запросить повторно можно через 00:{String(resendIn).padStart(2, "0")}
+                </p>
+              ) : (
+                <button
+                  onClick={resendCode}
+                  disabled={resending}
+                  className="text-[14px] leading-[18px] font-medium"
+                  style={{ color: COLOR_BRAND, letterSpacing: TRACKING }}
+                >
+                  {resending ? "Отправляем…" : "Отправить код повторно"}
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  setStep("email");
+                  setCodeDigits(["", "", "", ""]);
+                  setError("");
+                }}
+                className="text-[16px] leading-[20px] underline decoration-dotted"
+                style={{ color: "#559ae5", letterSpacing: TRACKING }}
+              >
+                Изменить почту
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-col gap-6 max-w-sm mx-auto w-full mt-auto pb-[120px]">
-            <CtaButton onClick={submitCode} disabled={!code.trim() || loading}>
-              {loading ? "Проверяем…" : "Подтвердить"}
+            <CtaButton onClick={() => submitCode()} disabled={codeDigits.some((d) => !d) || loading}>
+              {loading ? "Проверяем…" : "Продолжить"}
             </CtaButton>
-            <button
-              onClick={() => {
-                setStep("email");
-                setCode("");
-                setError("");
-              }}
-              className="text-[14px] text-center"
-              style={{ color: COLOR_BRAND }}
-            >
-              Изменить email
-            </button>
           </div>
         </>
       )}
