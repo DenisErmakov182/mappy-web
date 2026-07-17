@@ -11,6 +11,7 @@ import { NotesList } from "./components/NotesList";
 import { FriendsScreen } from "./components/FriendsScreen";
 import { SearchOverlay } from "./components/SearchOverlay";
 import { AuthScreen } from "./components/AuthScreen";
+import locateMeIcon from "./assets/icons/locate-me-3d.png";
 import {
   getToken,
   setToken as persistToken,
@@ -244,22 +245,11 @@ function MapApp({ user, onLogout }: { user: ApiUser; onLogout: () => void }) {
           className="absolute right-4 bottom-[110px] w-12 h-12 rounded-full bg-white flex items-center justify-center"
           aria-label="Моё местоположение"
         >
-          <svg
-            width="22"
-            height="22"
-            viewBox="0 0 24 24"
-            fill="none"
-            className={locating ? "animate-pulse" : undefined}
-          >
-            <path
-              d="M21 3L3 10.5L10.5 13.5L13.5 21L21 3Z"
-              stroke="#1e2939"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              fill={locating ? "#1e2939" : "none"}
-            />
-          </svg>
+          <img
+            src={locateMeIcon}
+            alt=""
+            className={`w-6 h-6 object-contain ${locating ? "animate-pulse" : ""}`}
+          />
         </button>
       )}
 
