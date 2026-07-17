@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Friend } from "../types";
-import { fetchFriends, addFriendByUsername, type ApiFriend } from "../lib/api";
+import { fetchFriends, addFriendByUsername, type ApiFriend, type ApiUser } from "../lib/api";
 import { CtaButton, Sheet } from "./primitives";
 import friendsEmptyIllustration from "../assets/illustrations/friends-empty.png";
 import pinMap from "../assets/illustrations/pin-map.png";
@@ -17,9 +17,8 @@ function toFriend(f: ApiFriend): Friend {
 
 /*
  * Экран друзей по макетам 1489:17535 (пусто) и 1489:17465 (полный).
- * Шапка профиля пока замокана — аккаунтов ещё нет.
  */
-export function FriendsScreen() {
+export function FriendsScreen({ user, onLogout }: { user: ApiUser; onLogout: () => void }) {
   const [friends, setFriends] = useState<Friend[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [query, setQuery] = useState("");
@@ -41,7 +40,7 @@ export function FriendsScreen() {
   return (
     <div className="h-full overflow-y-auto pb-32" style={{ backgroundColor: "var(--mappy-surface-primary)" }}>
       <div className="px-4 pt-[max(env(safe-area-inset-top),16px)] flex flex-col gap-1">
-        <ProfileHeader />
+        <ProfileHeader user={user} onLogout={onLogout} />
 
         {friends.length === 0 ? (
           <div className="bg-white rounded-[24px] px-6 py-6 text-center">
@@ -140,7 +139,16 @@ export function FriendsScreen() {
   );
 }
 
-function ProfileHeader() {
+function ProfileHeader({ user, onLogout }: { user: ApiUser; onLogout: () => void }) {
+  const [showMenu, setShowMenu] = useState(false);
+  const displayName = user.name ?? user.username ?? user.email;
+  const initials = displayName
+    .split(" ")
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
   return (
     <div className="relative bg-white rounded-[24px] px-6 pt-6 pb-5 mb-1">
       <span
@@ -152,20 +160,23 @@ function ProfileHeader() {
       <div className="flex items-start justify-between">
         <div>
           <p className="text-[24px] font-semibold leading-[28px]" style={{ color: "var(--mappy-text-primary)" }}>
-            Денис Ермаков
+            {displayName}
           </p>
-          <p className="text-[14px] mt-1.5" style={{ color: "var(--mappy-text-secondary)" }}>
-            @Lilman45
-          </p>
+          {user.username && (
+            <p className="text-[14px] mt-1.5" style={{ color: "var(--mappy-text-secondary)" }}>
+              @{user.username}
+            </p>
+          )}
         </div>
         <div className="relative">
           <div
             className="w-[74px] h-[74px] rounded-full flex items-center justify-center text-[26px] font-semibold text-white"
             style={{ background: "linear-gradient(135deg, #ffa1ad, #ff2056)" }}
           >
-            ДЕ
+            {initials}
           </div>
           <button
+            onClick={() => setShowMenu((v) => !v)}
             className="absolute -top-1 -right-1 w-[30px] h-[30px] rounded-full bg-white shadow flex items-center justify-center"
             aria-label="Настройки"
           >
@@ -178,6 +189,24 @@ function ProfileHeader() {
               />
             </svg>
           </button>
+          {showMenu && (
+            <div className="absolute top-9 right-0 bg-white rounded-[14px] shadow-lg py-1.5 w-[160px] z-10">
+              <p
+                className="px-4 py-2 text-[13px] truncate"
+                style={{ color: "var(--mappy-text-secondary)" }}
+                title={user.email}
+              >
+                {user.email}
+              </p>
+              <button
+                onClick={onLogout}
+                className="w-full text-left px-4 py-2 text-[15px] font-medium"
+                style={{ color: "#fb2c36" }}
+              >
+                Выйти
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

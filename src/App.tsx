@@ -78,10 +78,19 @@ export default function App() {
     );
   }
 
-  return <MapApp />;
+  return (
+    <MapApp
+      user={user}
+      onLogout={() => {
+        clearToken();
+        setToken(null);
+        setUser(null);
+      }}
+    />
+  );
 }
 
-function MapApp() {
+function MapApp({ user, onLogout }: { user: ApiUser; onLogout: () => void }) {
   const [tab, setTab] = useState<AppTab>("map");
   const [places, setPlaces] = useState<Place[]>([]);
   const [query, setQuery] = useState("");
@@ -148,7 +157,7 @@ function MapApp() {
             onGoToMap={() => setTab("map")}
           />
         )}
-        {tab === "friends" && <FriendsScreen />}
+        {tab === "friends" && <FriendsScreen user={user} onLogout={onLogout} />}
       </div>
 
       {/* Блюр-градиенты сверху и снизу (по макету 1489:15421 — без белых подложек) */}
