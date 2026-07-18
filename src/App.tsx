@@ -11,6 +11,7 @@ import { NotesList } from "./components/NotesList";
 import { FriendsScreen } from "./components/FriendsScreen";
 import { SearchOverlay } from "./components/SearchOverlay";
 import { AuthScreen } from "./components/AuthScreen";
+import { OnboardingScreen, hasSeenOnboarding } from "./components/OnboardingScreen";
 import locateMeIcon from "./assets/icons/locate-me-3d.png";
 import {
   getToken,
@@ -69,6 +70,7 @@ export default function App() {
   const [token, setToken] = useState<string | null>(() => getToken());
   const [user, setUser] = useState<ApiUser | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(() => !hasSeenOnboarding());
 
   useEffect(() => {
     if (!token) {
@@ -96,6 +98,10 @@ export default function App() {
         }}
       />
     );
+  }
+
+  if (showOnboarding) {
+    return <OnboardingScreen onDone={() => setShowOnboarding(false)} />;
   }
 
   return (
