@@ -91,6 +91,18 @@ function clusterPlaces(map: maplibregl.Map, places: Place[], thresholdPx = 56): 
   return clusters.map((c) => c.items);
 }
 
+/*
+ * Центр масс группы мест — используется как позиция пина кластера. Состав
+ * кластера может пересчитываться на каждом шаге зума, и если брать координаты
+ * просто первого места в группе, пин будет визуально "скакать" между разными
+ * реальными точками при перегруппировке; центроид же смещается плавно.
+ */
+function groupCentroid(group: Place[]): { latitude: number; longitude: number } {
+  const latitude = group.reduce((sum, p) => sum + p.latitude, 0) / group.length;
+  const longitude = group.reduce((sum, p) => sum + p.longitude, 0) / group.length;
+  return { latitude, longitude };
+}
+
 export function MapView({ places, center, onCenterChange, onSelectPlace, onMovingChange, flyTo }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -117,7 +129,7 @@ export function MapView({ places, center, onCenterChange, onSelectPlace, onMovin
     const rebuild = () => {
       markersRef.current.forEach((m) => m.remove());
       markersRef.current = clusterPlaces(map, placesRef.current).map((group) => {
-        const anchor = group[0];
+        const anchor = group.length === 1 ? group[0] : groupCentroid(group);
         // Клик по одиночному пину или по кластеру одинаково открывает карточку(и)
         // выбранных мест — при нескольких местах в одной точке между ними можно
         // свайпнуть в самой карточке, поэтому зум тут не нужен.
