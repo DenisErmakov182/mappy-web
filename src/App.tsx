@@ -6,7 +6,7 @@ import { MapView } from "./components/MapView";
 import { CenterPin } from "./components/CenterPin";
 import { AddPlaceSheet } from "./components/AddPlaceSheet";
 import { PlaceDetail } from "./components/PlaceDetail";
-import { PlaceRowCard } from "./components/PlaceRowCard";
+import { PlaceCardCarousel } from "./components/PlaceCardCarousel";
 import { NotesList } from "./components/NotesList";
 import { FriendsScreen } from "./components/FriendsScreen";
 import { SearchOverlay } from "./components/SearchOverlay";
@@ -253,20 +253,16 @@ function MapApp({ user, onLogout }: { user: ApiUser; onLogout: () => void }) {
         </button>
       )}
 
-      {/* Плавающая карточка выбранного места (или свайпер, если мест в одной точке несколько) над таббаром */}
+      {/* Плавающая карточка выбранного места (или карусель, если мест в одной точке несколько) над таббаром */}
       {tab === "map" && selectedPlaces.length > 0 && (
-        <div className="absolute left-4 right-4 bottom-[100px] flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-smooth [&::-webkit-scrollbar]:hidden">
-          {selectedPlaces.map((place) => (
-            <div key={place.id} className="w-full shrink-0 snap-center">
-              <PlaceRowCard
-                place={place}
-                onClick={() => {
-                  setDetailPlace(place);
-                  setSelectedPlaces([]);
-                }}
-              />
-            </div>
-          ))}
+        <div className="absolute left-0 right-0 bottom-[100px]">
+          <PlaceCardCarousel
+            places={selectedPlaces}
+            onSelect={(place) => {
+              setDetailPlace(place);
+              setSelectedPlaces([]);
+            }}
+          />
         </div>
       )}
 
