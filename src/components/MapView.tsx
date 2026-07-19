@@ -36,7 +36,7 @@ function buildPinElement(place: Place, onSelect: () => void): HTMLElement {
   const shadow = document.createElement("img");
   shadow.src = placedPinShadow;
   shadow.alt = "";
-  shadow.style.cssText = "position:absolute;left:-12px;top:25px;z-index:0;width:67px;height:62.67px;object-fit:contain;pointer-events:none;";
+  shadow.style.cssText = "position:absolute;left:0;top:25px;z-index:0;width:67px;height:62.67px;object-fit:contain;pointer-events:none;";
   el.appendChild(shadow);
 
   const { bg, text } = ratingChipColors(place.rating);
@@ -73,7 +73,7 @@ function buildClusterElement(count: number, onSelect: () => void): HTMLElement {
   const shadow = document.createElement("img");
   shadow.src = placedPinShadow;
   shadow.alt = "";
-  shadow.style.cssText = "position:absolute;left:-12px;top:25px;z-index:0;width:67px;height:62.67px;object-fit:contain;pointer-events:none;";
+  shadow.style.cssText = "position:absolute;left:0;top:25px;z-index:0;width:67px;height:62.67px;object-fit:contain;pointer-events:none;";
   el.appendChild(shadow);
 
   const badge = document.createElement("span");

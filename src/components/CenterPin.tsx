@@ -21,7 +21,7 @@ export function CenterPin({ isMoving, onClick }: { isMoving: boolean; onClick: (
         alt=""
         className="absolute transition-opacity duration-200 ease-out"
         style={{
-          left: 3,
+          left: 15,
           top: 57,
           width: 73,
           height: 68.33,
