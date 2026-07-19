@@ -86,15 +86,6 @@
   color: #ffb1c3;
 }
 
-/* Слои действий в карточке слегка пружинят по очереди при полном раскрытии. */
-@keyframes swipe-action-rubber {
-  0% { transform: scaleX(1); }
-  48% { transform: scaleX(1.06); }
-  72% { transform: scaleX(0.985); }
-  88% { transform: scaleX(1.015); }
-  100% { transform: scaleX(1); }
-}
-
 /* Онбординг: пин чуть покачивается вокруг своего носика (transform-origin задан
    на элементе), носик остаётся на месте — привлекает внимание на шаге 1 */
 @keyframes onboarding-pin-wiggle {
