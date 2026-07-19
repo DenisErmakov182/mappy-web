@@ -1,7 +1,7 @@
 import type { Place } from "../types";
-import { CategoryIcon } from "./CategoryIcon";
-import { RatingChip } from "./primitives";
+import { useEffect, useState } from "react";
 import pinMap from "../assets/illustrations/pin-map.png";
+import { SwipeablePlaceCard } from "./SwipeablePlaceCard";
 
 /*
  * Заметки: список карточек (фото слева 180x120) либо пустое состояние
@@ -11,11 +11,25 @@ export function NotesList({
   places,
   onSelectPlace,
   onGoToMap,
+  onDeletePlace,
+  onEditPlace,
+  onSharePlace,
 }: {
   places: Place[];
   onSelectPlace: (place: Place) => void;
   onGoToMap: () => void;
+  onDeletePlace: (place: Place) => void;
+  onEditPlace: (place: Place) => void;
+  onSharePlace: (place: Place) => void;
 }) {
+  const [openPlaceId, setOpenPlaceId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (openPlaceId && !places.some((place) => place.id === openPlaceId)) {
+      setOpenPlaceId(null);
+    }
+  }, [openPlaceId, places]);
+
   return (
     <div className="h-full overflow-y-auto pb-32" style={{ backgroundColor: "var(--mappy-surface-primary)" }}>
       {places.length === 0 ? (
@@ -39,44 +53,17 @@ export function NotesList({
       ) : (
         <div className="flex flex-col gap-3 px-4 pt-[110px]">
           {places.map((place) => (
-            <button
+            <SwipeablePlaceCard
               key={place.id}
-              onClick={() => onSelectPlace(place)}
-              className="flex gap-2 items-start text-left bg-white rounded-[28px] p-2"
-            >
-              <div
-                className="w-[168px] h-[122px] rounded-[20px] overflow-hidden shrink-0"
-                style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
-              >
-                {place.photoUrls[0] && (
-                  <img src={place.photoUrls[0]} alt="" className="w-full h-full object-cover" />
-                )}
-              </div>
-              <div className="flex flex-col justify-between self-stretch flex-1 min-w-0 pt-1">
-                <div className="px-1">
-                  <p
-                    className="text-[16px] font-semibold leading-[20px] line-clamp-2"
-                    style={{ color: "var(--mappy-text-primary)" }}
-                  >
-                    {place.title}
-                  </p>
-                  <p className="text-[13px] mt-1" style={{ color: "var(--mappy-text-secondary)" }}>
-                    {place.address}
-                  </p>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <RatingChip rating={place.rating} />
-                  {place.categories[0] && (
-                    <span
-                      className="inline-flex h-[28px] items-center justify-center px-2 rounded-[10px]"
-                      style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
-                    >
-                      <CategoryIcon category={place.categories[0]} size={22} />
-                    </span>
-                  )}
-                </div>
-              </div>
-            </button>
+              place={place}
+              isOpen={openPlaceId === place.id}
+              onOpen={() => setOpenPlaceId(place.id)}
+              onClose={() => setOpenPlaceId(null)}
+              onSelect={() => onSelectPlace(place)}
+              onDelete={() => onDeletePlace(place)}
+              onEdit={() => onEditPlace(place)}
+              onShare={() => onSharePlace(place)}
+            />
           ))}
         </div>
       )}

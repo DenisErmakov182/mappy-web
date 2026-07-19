@@ -273,6 +273,26 @@ function MapApp({
             places={visiblePlaces}
             onSelectPlace={setDetailPlace}
             onGoToMap={() => setTab("map")}
+            onEditPlace={(place) => setEditingPlace(place)}
+            onDeletePlace={async (place) => {
+              if (!window.confirm(`Удалить «${place.title}»?`)) return;
+              await deletePlace(place.id);
+              setPlaces((prev) => prev.filter((item) => item.id !== place.id));
+              setSelectedPlaces((prev) => prev.filter((item) => item.id !== place.id));
+            }}
+            onSharePlace={async (place) => {
+              const text = `${place.title}\n${place.address}`;
+              if (navigator.share) {
+                try {
+                  await navigator.share({ title: place.title, text });
+                } catch (error) {
+                  if (error instanceof DOMException && error.name === "AbortError") return;
+                  await navigator.clipboard?.writeText(text);
+                }
+                return;
+              }
+              await navigator.clipboard?.writeText(text);
+            }}
           />
         )}
         {tab === "friends" && <FriendsScreen user={user} onLogout={onLogout} />}

@@ -15,6 +15,16 @@ import sports from "../assets/categories/sports.png";
 
 const categoryIcons: Record<string, string> = { food, shopping, nature, monuments, fun, culture, sports };
 
+// Географическая координата маркера совпадает с остриём пина. Эти размеры
+// описывают видимую область вокруг острия и используются только для определения
+// момента, когда соседние пины начинают касаться друг друга на экране.
+const PIN_BOUNDS_FROM_TIP = {
+  left: -27,
+  right: 42,
+  top: -58,
+  bottom: 29,
+};
+
 interface Props {
   places: Place[];
   center: { lat: number; lng: number };
@@ -139,6 +149,113 @@ function groupPlacesByAddress(places: Place[]): Place[][] {
   return groups;
 }
 
+type VisibleMarkerGroup = {
+  places: Place[];
+  anchor: { latitude: number; longitude: number };
+};
+
+type ScreenBounds = {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+};
+
+function markerBounds(point: maplibregl.Point): ScreenBounds {
+  return {
+    left: point.x + PIN_BOUNDS_FROM_TIP.left,
+    right: point.x + PIN_BOUNDS_FROM_TIP.right,
+    top: point.y + PIN_BOUNDS_FROM_TIP.top,
+    bottom: point.y + PIN_BOUNDS_FROM_TIP.bottom,
+  };
+}
+
+function boundsTouch(first: ScreenBounds, second: ScreenBounds): boolean {
+  return !(
+    first.right < second.left ||
+    second.right < first.left ||
+    first.bottom < second.top ||
+    second.bottom < first.top
+  );
+}
+
+/*
+ * Сначала сохраняем продуктовую группировку одинаковых адресов. Затем временно
+ * объединяем получившиеся пины, если их реальные экранные прямоугольники
+ * соприкасаются. Union-find делает группировку транзитивной: если A касается B,
+ * а B касается C, пользователь видит один кластер из трёх мест.
+ */
+function groupTouchingMarkers(map: maplibregl.Map, places: Place[]): VisibleMarkerGroup[] {
+  const addressGroups = groupPlacesByAddress(places);
+  const points = addressGroups.map((group) => {
+    const anchor = group[0];
+    return map.project([anchor.longitude, anchor.latitude]);
+  });
+  const bounds = points.map(markerBounds);
+  const parents = addressGroups.map((_, index) => index);
+
+  const find = (index: number): number => {
+    let root = index;
+    while (parents[root] !== root) root = parents[root];
+    while (parents[index] !== index) {
+      const parent = parents[index];
+      parents[index] = root;
+      index = parent;
+    }
+    return root;
+  };
+
+  const union = (first: number, second: number) => {
+    const firstRoot = find(first);
+    const secondRoot = find(second);
+    if (firstRoot !== secondRoot) parents[secondRoot] = firstRoot;
+  };
+
+  for (let first = 0; first < addressGroups.length; first += 1) {
+    for (let second = first + 1; second < addressGroups.length; second += 1) {
+      if (boundsTouch(bounds[first], bounds[second])) union(first, second);
+    }
+  }
+
+  const clusters = new Map<number, number[]>();
+  addressGroups.forEach((_, index) => {
+    const root = find(index);
+    const cluster = clusters.get(root);
+    if (cluster) cluster.push(index);
+    else clusters.set(root, [index]);
+  });
+
+  return [...clusters.values()].map((indexes) => {
+    const clusterPlaces = indexes.flatMap((index) => addressGroups[index]);
+
+    if (indexes.length === 1) {
+      const anchor = addressGroups[indexes[0]][0];
+      return {
+        places: clusterPlaces,
+        anchor: { latitude: anchor.latitude, longitude: anchor.longitude },
+      };
+    }
+
+    // Центр временного кластера считаем в экранных координатах, поэтому пин
+    // появляется ровно между соприкоснувшимися маркерами, а не скачет к одному
+    // из них. unproject переводит эту точку обратно в координату карты.
+    const center = indexes.reduce(
+      (sum, index) => ({ x: sum.x + points[index].x, y: sum.y + points[index].y }),
+      { x: 0, y: 0 },
+    );
+    const clusterPoint = new maplibregl.Point(
+      center.x / indexes.length,
+      center.y / indexes.length,
+    );
+    const coordinate = map.unproject(clusterPoint);
+
+    return {
+      places: clusterPlaces,
+      anchor: { latitude: coordinate.lat, longitude: coordinate.lng },
+    };
+  });
+}
+
 export function MapView({ places, center, initialZoom = 12, onCenterChange, onSelectPlace, onMovingChange, flyTo }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -164,10 +281,7 @@ export function MapView({ places, center, initialZoom = 12, onCenterChange, onSe
 
     const rebuild = () => {
       markersRef.current.forEach((m) => m.remove());
-      markersRef.current = groupPlacesByAddress(placesRef.current).map((group) => {
-        // Список приходит от новых мест к старым. Координата первого места —
-        // постоянный якорь группы; усреднение координат сдвигало пин после сохранения.
-        const anchor = group[0];
+      markersRef.current = groupTouchingMarkers(map, placesRef.current).map(({ places: group, anchor }) => {
         // Клик по одиночному пину или по кластеру одинаково открывает карточку(и)
         // выбранных мест — при нескольких местах в одной точке между ними можно
         // свайпнуть в самой карточке, поэтому зум тут не нужен.
@@ -185,6 +299,9 @@ export function MapView({ places, center, initialZoom = 12, onCenterChange, onSe
     };
 
     map.on("load", rebuild);
+    // Относительное расстояние между пинами меняется только с масштабом. После
+    // завершения zoom пересчитываем касания и собираем/разбираем кластеры.
+    map.on("zoomend", rebuild);
     map.on("movestart", () => onMovingChange?.(true));
     map.on("moveend", () => {
       onMovingChange?.(false);
