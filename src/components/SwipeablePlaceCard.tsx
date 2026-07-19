@@ -107,22 +107,30 @@ export function SwipeablePlaceCard({
     <div className="relative h-[148px] w-full overflow-hidden rounded-[28px] bg-white [touch-action:pan-y]">
       <div className="absolute inset-y-0 right-0 flex w-[240px]">
         <SwipeAction
-          label="Удалить"
-          background="#e7000b"
-          icon={deleteIcon}
-          onClick={() => runAction(onDelete)}
-        />
-        <SwipeAction
-          label="Редактировать"
-          background="var(--mappy-surface-primary)"
-          icon={editIcon}
-          onClick={() => runAction(onEdit)}
-        />
-        <SwipeAction
+          right={0}
+          zIndex={1}
           label="Поделиться"
           background="var(--mappy-surface-canvas)"
           icon={shareIcon}
           onClick={() => runAction(onShare)}
+        />
+        <SwipeAction
+          right={ACTION_WIDTH}
+          zIndex={2}
+          label="Редактировать"
+          background="var(--mappy-surface-primary)"
+          icon={editIcon}
+          shadow="8px 2px 30.4px #e9e9e9"
+          onClick={() => runAction(onEdit)}
+        />
+        <SwipeAction
+          right={ACTION_WIDTH * 2}
+          zIndex={3}
+          label="Удалить"
+          background="#e7000b"
+          icon={deleteIcon}
+          shadow="8px 2px 30.4px #e9e9e9"
+          onClick={() => runAction(onDelete)}
         />
       </div>
 
@@ -130,7 +138,7 @@ export function SwipeablePlaceCard({
         className={`absolute inset-0 z-10 rounded-[28px] ${dragging ? "" : "transition-transform duration-200 ease-out"}`}
         style={{
           transform: `translate3d(${offset}px, 0, 0)`,
-          boxShadow: offset < -8 ? "8px 2px 30.4px rgba(214, 3, 13, 0.82)" : "none",
+          boxShadow: offset < -8 ? "8px 2px 30.4px #d6030d" : "none",
         }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -197,21 +205,32 @@ export function SwipeablePlaceCard({
 }
 
 function SwipeAction({
+  right,
+  zIndex,
   label,
   background,
   icon,
+  shadow,
   onClick,
 }: {
+  right: number;
+  zIndex: number;
   label: string;
   background: string;
   icon: string;
+  shadow?: string;
   onClick: () => void;
 }) {
   return (
     <button
       type="button"
-      className="flex h-full w-[80px] shrink-0 items-center justify-center"
-      style={{ backgroundColor: background }}
+      className="absolute inset-y-0 flex w-[144px] items-center justify-end rounded-r-[28px] px-8"
+      style={{
+        right,
+        zIndex,
+        backgroundColor: background,
+        boxShadow: shadow,
+      }}
       onClick={onClick}
       aria-label={label}
     >

@@ -304,7 +304,7 @@ function MapApp({
 
       {/* Верхняя зона: поиск + фильтр (на карте и в заметках) */}
       {tab !== "friends" && (
-        <div className="absolute top-0 left-0 right-0 px-4 pt-[max(env(safe-area-inset-top),12px)]">
+        <div className="absolute top-0 left-0 right-0 z-20 px-4 pt-[max(env(safe-area-inset-top),12px)]">
           <SearchFilterBar
             query={query}
             onOpenSearch={() => setShowSearch(true)}
@@ -375,7 +375,7 @@ function MapApp({
       )}
 
       {/* Таббар */}
-      <div className="absolute bottom-0 left-0 right-0 px-4 pb-[max(env(safe-area-inset-bottom),12px)]">
+      <div className="absolute bottom-0 left-0 right-0 z-20 px-4 pb-[max(env(safe-area-inset-bottom),12px)]">
         <TabBar
           selection={tab}
           onSelect={(t) => {

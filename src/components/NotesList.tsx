@@ -31,42 +31,44 @@ export function NotesList({
   }, [openPlaceId, places]);
 
   return (
-    <div className="h-full overflow-y-auto pb-32" style={{ backgroundColor: "var(--mappy-surface-primary)" }}>
-      {places.length === 0 ? (
-        <div className="flex flex-col items-center text-center px-8 pt-[28vh]">
-          <img src={pinMap} alt="" className="w-[110px] mb-4" />
-          <p className="text-[20px] font-semibold leading-tight mb-2" style={{ color: "var(--mappy-text-primary)" }}>
-            Вы еще не добавили мест
-            <br />с такими параметрами
-          </p>
-          <p className="text-[14px] mb-4" style={{ color: "var(--mappy-text-secondary)" }}>
-            Может они не стоили того, чтоб их запоминать
-          </p>
-          <button
-            onClick={onGoToMap}
-            className="px-4 py-2.5 rounded-[12px] text-[15px] font-medium"
-            style={{ backgroundColor: "var(--mappy-brand-subtle)", color: "var(--mappy-pink)" }}
-          >
-            Предлагаем найти новые!
-          </button>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-3 px-4 pt-[110px]">
-          {places.map((place) => (
-            <SwipeablePlaceCard
-              key={place.id}
-              place={place}
-              isOpen={openPlaceId === place.id}
-              onOpen={() => setOpenPlaceId(place.id)}
-              onClose={() => setOpenPlaceId(null)}
-              onSelect={() => onSelectPlace(place)}
-              onDelete={() => onDeletePlace(place)}
-              onEdit={() => onEditPlace(place)}
-              onShare={() => onSharePlace(place)}
-            />
-          ))}
-        </div>
-      )}
+    <div className="absolute inset-0" style={{ backgroundColor: "var(--mappy-surface-primary)" }}>
+      <div className="absolute inset-x-0 bottom-[127px] top-[127px] overflow-y-auto overscroll-contain">
+        {places.length === 0 ? (
+          <div className="flex min-h-full flex-col items-center justify-center px-8 text-center">
+            <img src={pinMap} alt="" className="mb-4 w-[110px]" />
+            <p className="mb-2 text-[20px] font-semibold leading-tight" style={{ color: "var(--mappy-text-primary)" }}>
+              Вы еще не добавили мест
+              <br />с такими параметрами
+            </p>
+            <p className="mb-4 text-[14px]" style={{ color: "var(--mappy-text-secondary)" }}>
+              Может они не стоили того, чтоб их запоминать
+            </p>
+            <button
+              onClick={onGoToMap}
+              className="rounded-[12px] px-4 py-2.5 text-[15px] font-medium"
+              style={{ backgroundColor: "var(--mappy-brand-subtle)", color: "var(--mappy-pink)" }}
+            >
+              Предлагаем найти новые!
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3 px-4 py-3">
+            {places.map((place) => (
+              <SwipeablePlaceCard
+                key={place.id}
+                place={place}
+                isOpen={openPlaceId === place.id}
+                onOpen={() => setOpenPlaceId(place.id)}
+                onClose={() => setOpenPlaceId(null)}
+                onSelect={() => onSelectPlace(place)}
+                onDelete={() => onDeletePlace(place)}
+                onEdit={() => onEditPlace(place)}
+                onShare={() => onSharePlace(place)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
