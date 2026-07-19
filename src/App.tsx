@@ -13,6 +13,7 @@ import { SearchOverlay } from "./components/SearchOverlay";
 import { AuthScreen } from "./components/AuthScreen";
 import { OnboardingScreen, hasSeenOnboarding } from "./components/OnboardingScreen";
 import { LocationPermissionScreen } from "./components/LocationPermissionScreen";
+import { CloseButton } from "./components/primitives";
 import locateMeIcon from "./assets/icons/locate-me-3d.png";
 import {
   getToken,
@@ -76,6 +77,15 @@ function completeLocationPrompt() {
   }
 }
 
+function resetLocationPrompt() {
+  try {
+    localStorage.removeItem(LAST_LOCATION_KEY);
+    localStorage.removeItem(LOCATION_PROMPT_COMPLETED_KEY);
+  } catch {
+    // Состояние всё равно сбросится в памяти текущего запуска.
+  }
+}
+
 function toPlaceInput(place: Place): PlaceInput {
   return {
     title: place.title,
@@ -124,7 +134,13 @@ export default function App() {
           persistToken(newToken);
           setToken(newToken);
           setUser(newUser);
-          if (isNew) setShowOnboarding(true);
+          if (isNew) {
+            // Новый аккаунт должен сам дать согласие на геолокацию, даже если
+            // на этом устройстве раньше уже использовался другой аккаунт.
+            resetLocationPrompt();
+            setMapLaunch(null);
+            setShowOnboarding(true);
+          }
         }}
       />
     );
@@ -316,6 +332,11 @@ function MapApp({
       {/* Плавающая карточка выбранного места (или карусель, если мест в одной точке несколько) над таббаром */}
       {tab === "map" && selectedPlaces.length > 0 && (
         <div className="absolute left-0 right-0 bottom-[100px]">
+          <div
+            className={`mb-2 flex justify-end ${selectedPlaces.length === 1 ? "px-4" : "px-[7.5vw]"}`}
+          >
+            <CloseButton onClick={() => setSelectedPlaces([])} size={24} />
+          </div>
           <PlaceCardCarousel
             places={selectedPlaces}
             onSelect={(place) => {
