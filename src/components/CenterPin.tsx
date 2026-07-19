@@ -11,10 +11,15 @@ import restingPinShadow from "../assets/icons/center-pin-shadow-rest.png";
 export function CenterPin({ isMoving, onClick }: { isMoving: boolean; onClick: () => void }) {
   return (
     <button
-      onClick={onClick}
+      onClick={() => {
+        if (!isMoving) onClick();
+      }}
+      disabled={isMoving}
       aria-label="Добавить место здесь"
       className="absolute left-1/2 top-1/2 z-10 pointer-events-auto"
-      style={{ transform: "translate(-50%, -50%)", width: 95, height: 112 }}
+      // Остриё большого пина (y = 16 + 88) совпадает с географическим
+      // центром карты. Поэтому сохранённый маркер появляется ровно в этой точке.
+      style={{ transform: "translate(-50%, -104px)", width: 95, height: 112 }}
     >
       <img
         src={restingPinShadow}

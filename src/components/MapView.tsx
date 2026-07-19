@@ -139,18 +139,6 @@ function groupPlacesByAddress(places: Place[]): Place[][] {
   return groups;
 }
 
-/*
- * Центр масс группы мест — используется как позиция пина кластера. Состав
- * кластера может пересчитываться на каждом шаге зума, и если брать координаты
- * просто первого места в группе, пин будет визуально "скакать" между разными
- * реальными точками при перегруппировке; центроид же смещается плавно.
- */
-function groupCentroid(group: Place[]): { latitude: number; longitude: number } {
-  const latitude = group.reduce((sum, p) => sum + p.latitude, 0) / group.length;
-  const longitude = group.reduce((sum, p) => sum + p.longitude, 0) / group.length;
-  return { latitude, longitude };
-}
-
 export function MapView({ places, center, initialZoom = 12, onCenterChange, onSelectPlace, onMovingChange, flyTo }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -177,7 +165,9 @@ export function MapView({ places, center, initialZoom = 12, onCenterChange, onSe
     const rebuild = () => {
       markersRef.current.forEach((m) => m.remove());
       markersRef.current = groupPlacesByAddress(placesRef.current).map((group) => {
-        const anchor = group.length === 1 ? group[0] : groupCentroid(group);
+        // Список приходит от новых мест к старым. Координата первого места —
+        // постоянный якорь группы; усреднение координат сдвигало пин после сохранения.
+        const anchor = group[0];
         // Клик по одиночному пину или по кластеру одинаково открывает карточку(и)
         // выбранных мест — при нескольких местах в одной точке между ними можно
         // свайпнуть в самой карточке, поэтому зум тут не нужен.
@@ -185,7 +175,10 @@ export function MapView({ places, center, initialZoom = 12, onCenterChange, onSe
           group.length === 1
             ? buildPinElement(group[0], () => callbacksRef.current.onSelectPlace(group))
             : buildClusterElement(group.length, () => callbacksRef.current.onSelectPlace(group));
-        return new maplibregl.Marker({ element: el, anchor: "bottom", offset: [4, -14] })
+        // Внутри элемента остриё PNG находится в точке (27, 58).
+        // Якорь top-left с обратным offset совмещает именно остриё с координатой
+        // карты без зависимости от размеров прозрачной области и масштаба.
+        return new maplibregl.Marker({ element: el, anchor: "top-left", offset: [-27, -58] })
           .setLngLat([anchor.longitude, anchor.latitude])
           .addTo(map);
       });

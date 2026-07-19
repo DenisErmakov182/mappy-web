@@ -196,7 +196,7 @@ function MapApp({
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<PlaceFilters>(emptyFilters());
   const [showFilters, setShowFilters] = useState(false);
-  const [showAddPlace, setShowAddPlace] = useState(false);
+  const [draftCoordinate, setDraftCoordinate] = useState<{ lat: number; lng: number } | null>(null);
   const [showSearch, setShowSearch] = useState(false);
   const [selectedPlaces, setSelectedPlaces] = useState<Place[]>([]);
   const [detailPlace, setDetailPlace] = useState<Place | null>(null);
@@ -311,7 +311,14 @@ function MapApp({
 
       {/* Главный пин в центре карты — тап добавляет место в этой точке */}
       {tab === "map" && selectedPlaces.length === 0 && (
-        <CenterPin isMoving={isMapMoving} onClick={() => setShowAddPlace(true)} />
+        <CenterPin
+          isMoving={isMapMoving}
+          onClick={() => {
+            // Фиксируем координату один раз. Изменения размеров viewport при
+            // открытии формы и клавиатуры больше не могут сдвинуть сохраняемую точку.
+            setDraftCoordinate({ ...center });
+          }}
+        />
       )}
 
       {/* Кнопка «Где я»: перелёт к геолокации пользователя */}
@@ -382,14 +389,16 @@ function MapApp({
         />
       )}
 
-      {showAddPlace && (
+      {draftCoordinate && (
         <AddPlaceSheet
-          coordinate={center}
+          coordinate={draftCoordinate}
           onSave={async (place) => {
             const saved = await createPlace(toPlaceInput(place));
-            setPlaces((prev) => [...prev, saved]);
+            // API возвращает места в таком же порядке: сначала новые. Этот порядок
+            // делает координату только что сохранённого места якорем адресной группы.
+            setPlaces((prev) => [saved, ...prev]);
           }}
-          onClose={() => setShowAddPlace(false)}
+          onClose={() => setDraftCoordinate(null)}
         />
       )}
 
