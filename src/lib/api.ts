@@ -96,6 +96,11 @@ export function deletePlace(id: string) {
   return request<{ ok: true }>(`/places/${id}`, { method: "DELETE" });
 }
 
+export function reverseGeocode(lat: number, lng: number) {
+  const params = new URLSearchParams({ lat: String(lat), lng: String(lng) });
+  return request<{ address: string }>(`/geocode/reverse?${params}`).then((result) => result.address);
+}
+
 async function getPhotoUploadUrl(contentType: string) {
   return request<{ uploadUrl: string; publicUrl: string }>("/places/photo-upload-url", {
     method: "POST",

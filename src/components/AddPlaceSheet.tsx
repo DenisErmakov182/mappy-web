@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Place, PlaceCategory, VisitStatus } from "../types";
 import { categoryLabel } from "../types";
-import { reverseGeocode } from "../lib/geocode";
-import { uploadPhoto } from "../lib/api";
+import { reverseGeocode, uploadPhoto } from "../lib/api";
 import { CategoryIcon } from "./CategoryIcon";
 import { CategoriesSheet } from "./CategoriesSheet";
 import { Sheet, CtaButton, StarIcon } from "./primitives";
@@ -124,6 +123,7 @@ export function AddPlaceSheet({
   );
   const [showCategories, setShowCategories] = useState(false);
   const [addressLoading, setAddressLoading] = useState(false);
+  const [addressError, setAddressError] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -134,12 +134,16 @@ export function AddPlaceSheet({
     if (initialPlace) return;
     let cancelled = false;
     setAddressLoading(true);
+    setAddressError("");
     reverseGeocode(coordinate.lat, coordinate.lng)
       .then((addr) => {
         if (!cancelled) setAddress(addr);
       })
-      .catch(() => {
-        if (!cancelled) setAddress("");
+      .catch((error) => {
+        if (!cancelled) {
+          setAddress("");
+          setAddressError(error instanceof Error ? error.message : "Не удалось определить адрес");
+        }
       })
       .finally(() => {
         if (!cancelled) setAddressLoading(false);
@@ -219,19 +223,22 @@ export function AddPlaceSheet({
             className="h-[46px] px-4 rounded-[14px] text-[16px] outline-none placeholder:text-[#99a1af]"
             style={inputStyle}
           />
-          {/* Адрес только для чтения: определяется по координатам точки */}
-          <div
-            className="h-[46px] px-4 rounded-[14px] flex items-center text-[16px]"
+          <input
+            value={address}
+            onChange={(event) => {
+              setAddress(event.target.value);
+              if (addressError) setAddressError("");
+            }}
+            placeholder={addressLoading ? "Определяем адрес…" : addressError ? "Введите адрес вручную" : "Адрес"}
+            disabled={addressLoading}
+            className="h-[46px] px-4 rounded-[14px] text-[16px] outline-none placeholder:text-[#99a1af] disabled:opacity-100"
             style={inputStyle}
-          >
-            {addressLoading ? (
-              <span style={{ color: "#99a1af" }}>Определяем адрес…</span>
-            ) : (
-              <span style={{ color: address ? "var(--mappy-text-primary)" : "#99a1af" }}>
-                {address || "Адрес не найден"}
-              </span>
-            )}
-          </div>
+          />
+          {addressError && (
+            <p className="px-1 text-[12px] leading-[16px]" style={{ color: "var(--mappy-text-secondary)" }}>
+              Не удалось определить автоматически — адрес можно ввести вручную
+            </p>
+          )}
         </div>
 
         {/* Сегмент-контрол 390x44, полное скругление — по макету */}
