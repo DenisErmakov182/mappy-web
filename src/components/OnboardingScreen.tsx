@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { CtaButton } from "./primitives";
 import mapCrop from "../assets/onboarding/map-crop.png";
-import notesPreview from "../assets/onboarding/notes-preview.png";
+import notesPreview from "../assets/onboarding/notes-preview.jpg";
 import friendsPreview from "../assets/onboarding/friends-preview.png";
 import searchBlur from "../assets/onboarding/search-blur.png";
 import mainPin from "../assets/icons/main-pin.png";
@@ -17,8 +17,33 @@ export function hasSeenOnboarding(): boolean {
   try {
     return localStorage.getItem(ONBOARDING_KEY) === "1";
   } catch {
-    return true;
+    // Если браузер блокирует localStorage (например, приватный режим), лучше
+    // показать онбординг повторно, чем навсегда пропустить первый запуск.
+    return false;
   }
+}
+
+const onboardingAssets = [mapCrop, notesPreview, friendsPreview, searchBlur];
+
+function preloadOnboardingAssets(): Promise<void> {
+  return Promise.all(
+    onboardingAssets.map(
+      (src) =>
+        new Promise<void>((resolve) => {
+          const image = new Image();
+          image.decoding = "sync";
+          image.onload = () => {
+            const decoded = image.decode?.();
+            if (decoded) decoded.catch(() => undefined).finally(resolve);
+            else resolve();
+          };
+          // Не блокируем весь онбординг навсегда при сетевой ошибке: реальные
+          // img ниже смогут повторить запрос, а следующий запуск — взять кэш.
+          image.onerror = () => resolve();
+          image.src = src;
+        }),
+    ),
+  ).then(() => undefined);
 }
 
 function markOnboardingSeen() {
@@ -183,9 +208,17 @@ function MapPage({ step }: { step: number }) {
     <div className="relative shrink-0 overflow-hidden" style={{ width: CARD_W, height: CARD_H }}>
       <div
         className="absolute left-0 top-0 transition-transform duration-500 ease-out"
-        style={{ width: CARD_W, height: MOCK_H, transform: `translateY(${y}px)` }}
+        style={{ width: CARD_W, height: MOCK_H, transform: `translate3d(0, ${y}px, 0)`, backfaceVisibility: "hidden" }}
       >
-        <img src={mapCrop} alt="" className="absolute left-0 top-0 w-full h-full object-cover" />
+        <img
+          src={mapCrop}
+          alt=""
+          width={CARD_W}
+          height={MOCK_H}
+          loading="eager"
+          decoding="sync"
+          className="absolute left-0 top-0 w-full h-full object-cover"
+        />
         {/* Блюр-подложка под поисковой строкой — часть скроллящегося мокапа, поэтому
             выезжает и уезжает вместе со строкой поиска, а не висит отдельным слоем */}
         <img
@@ -251,9 +284,18 @@ function NotesPage({ step }: { step: number }) {
     <div className="relative shrink-0 overflow-hidden" style={{ width: CARD_W, height: CARD_H, backgroundColor: "#fff" }}>
       <div
         className="absolute left-0 top-0 transition-transform duration-[1100ms] ease-out"
-        style={{ width: CARD_W, height: MOCK_H, transform: `translateY(${y}px)` }}
+        style={{ width: CARD_W, height: MOCK_H, transform: `translate3d(0, ${y}px, 0)`, backfaceVisibility: "hidden" }}
       >
-        <img src={notesPreview} alt="" className="absolute left-0 top-0" style={{ width: CARD_W }} />
+        <img
+          src={notesPreview}
+          alt=""
+          width={CARD_W}
+          height={MOCK_H}
+          loading="eager"
+          decoding="sync"
+          className="absolute left-0 top-0 object-cover"
+          style={{ width: CARD_W, height: MOCK_H }}
+        />
         <img
           src={searchBlur}
           alt=""
@@ -285,9 +327,18 @@ function FriendsPage({ step }: { step: number }) {
     <div className="relative shrink-0 overflow-hidden" style={{ width: CARD_W, height: CARD_H, backgroundColor: "#fff" }}>
       <div
         className="absolute left-0 top-0 transition-transform duration-[1100ms] ease-out"
-        style={{ width: CARD_W, height: MOCK_H, transform: `translateY(${y}px)` }}
+        style={{ width: CARD_W, height: MOCK_H, transform: `translate3d(0, ${y}px, 0)`, backfaceVisibility: "hidden" }}
       >
-        <img src={friendsPreview} alt="" className="absolute left-0 top-0" style={{ width: CARD_W }} />
+        <img
+          src={friendsPreview}
+          alt=""
+          width={CARD_W}
+          height={MOCK_H}
+          loading="eager"
+          decoding="sync"
+          className="absolute left-0 top-0 object-cover"
+          style={{ width: CARD_W, height: MOCK_H }}
+        />
         {/* Нижний блюр внутри мокапа — под низом реального контента (в отличие от
             карты и заметок список короче виртуальной высоты, снизу остаётся пустое
             место, которое нужно так же смягчить блюром, как и остальные экраны) */}
@@ -324,7 +375,7 @@ function OnboardingPreview({ step }: { step: number }) {
       <div className="relative w-full h-full rounded-[20px] overflow-hidden">
         <div
           className="flex h-full transition-transform duration-500 ease-out"
-          style={{ width: CARD_W * 3, transform: `translateX(-${pageIndex * CARD_W}px)` }}
+          style={{ width: CARD_W * 3, transform: `translate3d(-${pageIndex * CARD_W}px, 0, 0)`, backfaceVisibility: "hidden" }}
         >
           <MapPage step={step} />
           <NotesPage step={step} />
@@ -347,9 +398,20 @@ function OnboardingPreview({ step }: { step: number }) {
 
 export function OnboardingScreen({ onDone }: { onDone: () => void }) {
   const [step, setStep] = useState(0);
+  const [assetsReady, setAssetsReady] = useState(false);
   const isLast = step === stepsContent.length - 1;
   const current = stepsContent[step];
   const textAnimClass = step <= 2 ? "onboarding-text-up" : "onboarding-text-side";
+
+  useEffect(() => {
+    let cancelled = false;
+    preloadOnboardingAssets().then(() => {
+      if (!cancelled) setAssetsReady(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const finish = () => {
     markOnboardingSeen();
@@ -374,9 +436,9 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
             {i < step && <div className="h-full w-full rounded-full" style={{ background: "var(--mappy-gradient-cta)" }} />}
             {i === step && (
               <div
-                className="h-full rounded-full onboarding-progress-active"
+                className={`h-full rounded-full ${assetsReady ? "onboarding-progress-active" : ""}`}
                 style={{ background: "var(--mappy-gradient-cta)" }}
-                onAnimationEnd={next}
+                onAnimationEnd={assetsReady ? next : undefined}
               />
             )}
           </div>
@@ -412,7 +474,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
       </div>
 
       <div className="shrink-0 flex flex-col gap-3 pt-4">
-        <CtaButton onClick={next}>{current.buttonLabel}</CtaButton>
+        <CtaButton onClick={next} disabled={!assetsReady}>{assetsReady ? current.buttonLabel : "Загружаем превью…"}</CtaButton>
         <button
           onClick={finish}
           className="w-full h-14 rounded-[14px] text-[16px] font-medium"

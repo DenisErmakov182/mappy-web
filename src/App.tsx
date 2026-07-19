@@ -12,6 +12,7 @@ import { FriendsScreen } from "./components/FriendsScreen";
 import { SearchOverlay } from "./components/SearchOverlay";
 import { AuthScreen } from "./components/AuthScreen";
 import { OnboardingScreen, hasSeenOnboarding } from "./components/OnboardingScreen";
+import { LocationPermissionScreen } from "./components/LocationPermissionScreen";
 import locateMeIcon from "./assets/icons/locate-me-3d.png";
 import {
   getToken,
@@ -34,6 +35,13 @@ import {
 } from "./types";
 
 const LAST_LOCATION_KEY = "mappy_last_location";
+const LOCATION_PROMPT_COMPLETED_KEY = "mappy_location_prompt_completed";
+const MAP_WITHOUT_LOCATION = { center: { lat: 61.524, lng: 105.3188 }, zoom: 3 };
+
+type MapLaunchState = {
+  center: { lat: number; lng: number };
+  zoom: number;
+};
 
 function getStoredLocation(): { lat: number; lng: number } | null {
   try {
@@ -49,6 +57,22 @@ function storeLocation(lat: number, lng: number) {
     localStorage.setItem(LAST_LOCATION_KEY, JSON.stringify({ lat, lng }));
   } catch {
     // localStorage недоступен (приватный режим и т.п.) — не критично
+  }
+}
+
+function hasCompletedLocationPrompt(): boolean {
+  try {
+    return localStorage.getItem(LOCATION_PROMPT_COMPLETED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function completeLocationPrompt() {
+  try {
+    localStorage.setItem(LOCATION_PROMPT_COMPLETED_KEY, "1");
+  } catch {
+    // localStorage недоступен — экран может появиться снова при следующем запуске
   }
 }
 
@@ -71,6 +95,11 @@ export default function App() {
   const [user, setUser] = useState<ApiUser | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(() => !hasSeenOnboarding());
+  const [mapLaunch, setMapLaunch] = useState<MapLaunchState | null>(() => {
+    const stored = getStoredLocation();
+    if (stored) return { center: stored, zoom: 12 };
+    return hasCompletedLocationPrompt() ? MAP_WITHOUT_LOCATION : null;
+  });
 
   useEffect(() => {
     if (!token) {
@@ -91,10 +120,11 @@ export default function App() {
   if (!token || !user) {
     return (
       <AuthScreen
-        onAuthenticated={(newToken, newUser) => {
+        onAuthenticated={(newToken, newUser, isNew) => {
           persistToken(newToken);
           setToken(newToken);
           setUser(newUser);
+          if (isNew) setShowOnboarding(true);
         }}
       />
     );
@@ -104,9 +134,27 @@ export default function App() {
     return <OnboardingScreen onDone={() => setShowOnboarding(false)} />;
   }
 
+  if (!mapLaunch) {
+    return (
+      <LocationPermissionScreen
+        onLocated={(coordinates) => {
+          storeLocation(coordinates.lat, coordinates.lng);
+          completeLocationPrompt();
+          setMapLaunch({ center: coordinates, zoom: 12 });
+        }}
+        onContinueWithoutLocation={() => {
+          completeLocationPrompt();
+          setMapLaunch(MAP_WITHOUT_LOCATION);
+        }}
+      />
+    );
+  }
+
   return (
     <MapApp
       user={user}
+      initialCenter={mapLaunch.center}
+      initialZoom={mapLaunch.zoom}
       onLogout={() => {
         clearToken();
         setToken(null);
@@ -116,7 +164,17 @@ export default function App() {
   );
 }
 
-function MapApp({ user, onLogout }: { user: ApiUser; onLogout: () => void }) {
+function MapApp({
+  user,
+  initialCenter,
+  initialZoom,
+  onLogout,
+}: {
+  user: ApiUser;
+  initialCenter: { lat: number; lng: number };
+  initialZoom: number;
+  onLogout: () => void;
+}) {
   const [tab, setTab] = useState<AppTab>("map");
   const [places, setPlaces] = useState<Place[]>([]);
   const [query, setQuery] = useState("");
@@ -126,7 +184,7 @@ function MapApp({ user, onLogout }: { user: ApiUser; onLogout: () => void }) {
   const [showSearch, setShowSearch] = useState(false);
   const [selectedPlaces, setSelectedPlaces] = useState<Place[]>([]);
   const [detailPlace, setDetailPlace] = useState<Place | null>(null);
-  const [center, setCenter] = useState(() => getStoredLocation() ?? { lat: 48.8566, lng: 2.3522 });
+  const [center, setCenter] = useState(initialCenter);
   const [isMapMoving, setIsMapMoving] = useState(false);
   const [editingPlace, setEditingPlace] = useState<Place | null>(null);
   const [flyTo, setFlyTo] = useState<{ lat: number; lng: number; ts: number } | null>(null);
@@ -170,11 +228,6 @@ function MapApp({ user, onLogout }: { user: ApiUser; onLogout: () => void }) {
     );
   };
 
-  useEffect(() => {
-    locateMe(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const visiblePlaces = useMemo(() => {
     return places.filter((place) => {
       if (!placeMatchesFilters(place, filters)) return false;
@@ -192,6 +245,7 @@ function MapApp({ user, onLogout }: { user: ApiUser; onLogout: () => void }) {
           <MapView
             places={visiblePlaces}
             center={center}
+            initialZoom={initialZoom}
             onCenterChange={setCenter}
             onSelectPlace={setSelectedPlaces}
             onMovingChange={setIsMapMoving}

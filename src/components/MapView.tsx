@@ -17,6 +17,7 @@ const categoryIcons: Record<string, string> = { food, shopping, nature, monument
 interface Props {
   places: Place[];
   center: { lat: number; lng: number };
+  initialZoom?: number;
   onCenterChange: (center: { lat: number; lng: number }) => void;
   onSelectPlace: (places: Place[]) => void;
   onMovingChange?: (moving: boolean) => void;
@@ -103,7 +104,7 @@ function groupCentroid(group: Place[]): { latitude: number; longitude: number } 
   return { latitude, longitude };
 }
 
-export function MapView({ places, center, onCenterChange, onSelectPlace, onMovingChange, flyTo }: Props) {
+export function MapView({ places, center, initialZoom = 12, onCenterChange, onSelectPlace, onMovingChange, flyTo }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<maplibregl.Marker[]>([]);
@@ -121,7 +122,7 @@ export function MapView({ places, center, onCenterChange, onSelectPlace, onMovin
       // Бесплатный OSM-стиль без ключей; позже — self-hosted Protomaps под дизайн.
       style: "https://tiles.openfreemap.org/styles/bright",
       center: [center.lng, center.lat],
-      zoom: 12,
+      zoom: initialZoom,
       attributionControl: false,
     });
     mapRef.current = map;

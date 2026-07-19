@@ -61,13 +61,26 @@ export function PlaceCardCarousel({
       ref={scrollRef}
       className="overflow-x-auto snap-x snap-mandatory scroll-smooth [&::-webkit-scrollbar]:hidden"
     >
-      <div className="flex gap-3 px-4" style={{ width: "max-content" }}>
-        {places.map((place) => (
+      <div
+        className="flex"
+        style={{
+          width: "max-content",
+          // Карточка шириной 85vw получает по 7.5vw с краёв трека, поэтому
+          // первая и последняя карточки тоже могут защёлкнуться ровно по центру.
+          paddingInline: "7.5vw",
+        }}
+      >
+        {places.map((place, index) => (
           <div
             key={place.id}
             data-carousel-card
-            className="shrink-0 snap-center [transition:filter_75ms_linear] [transform-origin:center]"
-            style={{ width: "85vw" }}
+            className="shrink-0 snap-center snap-always [transition:filter_75ms_linear] [transform-origin:center]"
+            style={{
+              width: "85vw",
+              // Раньше между карточками было 12px. Сдвигаем каждую следующую
+              // на 16px ближе: итоговое перекрытие составляет 4px.
+              marginLeft: index === 0 ? 0 : -4,
+            }}
           >
             <PlaceRowCard place={place} onClick={() => onSelect(place)} />
           </div>

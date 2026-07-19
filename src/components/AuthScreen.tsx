@@ -46,7 +46,7 @@ function FieldError({ text }: { text: string }) {
 export function AuthScreen({
   onAuthenticated,
 }: {
-  onAuthenticated: (token: string, user: ApiUser) => void;
+  onAuthenticated: (token: string, user: ApiUser, isNew: boolean) => void;
 }) {
   const [step, setStep] = useState<"email" | "code" | "profile">("email");
   const [intent, setIntent] = useState<"login" | "register">("login");
@@ -70,6 +70,7 @@ export function AuthScreen({
   // сходить в API (он требует авторизации), а сам onAuthenticated вызвать в конце.
   const [pendingToken, setPendingToken] = useState<string | null>(null);
   const [pendingUser, setPendingUser] = useState<ApiUser | null>(null);
+  const [pendingIsNew, setPendingIsNew] = useState(false);
 
   const submitEmail = async () => {
     if (!email.trim()) {
@@ -125,11 +126,12 @@ export function AuthScreen({
     try {
       const res = await verifyCode(email.trim(), value);
       if (res.user.username) {
-        onAuthenticated(res.token, res.user);
+        onAuthenticated(res.token, res.user, res.isNew);
       } else {
         // Токен нужно сохранить сразу — следующий запрос (профиль) авторизован
         setPendingToken(res.token);
         setPendingUser(res.user);
+        setPendingIsNew(res.isNew);
         setStep("profile");
       }
     } catch (e) {
@@ -189,7 +191,7 @@ export function AuthScreen({
     try {
       localStorage.setItem("mappy_token", pendingToken);
       const user = await completeProfile(firstName.trim(), lastName.trim(), username.trim());
-      onAuthenticated(pendingToken, user);
+      onAuthenticated(pendingToken, user, pendingIsNew);
     } catch (e) {
       const message = e instanceof Error ? e.message : "Не удалось сохранить профиль";
       if (USERNAME_ERROR_MESSAGES.includes(message)) {
