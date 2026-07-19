@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { CtaButton } from "./primitives";
 import mapCrop from "../assets/onboarding/map-crop.png";
-import onboardingPin from "../assets/onboarding/onboarding-pin.png";
+import notesPreview from "../assets/onboarding/notes-preview.png";
+import friendsPreview from "../assets/onboarding/friends-preview.png";
+import searchBlur from "../assets/onboarding/search-blur.png";
+import mainPin from "../assets/icons/main-pin.png";
 import searchIcon from "../assets/icons/search-icon.svg";
 import filterIcon from "../assets/icons/filter-icon.svg";
 import tabMap from "../assets/icons/tab-map.png";
 import tabNotes from "../assets/icons/tab-notes.png";
 import tabFriends from "../assets/icons/tab-friends.png";
-import starGold from "../assets/icons/star-gold.png";
 
 const ONBOARDING_KEY = "mappy_onboarding_seen";
 
@@ -39,8 +41,26 @@ function markOnboardingSeen() {
 const CARD_W = 316;
 const CARD_H = 348;
 const MOCK_H = 685;
+// Блюр-накладки растянуты не по своим пропорциям, а под края конкретных
+// элементов, которые они «поддерживают»:
+// под поиском (search-blur.png) — нижним краем по низу поисковой строки
+// (top:32 + h:35 + padding 6+6)
+const EDGE_BLUR_TOP_H = 79;
+// в заметках та же подложка чуть выше (поднята дополнительно на глаз)
+const NOTES_EDGE_BLUR_TOP_H = EDGE_BLUR_TOP_H + 12;
+// под таббаром — верхним краем на 8px выше верха таббара (bottom:12 + h:32 + padding 6+6 + 8)
+const EDGE_BLUR_BOTTOM_H = 64;
+// Сам файл search-blur.png заранее обрезан (см. скрипт в истории) до чистого
+// вертикального градиента без прозрачных полей по бокам — поэтому рендерим
+// его ровно в ширину карточки, без доп. запаса на обрезку оверфлоу
+const EDGE_BLUR_W = CARD_W;
 // Сдвиг виртуального контента вверх/вниз для шагов 0,1,2 (точные значения из Figma)
 const MAP_SCROLL_Y = [-156, 0, -337];
+// Notes/Friends используют тот же приём «виртуального мокапа» высотой MOCK_H:
+// Notes открывается снизу и сама прокручивается наверх, Friends продолжает вниз
+const NOTES_SCROLL_Y: [number, number] = [-337, 0];
+const FRIENDS_SCROLL_Y: [number, number] = [0, -337];
+const AUTO_SCROLL_DELAY = 1000;
 
 interface StepContent {
   headingLine1: string;
@@ -78,18 +98,9 @@ const stepsContent: StepContent[] = [
     headingLine1: "Основная навигация",
     headingLine2: "друзья",
     caption: "Добавляй друзей делись с ними местами или картой, теперь можно не писать часами всем вокруг, чтобы узнать куда идти!",
-    buttonLabel: "К самому интересному",
+    buttonLabel: "Начать пользоваться!",
   },
 ];
-
-/* Мини-статус-бар мокапа (9:41 — декоративный) */
-function MiniStatusBar() {
-  return (
-    <div className="absolute top-0 left-0 w-full h-[43px] flex items-end justify-center pb-1.5 z-10">
-      <span className="text-[11px] font-semibold text-[#030712]">9:41</span>
-    </div>
-  );
-}
 
 /* Мини-строка поиска; при active=true символы "печатаются" сами, потом стираются */
 function MiniSearchBar({ active }: { active: boolean }) {
@@ -115,7 +126,7 @@ function MiniSearchBar({ active }: { active: boolean }) {
   }, [active]);
 
   return (
-    <div className="absolute left-[11px] top-[48px] flex gap-1 bg-white p-1.5 rounded-[24px] z-10" style={{ width: 293 }}>
+    <div className="absolute left-[11px] top-[32px] flex gap-1 bg-white p-1.5 rounded-[24px] z-10" style={{ width: 293 }}>
       <div className="flex-1 flex items-center gap-1 h-[35px] px-3 rounded-l-[24px] rounded-r-[7px]" style={{ backgroundColor: "var(--mappy-surface-secondary)" }}>
         <img src={searchIcon} alt="" className="w-[13px] h-[13px] shrink-0" />
         <span className="text-[9px] font-medium truncate" style={{ color: "var(--mappy-text-secondary)" }}>
@@ -160,95 +171,138 @@ function FixedTabBar({ active }: { active: "map" | "notes" | "friends" }) {
   );
 }
 
-/* Map-страница: единый скроллящийся мокап (статус-бар/поиск/карта+пин) */
+/*
+ * Map-страница: единый скроллящийся мокап (статус-бар/поиск/карта+пин).
+ * Карта — реальный скриншот, используется просто как анимированный фон
+ * (не привязан к конкретным координатам) и растянут на всю высоту мокапа
+ * (685px), чтобы не было пустых серых зон сверху/снизу при скролле.
+ */
 function MapPage({ step }: { step: number }) {
   const y = MAP_SCROLL_Y[Math.min(step, 2)];
   return (
-    <div className="relative shrink-0 overflow-hidden" style={{ width: CARD_W, height: CARD_H, backgroundColor: "rgba(3,7,18,0.04)" }}>
+    <div className="relative shrink-0 overflow-hidden" style={{ width: CARD_W, height: CARD_H }}>
       <div
         className="absolute left-0 top-0 transition-transform duration-500 ease-out"
         style={{ width: CARD_W, height: MOCK_H, transform: `translateY(${y}px)` }}
       >
-        <MiniStatusBar />
+        <img src={mapCrop} alt="" className="absolute left-0 top-0 w-full h-full object-cover" />
+        {/* Блюр-подложка под поисковой строкой — часть скроллящегося мокапа, поэтому
+            выезжает и уезжает вместе со строкой поиска, а не висит отдельным слоем */}
+        <img
+          src={searchBlur}
+          alt=""
+          className="absolute top-0 pointer-events-none"
+          style={{ left: "50%", width: EDGE_BLUR_W, height: EDGE_BLUR_TOP_H, transform: "translateX(-50%) rotate(180deg)" }}
+        />
+        {/* Пин как в проде (main-pin.png), по центру блока: покачивается вокруг своего
+            металлического носика (transform-origin снизу по центру img), носик стоит
+            на месте, под ним статичная рассеянная тень — не крутится вместе с пином.
+            Показываем только на шагах 0-1: центрирование посчитано под окно шага 0,
+            на шаге 2 (окно съезжает к низу мокапа) пин иначе вылезал бы обрезком сверху. */}
+        {step < 2 && (
+          <div className="absolute" style={{ left: "50%", top: 330, transform: "translate(-50%, -50%)" }}>
+            <div
+              className="absolute rounded-full"
+              style={{
+                left: "50%",
+                bottom: 2,
+                width: 26,
+                height: 9,
+                transform: "translateX(-50%)",
+                background: "radial-gradient(closest-side, rgba(0,0,0,0.5), rgba(0,0,0,0) 70%)",
+                filter: "blur(2px)",
+              }}
+            />
+            <img
+              src={mainPin}
+              alt=""
+              className={step === 0 ? "onboarding-pin-wiggle" : ""}
+              style={{ width: 34, display: "block", transformOrigin: "50% 100%" }}
+            />
+          </div>
+        )}
         <MiniSearchBar active={step === 1} />
-        <div className="absolute left-0 overflow-hidden" style={{ top: 104, width: CARD_W, height: 495 }}>
-          <img src={mapCrop} alt="" className="w-full h-full object-cover" />
-          <img
-            src={onboardingPin}
-            alt=""
-            className={`absolute ${step === 0 ? "onboarding-pin-wiggle" : ""}`}
-            style={{ left: "39%", top: "32%", width: 30, transform: "translate(-50%, -100%)" }}
-          />
-        </div>
       </div>
     </div>
   );
 }
 
-/* Notes-страница: карточка сохранённого места по образцу настоящего PlaceRowCard (фото слева) */
-function NotesPage() {
+/*
+ * Notes-страница: тот же приём «виртуального мокапа» (685px), что и у карты.
+ * Открывается снизу скриншота (продолжая движение вниз с карты) и сама
+ * прокручивается наверх; верхний блюр + поиск сидят на виртуальном top:0/32
+ * (то же место, что и на карте) и естественно появляются в кадре только
+ * когда скролл доезжает до верха — отдельно включать их не нужно.
+ */
+function NotesPage({ step }: { step: number }) {
+  const active = step === 3;
+  const [revealed, setRevealed] = useState(false);
+  useEffect(() => {
+    // Уходя со страницы не сбрасываем обратно вниз — иначе поверх горизонтального
+    // свайпа на «друзей» дополнительно проигрывается вертикальный откат, и это
+    // выглядит как двойное движение. Просто оставляем как есть, страница всё
+    // равно скрыта за пределами карточки.
+    if (!active || revealed) return;
+    const t = setTimeout(() => setRevealed(true), AUTO_SCROLL_DELAY);
+    return () => clearTimeout(t);
+  }, [active, revealed]);
+  const y = NOTES_SCROLL_Y[revealed ? 1 : 0];
   return (
-    <div className="relative shrink-0 overflow-hidden" style={{ width: CARD_W, height: CARD_H, backgroundColor: "rgba(3,7,18,0.04)" }}>
-      <MiniStatusBar />
-      <div className="absolute left-[11px] right-[11px] top-[56px] flex flex-col gap-2">
-        <div className="bg-white rounded-[16px] p-1.5 flex items-start gap-1.5" style={{ boxShadow: "0 6px 16px rgba(0,0,0,0.08)" }}>
-          <div className="w-[64px] h-[46px] rounded-[10px] flex items-center justify-center shrink-0" style={{ backgroundColor: "var(--mappy-surface-secondary)" }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <rect x="3" y="4" width="18" height="15" rx="2" stroke="#c4c9d1" strokeWidth="1.5" />
-              <circle cx="9" cy="10" r="1.5" fill="#c4c9d1" />
-              <path d="M4 17l5-5 4 4 3-3 4 4" stroke="#c4c9d1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </div>
-          <div className="flex flex-col gap-0.5 min-w-0 pt-0.5">
-            <p className="text-[9px] font-semibold leading-[11px] truncate" style={{ color: "var(--mappy-text-primary)" }}>
-              Ресторан космической кухни
-            </p>
-            <p className="text-[7px]" style={{ color: "var(--mappy-text-secondary)" }}>
-              Сероводородная ул, 38
-            </p>
-            <div className="flex items-center gap-1 mt-0.5">
-              <span className="inline-flex items-center gap-0.5 rounded-full px-1.5 h-[13px]" style={{ backgroundColor: "rgb(220, 252, 231)", color: "rgb(0, 166, 62)", fontSize: 7 }}>
-                3<img src={starGold} alt="" className="w-[6px] h-[6px]" />
-              </span>
-              <span className="text-[7px]" style={{ color: "var(--mappy-text-secondary)" }}>
-                Еда и напитки
-              </span>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-[16px] p-1.5 flex items-start gap-1.5 opacity-50">
-          <div className="w-[64px] h-[46px] rounded-[10px] shrink-0" style={{ backgroundColor: "var(--mappy-surface-secondary)" }} />
-          <div className="flex-1" />
-        </div>
+    <div className="relative shrink-0 overflow-hidden" style={{ width: CARD_W, height: CARD_H, backgroundColor: "#fff" }}>
+      <div
+        className="absolute left-0 top-0 transition-transform duration-[1100ms] ease-out"
+        style={{ width: CARD_W, height: MOCK_H, transform: `translateY(${y}px)` }}
+      >
+        <img src={notesPreview} alt="" className="absolute left-0 top-0" style={{ width: CARD_W }} />
+        <img
+          src={searchBlur}
+          alt=""
+          className="absolute top-0 pointer-events-none"
+          style={{ left: "50%", width: EDGE_BLUR_W, height: NOTES_EDGE_BLUR_TOP_H, transform: "translateX(-50%) rotate(180deg)" }}
+        />
+        <MiniSearchBar active={false} />
       </div>
     </div>
   );
 }
 
-/* Friends-страница: список по образцу настоящего FriendsScreen (плоские строки с разделителем) */
-function FriendsPage() {
-  const rows = ["Денис Ермаков", "Денис Ермаков", "Денис Ермаков", "Денис Ермаков"];
+/*
+ * Friends-страница: продолжает ту же виртуальную вертикаль — стартует сверху
+ * (там же, где закончила Notes) и сама прокручивается дальше вниз.
+ */
+function FriendsPage({ step }: { step: number }) {
+  const active = step === 4;
+  const [revealed, setRevealed] = useState(false);
+  useEffect(() => {
+    // Как и в Notes — не откатываем обратно наверх при уходе со страницы,
+    // чтобы не было лишнего движения поверх горизонтального свайпа.
+    if (!active || revealed) return;
+    const t = setTimeout(() => setRevealed(true), AUTO_SCROLL_DELAY);
+    return () => clearTimeout(t);
+  }, [active, revealed]);
+  const y = FRIENDS_SCROLL_Y[revealed ? 1 : 0];
   return (
-    <div className="relative shrink-0 overflow-hidden bg-white" style={{ width: CARD_W, height: CARD_H }}>
-      <MiniStatusBar />
-      <div className="absolute left-[11px] right-[11px] top-[52px] flex flex-col">
-        {rows.map((name, i) => (
-          <div
-            key={i}
-            className="flex items-center gap-2 py-1.5"
-            style={{ borderTop: i > 0 ? "1px solid var(--mappy-divider)" : "none" }}
-          >
-            <div className="w-[20px] h-[20px] rounded-full shrink-0" style={{ backgroundColor: "var(--mappy-brand-subtle)" }} />
-            <div className="flex flex-col">
-              <span className="text-[9px] font-semibold leading-[11px]" style={{ color: "var(--mappy-text-primary)" }}>
-                {name}
-              </span>
-              <span className="text-[7px]" style={{ color: "var(--mappy-text-secondary)" }}>
-                @denis
-              </span>
-            </div>
-          </div>
-        ))}
+    <div className="relative shrink-0 overflow-hidden" style={{ width: CARD_W, height: CARD_H, backgroundColor: "#fff" }}>
+      <div
+        className="absolute left-0 top-0 transition-transform duration-[1100ms] ease-out"
+        style={{ width: CARD_W, height: MOCK_H, transform: `translateY(${y}px)` }}
+      >
+        <img src={friendsPreview} alt="" className="absolute left-0 top-0" style={{ width: CARD_W }} />
+        {/* Нижний блюр внутри мокапа — под низом реального контента (в отличие от
+            карты и заметок список короче виртуальной высоты, снизу остаётся пустое
+            место, которое нужно так же смягчить блюром, как и остальные экраны) */}
+        <img
+          src={searchBlur}
+          alt=""
+          className="absolute pointer-events-none"
+          style={{
+            left: "50%",
+            top: MOCK_H - EDGE_BLUR_BOTTOM_H,
+            width: EDGE_BLUR_W,
+            height: EDGE_BLUR_BOTTOM_H,
+            transform: "translateX(-50%)",
+          }}
+        />
       </div>
     </div>
   );
@@ -258,19 +312,35 @@ function OnboardingPreview({ step }: { step: number }) {
   const pageIndex = Math.max(0, Math.min(step - 2, 2));
   const activeTab = pageIndex === 0 ? "map" : pageIndex === 1 ? "notes" : "friends";
   return (
+    // Тень — на внешней обёртке без overflow. Если повесить box-shadow и
+    // overflow-hidden на один и тот же элемент, тень (и всё, что рисуется у
+    // самого края скруглённого угла) обрезается квадратом по границе рамки
+    // вместо скругления — отсюда были и обрубленная тень, и «выемки» в углах
+    // блюра. overflow-hidden оставляем только на внутреннем контейнере.
     <div
-      className="relative rounded-[20px] overflow-hidden shrink-0"
+      className="relative rounded-[20px] shrink-0"
       style={{ width: CARD_W, height: CARD_H, boxShadow: "0 24px 40px -12px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.08)" }}
     >
-      <div
-        className="flex h-full transition-transform duration-500 ease-out"
-        style={{ width: CARD_W * 3, transform: `translateX(-${pageIndex * CARD_W}px)` }}
-      >
-        <MapPage step={step} />
-        <NotesPage />
-        <FriendsPage />
+      <div className="relative w-full h-full rounded-[20px] overflow-hidden">
+        <div
+          className="flex h-full transition-transform duration-500 ease-out"
+          style={{ width: CARD_W * 3, transform: `translateX(-${pageIndex * CARD_W}px)` }}
+        >
+          <MapPage step={step} />
+          <NotesPage step={step} />
+          <FriendsPage step={step} />
+        </div>
+        {/* Блюр-подложка под таббаром — появляется и исчезает вместе с ним (не отдельный слой) */}
+        {step >= 2 && (
+          <img
+            src={searchBlur}
+            alt=""
+            className="absolute bottom-0 pointer-events-none"
+            style={{ left: "50%", width: EDGE_BLUR_W, height: EDGE_BLUR_BOTTOM_H, transform: "translateX(-50%)", zIndex: 10 }}
+          />
+        )}
+        {step >= 2 && <FixedTabBar active={activeTab} />}
       </div>
-      {step >= 2 && <FixedTabBar active={activeTab} />}
     </div>
   );
 }
@@ -293,23 +363,42 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
 
   return (
     <div className="fixed inset-0 z-[100] bg-white flex flex-col px-5 pt-[max(env(safe-area-inset-top),16px)] pb-[max(env(safe-area-inset-bottom),16px)] overflow-hidden">
+      {/* Прогресс-бар как сторис в Instagram: пройденные шаги — залиты полностью,
+          текущий доливается CTA-градиентом за 10 секунд и по завершении анимации
+          сам переключает на следующий шаг (на последнем — завершает онбординг).
+          Ручной клик по кнопке "next" тоже работает как обычно и просто демонтирует
+          недоигравшую анимацию текущего шага. */}
       <div className="flex gap-1 mb-12 shrink-0">
         {stepsContent.map((_, i) => (
           <div key={i} className="flex-1 h-2 rounded-full overflow-hidden" style={{ backgroundColor: "var(--mappy-surface-secondary)" }}>
-            {i <= step && (
-              <div className="h-full rounded-full" style={{ background: "var(--mappy-gradient-cta)" }} />
+            {i < step && <div className="h-full w-full rounded-full" style={{ background: "var(--mappy-gradient-cta)" }} />}
+            {i === step && (
+              <div
+                className="h-full rounded-full onboarding-progress-active"
+                style={{ background: "var(--mappy-gradient-cta)" }}
+                onAnimationEnd={next}
+              />
             )}
           </div>
         ))}
       </div>
 
-      <div className="flex flex-col items-center gap-10 flex-1 overflow-hidden">
-        <div key={`h-${step}`} className={`${textAnimClass} text-center w-full`}>
-          <p className="text-[28px] font-semibold leading-[32px] tracking-[-0.6px] text-black">{current.headingLine1}</p>
-          {current.headingLine2 && (
-            <p className="text-[28px] font-semibold leading-[32px] tracking-[-0.6px] text-black">{current.headingLine2}</p>
-          )}
-        </div>
+      <div className="flex flex-col items-center gap-10 flex-1">
+        {step === 0 ? (
+          <div key="h-0" className="onboarding-text-up text-center w-full">
+            <p className="text-[28px] font-semibold leading-[32px] tracking-[-0.6px] text-black">{current.headingLine1}</p>
+          </div>
+        ) : (
+          <div className="text-center w-full overflow-hidden">
+            {/* "Основная навигация" не анимируется — появляется один раз и остаётся на месте, едет только вторая строка */}
+            <p key="h-static" className="onboarding-text-up text-[28px] font-semibold leading-[32px] tracking-[-0.6px] text-black">
+              {current.headingLine1}
+            </p>
+            <p key={`h2-${step}`} className={`${textAnimClass} text-[28px] font-semibold leading-[32px] tracking-[-0.6px] text-black`}>
+              {current.headingLine2}
+            </p>
+          </div>
+        )}
 
         <OnboardingPreview step={step} />
 

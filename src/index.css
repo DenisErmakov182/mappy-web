@@ -85,13 +85,14 @@
   color: #ffb1c3;
 }
 
-/* Онбординг: пин чуть покачивается, привлекая внимание, при появлении шага 1 */
+/* Онбординг: пин чуть покачивается вокруг своего носика (transform-origin задан
+   на элементе), носик остаётся на месте — привлекает внимание на шаге 1 */
 @keyframes onboarding-pin-wiggle {
-  0%, 100% { transform: translate(-50%, -100%) rotate(0deg); }
-  20% { transform: translate(-50%, -100%) rotate(-9deg); }
-  40% { transform: translate(-50%, -100%) rotate(7deg); }
-  60% { transform: translate(-50%, -100%) rotate(-4deg); }
-  80% { transform: translate(-50%, -100%) rotate(2deg); }
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(-9deg); }
+  40% { transform: rotate(7deg); }
+  60% { transform: rotate(-4deg); }
+  80% { transform: rotate(2deg); }
 }
 .onboarding-pin-wiggle {
   animation: onboarding-pin-wiggle 0.7s ease-in-out 0.4s 1;
@@ -111,4 +112,13 @@
 }
 .onboarding-text-side {
   animation: onboarding-text-side 0.35s ease-out both;
+}
+
+/* Онбординг: прогресс-бар как сторис — активный сегмент доливается за 10 секунд */
+@keyframes onboarding-progress-fill {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+.onboarding-progress-active {
+  animation: onboarding-progress-fill 10s linear forwards;
 }
