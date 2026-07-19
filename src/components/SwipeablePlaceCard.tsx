@@ -40,15 +40,19 @@ export function SwipeablePlaceCard({
 }) {
   const [offset, setOffset] = useState(isOpen ? -ACTIONS_WIDTH : 0);
   const [dragging, setDragging] = useState(false);
+  const [showOpenShadow, setShowOpenShadow] = useState(isOpen);
   const gesture = useRef<Gesture | null>(null);
   const suppressClick = useRef(false);
 
   useEffect(() => {
-    if (!dragging) setOffset(isOpen ? -ACTIONS_WIDTH : 0);
+    if (dragging) return;
+    if (!isOpen) setShowOpenShadow(false);
+    setOffset(isOpen ? -ACTIONS_WIDTH : 0);
   }, [dragging, isOpen]);
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.pointerType === "mouse" && event.button !== 0) return;
+    setShowOpenShadow(false);
     gesture.current = {
       pointerId: event.pointerId,
       startX: event.clientX,
@@ -89,6 +93,8 @@ export function SwipeablePlaceCard({
 
     if (current.horizontal) {
       const shouldOpen = offset <= -SWIPE_THRESHOLD;
+      const alreadyFullyOpen = offset <= -ACTIONS_WIDTH + 1;
+      setShowOpenShadow(shouldOpen && alreadyFullyOpen);
       setOffset(shouldOpen ? -ACTIONS_WIDTH : 0);
       if (shouldOpen) onOpen();
       else onClose();
@@ -135,15 +141,26 @@ export function SwipeablePlaceCard({
       </div>
 
       <div
-        className={`absolute inset-0 z-10 rounded-[28px] ${dragging ? "" : "transition-transform duration-200 ease-out"}`}
+        className="absolute inset-0 z-10 rounded-[28px]"
         style={{
           transform: `translate3d(${offset}px, 0, 0)`,
-          boxShadow: offset < -8 ? "8px 2px 30.4px #d6030d" : "none",
+          transition: dragging ? "none" : "transform 360ms cubic-bezier(0.2, 0.7, 0.2, 1)",
+          boxShadow: showOpenShadow ? "8px 2px 30.4px #d6030d" : "none",
         }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={finishGesture}
         onPointerCancel={finishGesture}
+        onTransitionEnd={(event) => {
+          if (
+            event.propertyName === "transform" &&
+            offset === -ACTIONS_WIDTH &&
+            isOpen &&
+            !dragging
+          ) {
+            setShowOpenShadow(true);
+          }
+        }}
       >
         <button
           type="button"
