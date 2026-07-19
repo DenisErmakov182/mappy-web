@@ -18,7 +18,15 @@ function toFriend(f: ApiFriend): Friend {
 /*
  * Экран друзей по макетам 1489:17535 (пусто) и 1489:17465 (полный).
  */
-export function FriendsScreen({ user, onLogout }: { user: ApiUser; onLogout: () => void }) {
+export function FriendsScreen({
+  user,
+  onLogout,
+  onDeleteAccount,
+}: {
+  user: ApiUser;
+  onLogout: () => void;
+  onDeleteAccount: () => Promise<void>;
+}) {
   const [friends, setFriends] = useState<Friend[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [query, setQuery] = useState("");
@@ -40,7 +48,7 @@ export function FriendsScreen({ user, onLogout }: { user: ApiUser; onLogout: () 
   return (
     <div className="h-full overflow-y-auto pb-32" style={{ backgroundColor: "var(--mappy-surface-primary)" }}>
       <div className="px-4 pt-[max(env(safe-area-inset-top),16px)] flex flex-col gap-1">
-        <ProfileHeader user={user} onLogout={onLogout} />
+        <ProfileHeader user={user} onLogout={onLogout} onDeleteAccount={onDeleteAccount} />
 
         {friends.length === 0 ? (
           <div className="bg-white rounded-[24px] px-6 py-6 text-center">
@@ -139,8 +147,34 @@ export function FriendsScreen({ user, onLogout }: { user: ApiUser; onLogout: () 
   );
 }
 
-function ProfileHeader({ user, onLogout }: { user: ApiUser; onLogout: () => void }) {
+function ProfileHeader({
+  user,
+  onLogout,
+  onDeleteAccount,
+}: {
+  user: ApiUser;
+  onLogout: () => void;
+  onDeleteAccount: () => Promise<void>;
+}) {
   const [showMenu, setShowMenu] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    if (
+      !window.confirm(
+        "Удалить аккаунт насовсем? Все ваши места, фото и друзья будут удалены без возможности восстановления.",
+      )
+    ) {
+      return;
+    }
+    setDeleting(true);
+    try {
+      await onDeleteAccount();
+    } catch {
+      setDeleting(false);
+      window.alert("Не удалось удалить аккаунт, попробуйте ещё раз");
+    }
+  };
   const displayName = user.name ?? user.username ?? user.email;
   const initials = displayName
     .split(" ")
@@ -201,9 +235,17 @@ function ProfileHeader({ user, onLogout }: { user: ApiUser; onLogout: () => void
               <button
                 onClick={onLogout}
                 className="w-full text-left px-4 py-2 text-[15px] font-medium"
-                style={{ color: "#fb2c36" }}
+                style={{ color: "var(--mappy-text-primary)" }}
               >
                 Выйти
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleting}
+                className="w-full text-left px-4 py-2 text-[15px] font-medium disabled:opacity-50"
+                style={{ color: "#fb2c36" }}
+              >
+                {deleting ? "Удаление..." : "Удалить аккаунт"}
               </button>
             </div>
           )}

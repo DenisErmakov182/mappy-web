@@ -24,6 +24,7 @@ import {
   createPlace,
   updatePlace,
   deletePlace,
+  deleteAccount,
   type ApiUser,
   type PlaceInput,
 } from "./lib/api";
@@ -176,6 +177,12 @@ export default function App() {
         setToken(null);
         setUser(null);
       }}
+      onDeleteAccount={async () => {
+        await deleteAccount();
+        clearToken();
+        setToken(null);
+        setUser(null);
+      }}
     />
   );
 }
@@ -185,11 +192,13 @@ function MapApp({
   initialCenter,
   initialZoom,
   onLogout,
+  onDeleteAccount,
 }: {
   user: ApiUser;
   initialCenter: { lat: number; lng: number };
   initialZoom: number;
   onLogout: () => void;
+  onDeleteAccount: () => Promise<void>;
 }) {
   const [tab, setTab] = useState<AppTab>("map");
   const [places, setPlaces] = useState<Place[]>([]);
@@ -295,7 +304,9 @@ function MapApp({
             }}
           />
         )}
-        {tab === "friends" && <FriendsScreen user={user} onLogout={onLogout} />}
+        {tab === "friends" && (
+          <FriendsScreen user={user} onLogout={onLogout} onDeleteAccount={onDeleteAccount} />
+        )}
       </div>
 
       {/* Блюр-градиенты сверху и снизу (по макету 1489:15421 — без белых подложек) */}

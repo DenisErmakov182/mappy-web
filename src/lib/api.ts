@@ -71,6 +71,10 @@ export function getMe() {
   return request<ApiUser>("/auth/me");
 }
 
+export function deleteAccount() {
+  return request<{ ok: true }>("/auth/me", { method: "DELETE" });
+}
+
 export interface PlaceInput {
   title: string;
   address: string;
