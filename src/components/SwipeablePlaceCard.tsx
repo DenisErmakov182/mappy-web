@@ -43,15 +43,28 @@ export function SwipeablePlaceCard({
   const [showOpenShadow, setShowOpenShadow] = useState(isOpen);
   const gesture = useRef<Gesture | null>(null);
   const suppressClick = useRef(false);
+  const shadowDelay = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (shadowDelay.current !== null) window.clearTimeout(shadowDelay.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (dragging) return;
-    if (!isOpen) setShowOpenShadow(false);
+    if (!isOpen) {
+      if (shadowDelay.current !== null) window.clearTimeout(shadowDelay.current);
+      shadowDelay.current = null;
+      setShowOpenShadow(false);
+    }
     setOffset(isOpen ? -ACTIONS_WIDTH : 0);
   }, [dragging, isOpen]);
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.pointerType === "mouse" && event.button !== 0) return;
+    if (shadowDelay.current !== null) window.clearTimeout(shadowDelay.current);
+    shadowDelay.current = null;
     setShowOpenShadow(false);
     gesture.current = {
       pointerId: event.pointerId,
@@ -94,10 +107,17 @@ export function SwipeablePlaceCard({
     if (current.horizontal) {
       const shouldOpen = offset <= -SWIPE_THRESHOLD;
       const alreadyFullyOpen = offset <= -ACTIONS_WIDTH + 1;
-      setShowOpenShadow(shouldOpen && alreadyFullyOpen);
+      setShowOpenShadow(false);
       setOffset(shouldOpen ? -ACTIONS_WIDTH : 0);
       if (shouldOpen) onOpen();
       else onClose();
+
+      if (shouldOpen && alreadyFullyOpen) {
+        shadowDelay.current = window.setTimeout(() => {
+          setShowOpenShadow(true);
+          shadowDelay.current = null;
+        }, 360);
+      }
     }
 
     gesture.current = null;
@@ -115,6 +135,8 @@ export function SwipeablePlaceCard({
         <SwipeAction
           right={0}
           zIndex={1}
+          animationDelay={0}
+          animate={isOpen && !dragging && !showOpenShadow}
           label="Поделиться"
           background="var(--mappy-surface-canvas)"
           icon={shareIcon}
@@ -123,6 +145,8 @@ export function SwipeablePlaceCard({
         <SwipeAction
           right={ACTION_WIDTH}
           zIndex={2}
+          animationDelay={70}
+          animate={isOpen && !dragging && !showOpenShadow}
           label="Редактировать"
           background="var(--mappy-surface-primary)"
           icon={editIcon}
@@ -132,6 +156,8 @@ export function SwipeablePlaceCard({
         <SwipeAction
           right={ACTION_WIDTH * 2}
           zIndex={3}
+          animationDelay={140}
+          animate={isOpen && !dragging && !showOpenShadow}
           label="Удалить"
           background="#e7000b"
           icon={deleteIcon}
@@ -158,6 +184,8 @@ export function SwipeablePlaceCard({
             isOpen &&
             !dragging
           ) {
+            if (shadowDelay.current !== null) window.clearTimeout(shadowDelay.current);
+            shadowDelay.current = null;
             setShowOpenShadow(true);
           }
         }}
@@ -224,6 +252,8 @@ export function SwipeablePlaceCard({
 function SwipeAction({
   right,
   zIndex,
+  animationDelay,
+  animate,
   label,
   background,
   icon,
@@ -232,6 +262,8 @@ function SwipeAction({
 }: {
   right: number;
   zIndex: number;
+  animationDelay: number;
+  animate: boolean;
   label: string;
   background: string;
   icon: string;
@@ -247,6 +279,10 @@ function SwipeAction({
         zIndex,
         backgroundColor: background,
         boxShadow: shadow,
+        transformOrigin: "center",
+        animation: animate
+          ? `swipe-action-rubber 220ms cubic-bezier(0.34, 1.56, 0.64, 1) ${animationDelay}ms both`
+          : "none",
       }}
       onClick={onClick}
       aria-label={label}
