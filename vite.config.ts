@@ -13,6 +13,12 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: false,
+      workbox: {
+        // Новая оболочка приложения сразу забирает управление вкладками,
+        // вместо ожидания, пока Yandex/Safari выгрузит старую PWA-сессию.
+        skipWaiting: true,
+        clientsClaim: true,
+      },
       includeAssets: ['favicon.ico', 'favicon.png', 'icons/apple-touch-icon.png'],
       manifest: {
         name: 'Mappy',
