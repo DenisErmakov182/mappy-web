@@ -53,7 +53,7 @@ export function SearchOverlay({
 
           <div
             className="flex items-center gap-2.5 flex-1 h-12 px-4 rounded-l-[10px] rounded-r-[32px]"
-            style={{ backgroundColor: "var(--mappy-surface-primary)" }}
+            style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
           >
             <img src={searchIcon} alt="" className="w-6 h-6 shrink-0" />
             <input

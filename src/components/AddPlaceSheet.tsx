@@ -17,6 +17,87 @@ interface PhotoSlot {
   file?: File; // задано только для ещё не загруженных на S3 фото
 }
 
+function PlusIcon({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function RatingStarButton({
+  star,
+  filled,
+  onSelect,
+}: {
+  star: number;
+  filled: boolean;
+  onSelect: () => void;
+}) {
+  const particleLayerRef = useRef<HTMLSpanElement>(null);
+
+  const burst = () => {
+    onSelect();
+    const layer = particleLayerRef.current;
+    if (!layer || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    layer.replaceChildren();
+    const colors = ["#ffe166", "#ffd23f", "#ffc400", "#ffad00"];
+    const count = 4 + Math.floor(Math.random() * 3);
+    const angleOffset = Math.random() * Math.PI * 2;
+
+    for (let index = 0; index < count; index += 1) {
+      const spark = document.createElement("span");
+      const angle = angleOffset + (Math.PI * 2 * index) / count + (Math.random() - 0.5) * 0.48;
+      const distance = 46 + Math.random() * 21;
+      const x = Math.cos(angle) * distance;
+      const y = Math.sin(angle) * distance;
+      const rotation = -145 + Math.random() * 290;
+      const width = 7 + Math.random() * 3;
+      const height = 17 + Math.random() * 8;
+
+      Object.assign(spark.style, {
+        position: "absolute",
+        left: "50%",
+        top: "50%",
+        width: `${width}px`,
+        height: `${height}px`,
+        borderRadius: `${width / 2}px`,
+        backgroundColor: colors[Math.floor(Math.random() * colors.length)],
+        pointerEvents: "none",
+        opacity: "0",
+        willChange: "transform, opacity",
+      });
+      layer.appendChild(spark);
+
+      const animation = spark.animate(
+        [
+          { opacity: 0, transform: `translate(-50%, -50%) rotate(${rotation * 0.12}deg) scale(0.2)`, offset: 0 },
+          { opacity: 1, transform: `translate(-50%, -50%) translate(${x * 0.13}px, ${y * 0.13}px) rotate(${rotation * 0.12}deg) scale(0.8)`, offset: 0.22 },
+          { opacity: 1, transform: `translate(-50%, -50%) translate(${x * 0.78}px, ${y * 0.78}px) rotate(${rotation * 0.78}deg) scale(1)`, offset: 0.72 },
+          { opacity: 0, transform: `translate(-50%, -50%) translate(${x}px, ${y}px) rotate(${rotation}deg) scale(0.68)`, offset: 1 },
+        ],
+        { duration: 500, easing: "cubic-bezier(0.18, 0.74, 0.3, 1)", fill: "forwards" },
+      );
+      animation.finished.finally(() => spark.remove());
+    }
+  };
+
+  return (
+    <span className="relative isolate w-[52px] h-[52px] shrink-0">
+      <span ref={particleLayerRef} className="absolute inset-0 z-0 pointer-events-none overflow-visible" aria-hidden="true" />
+      <button
+        type="button"
+        onClick={burst}
+        className="relative z-10 w-full h-full flex items-center justify-center"
+        aria-label={`Оценка ${star}`}
+      >
+        <StarIcon filled={filled} />
+      </button>
+    </span>
+  );
+}
+
 /*
  * Добавление места по макету 1489:16353 (+ флоу фото 1489:18077 → 1489:16383):
  * после выбора фото розовый блок сменяется сеткой 5x2 со слотами.
@@ -114,7 +195,7 @@ export function AddPlaceSheet({
   };
 
   const inputStyle = {
-    backgroundColor: "var(--mappy-surface-primary)",
+    backgroundColor: "var(--mappy-surface-secondary)",
     color: "var(--mappy-text-primary)",
   } as const;
 
@@ -155,7 +236,7 @@ export function AddPlaceSheet({
 
         {/* Сегмент-контрол 390x44, полное скругление — по макету */}
         <div
-          className="flex h-[44px] rounded-full"
+          className="flex h-[44px] items-center p-1 rounded-[28px]"
           style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
         >
           {(
@@ -167,11 +248,10 @@ export function AddPlaceSheet({
             <button
               key={value}
               onClick={() => setStatus(value)}
-              className="flex-1 rounded-full text-[14px] font-medium transition-colors"
+              className="flex flex-1 h-full items-center justify-center overflow-hidden px-6 rounded-[28px] text-[14px] leading-[18px] font-medium tracking-[-0.6px] transition-colors"
               style={{
                 backgroundColor: status === value ? "#fff" : "transparent",
                 color: status === value ? "var(--mappy-text-primary)" : "var(--mappy-text-secondary)",
-                boxShadow: status === value ? "0 1px 4px rgba(0,0,0,0.06)" : "none",
               }}
             >
               {label}
@@ -181,9 +261,12 @@ export function AddPlaceSheet({
 
         <div className="flex justify-center gap-3 py-1">
           {[1, 2, 3, 4, 5].map((star) => (
-            <button key={star} onClick={() => setRating(star)} aria-label={`Оценка ${star}`}>
-              <StarIcon filled={star <= rating} />
-            </button>
+            <RatingStarButton
+              key={star}
+              star={star}
+              filled={star <= rating}
+              onSelect={() => setRating(star)}
+            />
           ))}
         </div>
 
@@ -221,7 +304,8 @@ export function AddPlaceSheet({
               Вашим друзьям будет легче понять, как выглядит место
             </p>
             <CtaButton onClick={pickPhotos}>
-              <span className="text-[20px] leading-none mr-1">+</span> Добавить фото
+              <PlusIcon size={20} />
+              <span>Добавить фото</span>
             </CtaButton>
           </div>
         ) : (
@@ -237,7 +321,7 @@ export function AddPlaceSheet({
                 style={{ backgroundColor: "var(--mappy-surface-secondary)", color: "var(--mappy-text-primary)" }}
                 aria-label="Добавить ещё фото"
               >
-                +
+                <PlusIcon />
               </button>
             </div>
             <div className="grid grid-cols-5 gap-2">
@@ -267,7 +351,7 @@ export function AddPlaceSheet({
                     }}
                     aria-label="Добавить фото"
                   >
-                    +
+                    <PlusIcon />
                   </button>
                 ),
               )}
@@ -285,7 +369,7 @@ export function AddPlaceSheet({
             style={{ backgroundColor: "var(--mappy-surface-secondary)", color: "var(--mappy-text-primary)" }}
             aria-label="Добавить категории"
           >
-            +
+            <PlusIcon size={20} />
           </button>
         </div>
 

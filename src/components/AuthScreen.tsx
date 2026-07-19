@@ -10,7 +10,7 @@ const COLOR_SECONDARY = "var(--mappy-text-secondary)"; // #4a5565
 const COLOR_BRAND = "var(--mappy-pink)"; // #ff2056
 const COLOR_DANGER = "#fb2c36";
 const COLOR_INPUT_TEXT = "var(--mappy-text-primary)"; // #1e2939
-const COLOR_INPUT_BG = "var(--mappy-surface-primary)"; // #f9fafb
+const COLOR_INPUT_BG = "var(--mappy-surface-secondary)"; // #f3f4f6
 const TRACKING = "-0.6px";
 
 const inputStyle = {

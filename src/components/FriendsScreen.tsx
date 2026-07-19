@@ -262,7 +262,7 @@ function AddFriendSheet({ onAdd, onClose }: { onAdd: (friend: Friend) => void; o
           onKeyDown={(e) => e.key === "Enter" && submit()}
           placeholder="Никнейм"
           className="w-full h-[46px] px-4 rounded-[14px] text-[16px] outline-none mb-4 placeholder:text-[#99a1af]"
-          style={{ backgroundColor: "var(--mappy-surface-primary)", color: "var(--mappy-text-primary)" }}
+          style={{ backgroundColor: "var(--mappy-surface-secondary)", color: "var(--mappy-text-primary)" }}
           autoFocus
         />
         {error && (

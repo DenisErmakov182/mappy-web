@@ -4,6 +4,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import type { Place } from "../types";
 import { ratingChipColors } from "../types";
 import mainPin from "../assets/icons/main-pin.png";
+import placedPinShadow from "../assets/icons/placed-pin-shadow.png";
 import food from "../assets/categories/food.png";
 import shopping from "../assets/categories/shopping.png";
 import nature from "../assets/categories/nature.png";
@@ -31,6 +32,12 @@ interface Props {
 function buildPinElement(place: Place, onSelect: () => void): HTMLElement {
   const el = document.createElement("button");
   el.style.cssText = "position:relative;width:69px;height:76px;background:none;border:none;padding:0;cursor:pointer;";
+
+  const shadow = document.createElement("img");
+  shadow.src = placedPinShadow;
+  shadow.alt = "";
+  shadow.style.cssText = "position:absolute;left:-12px;top:25px;z-index:0;width:67px;height:62.67px;object-fit:contain;pointer-events:none;";
+  el.appendChild(shadow);
 
   const { bg, text } = ratingChipColors(place.rating);
   const rating = document.createElement("span");
@@ -62,6 +69,12 @@ function buildPinElement(place: Place, onSelect: () => void): HTMLElement {
 function buildClusterElement(count: number, onSelect: () => void): HTMLElement {
   const el = document.createElement("button");
   el.style.cssText = "position:relative;width:69px;height:76px;background:none;border:none;padding:0;cursor:pointer;";
+
+  const shadow = document.createElement("img");
+  shadow.src = placedPinShadow;
+  shadow.alt = "";
+  shadow.style.cssText = "position:absolute;left:-12px;top:25px;z-index:0;width:67px;height:62.67px;object-fit:contain;pointer-events:none;";
+  el.appendChild(shadow);
 
   const badge = document.createElement("span");
   badge.textContent = String(count);

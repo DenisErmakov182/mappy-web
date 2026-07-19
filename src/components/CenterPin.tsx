@@ -1,9 +1,11 @@
 import bigPin from "../assets/icons/big-pin.png";
-import pinShadow from "../assets/icons/pin-shadow.svg";
+import raisedPinShadow from "../assets/icons/center-pin-shadow-raised.png";
+import restingPinShadow from "../assets/icons/center-pin-shadow-rest.png";
 
 /*
  * Главный пин в центре карты по макету 1489:15484 (71x88 + рассеянная тень).
- * При движении карты пин приподнимается, тень бледнеет и расширяется.
+ * При движении карты пин приподнимается, а PNG-тени из Figma сменяются
+ * кроссфейдом без браузерного масштабирования blur-фильтра.
  * Тап по пину — добавить место в точке под остриём.
  */
 export function CenterPin({ isMoving, onClick }: { isMoving: boolean; onClick: () => void }) {
@@ -12,19 +14,30 @@ export function CenterPin({ isMoving, onClick }: { isMoving: boolean; onClick: (
       onClick={onClick}
       aria-label="Добавить место здесь"
       className="absolute left-1/2 top-1/2 z-10 pointer-events-auto"
-      style={{ transform: "translate(-50%, -100%)", width: 95, height: 112 }}
+      style={{ transform: "translate(-50%, -50%)", width: 95, height: 112 }}
     >
       <img
-        src={pinShadow}
+        src={restingPinShadow}
         alt=""
-        className="absolute transition-all duration-200 ease-out"
+        className="absolute transition-opacity duration-200 ease-out"
         style={{
-          left: 12,
-          bottom: -14,
-          width: 71,
-          height: 59,
-          opacity: isMoving ? 0.45 : 1,
-          transform: isMoving ? "scale(1.25)" : "scale(1)",
+          left: 3,
+          top: 57,
+          width: 73,
+          height: 68.33,
+          opacity: isMoving ? 0 : 1,
+        }}
+      />
+      <img
+        src={raisedPinShadow}
+        alt=""
+        className="absolute transition-opacity duration-200 ease-out"
+        style={{
+          left: 0,
+          top: 53,
+          width: 95.67,
+          height: 84.67,
+          opacity: isMoving ? 1 : 0,
         }}
       />
       <img
