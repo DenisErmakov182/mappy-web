@@ -89,12 +89,20 @@ export function Sheet({ children, onClose }: { children: ReactNode; onClose: () 
   );
 }
 
-export function CloseButton({ onClick, size = 26 }: { onClick: () => void; size?: number }) {
+export function CloseButton({
+  onClick,
+  size = 26,
+  backgroundColor = "var(--mappy-surface-secondary)",
+}: {
+  onClick: () => void;
+  size?: number;
+  backgroundColor?: string;
+}) {
   return (
     <button
       onClick={onClick}
       className="flex items-center justify-center rounded-full shrink-0"
-      style={{ backgroundColor: "var(--mappy-surface-secondary)", width: size, height: size }}
+      style={{ backgroundColor, width: size, height: size }}
       aria-label="Закрыть"
     >
       <svg width={size * 0.62} height={size * 0.62} viewBox="0 0 16 16" fill="none">

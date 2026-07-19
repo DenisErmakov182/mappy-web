@@ -123,3 +123,254 @@
 .onboarding-progress-active {
   animation: onboarding-progress-fill 10s linear forwards;
 }
+
+/* Регистрация: нативный по ощущению install-гайд в боттом-шите. */
+@keyframes install-guide-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes install-guide-bottom-sheet-in {
+  0% { transform: translateY(100%); }
+  72% { transform: translateY(-7px); }
+  88% { transform: translateY(2px); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes install-guide-share-sheet-track {
+  0%, 12% { transform: translate(-50%, calc(var(--install-guide-stage-height) + 28px)); }
+  42% { transform: translate(-50%, 44px); }
+  49% { transform: translate(-50%, 56px); }
+  56%, 65% { transform: translate(-50%, 52px); }
+  84% { transform: translate(-50%, -5px); }
+  92% { transform: translate(-50%, 2px); }
+  100% { transform: translate(-50%, 0); }
+}
+
+@keyframes install-guide-share-sheet-grow {
+  0%, 65% { transform: scale(1); }
+  84% { transform: scale(1.33); }
+  92% { transform: scale(1.29); }
+  100% { transform: scale(1.30375); }
+}
+
+@keyframes install-guide-home-press {
+  0%, 100% { background-color: rgba(60, 60, 67, 0); }
+  32%, 62% { background-color: rgba(60, 60, 67, 0.2); }
+}
+
+@keyframes install-guide-home-label-press {
+  0%, 100% { transform: scale(1); }
+  32%, 62% { transform: scale(0.92); }
+}
+
+.install-guide-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.53);
+  backdrop-filter: blur(9.95px);
+  -webkit-backdrop-filter: blur(9.95px);
+  animation: install-guide-backdrop-in 180ms ease-out both;
+}
+
+.install-guide-bottom-sheet {
+  position: relative;
+  display: flex;
+  width: min(100%, 430px);
+  max-height: 94dvh;
+  flex-direction: column;
+  gap: 24px;
+  overflow-y: auto;
+  border-radius: 28px 28px 0 0;
+  padding: 24px 24px max(24px, env(safe-area-inset-bottom));
+  background: linear-gradient(265deg, #f9fafb 4%, #f3f4f6 97%);
+  box-shadow: 0 -18px 48px rgba(15, 23, 42, 0.18);
+  animation: install-guide-bottom-sheet-in 560ms both;
+}
+
+.install-guide-sheet-grabber {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 44px;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(60, 60, 67, 0.3);
+}
+
+.install-guide-content {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.install-guide-stage {
+  --install-guide-stage-height: 273px;
+  position: relative;
+  height: var(--install-guide-stage-height);
+  flex: 0 0 auto;
+  overflow: hidden;
+  border-radius: 20px;
+  background: #e5e7eb;
+}
+
+.install-guide-share-sheet-track {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: min(293px, calc(100% - 48px));
+  transform: translate(-50%, calc(var(--install-guide-stage-height) + 28px));
+  animation: install-guide-share-sheet-track 1800ms 360ms both;
+  will-change: transform;
+}
+
+.install-guide-share-sheet {
+  position: relative;
+  width: 100%;
+  height: 276.24px;
+  transform: scale(1);
+  transform-origin: top center;
+  animation: install-guide-share-sheet-grow 1800ms 360ms both;
+  will-change: transform;
+}
+
+.install-guide-grabber {
+  position: absolute;
+  top: 3.64px;
+  left: 50%;
+  width: 26.24px;
+  height: 3.64px;
+  border-radius: 999px;
+  background: rgba(60, 60, 67, 0.3);
+  transform: translateX(-50%);
+}
+
+.install-guide-actions-list {
+  position: absolute;
+  top: 19.68px;
+  left: 11.66px;
+  display: flex;
+  width: 269.68px;
+  flex-direction: column;
+  gap: 14.58px;
+}
+
+.install-guide-action-group {
+  overflow: hidden;
+  border-radius: 18.95px;
+  background: rgba(120, 120, 128, 0.16);
+}
+
+.install-guide-action {
+  position: relative;
+  height: 37.9px;
+  color: #000;
+}
+
+.install-guide-action-content {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  padding: 0 8.02px 0 11.66px;
+  transform-origin: center;
+}
+
+.install-guide-action-icon {
+  display: flex;
+  width: 32.07px;
+  height: 32.07px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+}
+
+.install-guide-action-icon svg {
+  width: 18.6px;
+  height: 18.6px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.install-guide-action-label-wrap {
+  display: flex;
+  min-width: 0;
+  height: 100%;
+  flex: 1 1 auto;
+  align-items: center;
+  border-top: 0.73px solid rgba(60, 60, 67, 0.16);
+}
+
+.install-guide-action:first-child .install-guide-action-label-wrap {
+  border-top-color: transparent;
+}
+
+.install-guide-action-label {
+  overflow: hidden;
+  font-family: "SF Pro Text", "SF Pro", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 12.39px;
+  font-weight: 400;
+  line-height: 16.04px;
+  letter-spacing: -0.43px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.install-guide-home-action {
+  background-color: transparent;
+  animation: install-guide-home-press 360ms 2.22s ease-in-out both;
+}
+
+.install-guide-home-action .install-guide-action-content {
+  animation: install-guide-home-label-press 360ms 2.22s ease-in-out both;
+}
+
+@media (max-height: 720px) {
+  .install-guide-bottom-sheet {
+    gap: 24px;
+    max-height: 94dvh;
+  }
+
+  .install-guide-content {
+    gap: 20px;
+  }
+
+  .install-guide-stage {
+    --install-guide-stage-height: 228px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .install-guide-backdrop,
+  .install-guide-bottom-sheet,
+  .install-guide-share-sheet-track,
+  .install-guide-share-sheet,
+  .install-guide-home-action,
+  .install-guide-home-action .install-guide-action-content {
+    animation: none;
+  }
+
+  .install-guide-share-sheet-track {
+    transform: translate(-50%, 0);
+  }
+
+  .install-guide-share-sheet {
+    transform: scale(1.30375);
+  }
+
+  .install-guide-home-action {
+    background-color: transparent;
+  }
+
+  .install-guide-home-action .install-guide-action-content {
+    transform: scale(1);
+  }
+}

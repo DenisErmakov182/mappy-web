@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { requestCode, verifyCode, completeProfile, type ApiUser } from "../lib/api";
-import { CtaButton } from "./primitives";
+import { CloseButton, CtaButton } from "./primitives";
 
 const RESEND_COOLDOWN_SEC = 25;
 
@@ -43,6 +43,173 @@ function FieldError({ text }: { text: string }) {
   );
 }
 
+function isStandalonePwa() {
+  const iosNavigator = navigator as Navigator & { standalone?: boolean };
+  return window.matchMedia("(display-mode: standalone)").matches || iosNavigator.standalone === true;
+}
+
+type InstallGuideIconType = "glasses" | "book" | "star" | "home" | "markup" | "print";
+
+function InstallGuideIcon({ type }: { type: InstallGuideIconType }) {
+  if (type === "glasses") {
+    return (
+      <svg viewBox="0 0 24 24">
+        <circle cx="7" cy="13" r="4" />
+        <circle cx="17" cy="13" r="4" />
+        <path d="M11 13h2M3 11l1-4M21 11l-1-4" />
+      </svg>
+    );
+  }
+
+  if (type === "book") {
+    return (
+      <svg viewBox="0 0 24 24">
+        <path d="M3.5 5.5c3.1-1.3 5.9-.8 8.5 1.4v12c-2.6-2.2-5.4-2.7-8.5-1.4v-12Z" />
+        <path d="M20.5 5.5c-3.1-1.3-5.9-.8-8.5 1.4v12c2.6-2.2 5.4-2.7 8.5-1.4v-12Z" />
+      </svg>
+    );
+  }
+
+  if (type === "star") {
+    return (
+      <svg viewBox="0 0 24 24">
+        <path d="m12 2.8 2.85 5.78 6.38.93-4.62 4.5 1.09 6.35L12 17.37l-5.7 2.99 1.09-6.35-4.62-4.5 6.38-.93L12 2.8Z" />
+      </svg>
+    );
+  }
+
+  if (type === "home") {
+    return (
+      <svg viewBox="0 0 24 24">
+        <rect x="4" y="4" width="16" height="16" rx="3" />
+        <path d="M12 8v8M8 12h8" />
+      </svg>
+    );
+  }
+
+  if (type === "markup") {
+    return (
+      <svg viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="8" />
+        <path d="m9.2 16.8 1.1-5.1 2.8-5.1 1.6 5.6.1 4.6M10.3 12.2h4.4" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 24 24">
+      <path d="M7 8V4h10v4M7 17H5.5A2.5 2.5 0 0 1 3 14.5v-4A2.5 2.5 0 0 1 5.5 8h13a2.5 2.5 0 0 1 2.5 2.5v4a2.5 2.5 0 0 1-2.5 2.5H17" />
+      <rect x="7" y="14" width="10" height="7" rx="1" />
+    </svg>
+  );
+}
+
+function InstallGuideAction({
+  type,
+  label,
+  home = false,
+}: {
+  type: InstallGuideIconType;
+  label: string;
+  home?: boolean;
+}) {
+  return (
+    <div className={`install-guide-action${home ? " install-guide-home-action" : ""}`}>
+      <div className="install-guide-action-content">
+        <span className="install-guide-action-icon">
+          <InstallGuideIcon type={type} />
+        </span>
+        <span className="install-guide-action-label-wrap">
+          <span className="install-guide-action-label">{label}</span>
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function InstallGuideAnimation() {
+  return (
+    <div className="install-guide-stage" aria-hidden="true">
+      <div className="install-guide-share-sheet-track">
+        <div className="install-guide-share-sheet">
+          <div className="install-guide-grabber" />
+          <div className="install-guide-actions-list">
+            <div className="install-guide-action-group">
+              <InstallGuideAction type="glasses" label="Добавить в список для чтения" />
+              <InstallGuideAction type="book" label="Добавить закладку" />
+              <InstallGuideAction type="star" label="Добавить в избранное" />
+              <InstallGuideAction type="home" label="На экран «Домой»" home />
+            </div>
+            <div className="install-guide-action-group">
+              <InstallGuideAction type="markup" label="Добавить разметку" />
+              <InstallGuideAction type="print" label="Напечатать" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RegistrationInstallNotice({ onClose }: { onClose: () => void }) {
+  const [animationCycle, setAnimationCycle] = useState(0);
+
+  useEffect(() => {
+    const closeOnEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [onClose]);
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const replayTimer = window.setInterval(() => {
+      setAnimationCycle((cycle) => cycle + 1);
+    }, 10_000);
+
+    return () => window.clearInterval(replayTimer);
+  }, []);
+
+  return (
+    <div className="install-guide-backdrop" role="presentation">
+      <section
+        className="install-guide-bottom-sheet"
+        style={{ letterSpacing: TRACKING }}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="install-guide-title"
+      >
+        <div className="install-guide-sheet-grabber" aria-hidden="true" />
+
+        <div className="install-guide-content">
+          <div className="flex flex-col gap-3 pr-8">
+            <h2 id="install-guide-title" className="text-[20px] leading-[24px] font-medium" style={{ color: COLOR_INPUT_TEXT }}>
+              Настоятельно рекомендуем
+            </h2>
+            <div className="flex flex-col gap-1 text-[16px] leading-[20px]" style={{ color: COLOR_SECONDARY }}>
+              <p>Перед полноценной регистрацией установите приложение к себе на устройство</p>
+              <p>
+                Нажмите на кнопку <span className="font-medium">«На экран «Домой»»</span>
+              </p>
+              <p>Установка поможет вам приятнее пользоваться приложением!</p>
+            </div>
+          </div>
+
+          <InstallGuideAnimation key={animationCycle} />
+        </div>
+
+        <div className="absolute right-4 top-[15px]">
+          <CloseButton onClick={onClose} size={28} backgroundColor="var(--mappy-surface-primary)" />
+        </div>
+
+        <CtaButton onClick={onClose}>Сделаю!</CtaButton>
+      </section>
+    </div>
+  );
+}
+
 export function AuthScreen({
   onAuthenticated,
 }: {
@@ -50,6 +217,8 @@ export function AuthScreen({
 }) {
   const [step, setStep] = useState<"email" | "code" | "profile">("email");
   const [intent, setIntent] = useState<"login" | "register">("login");
+  const [installNoticeDismissed, setInstallNoticeDismissed] = useState(false);
+  const [standalonePwa] = useState(isStandalonePwa);
   const [email, setEmail] = useState("");
   const [codeDigits, setCodeDigits] = useState(["", "", "", ""]);
   const [resendIn, setResendIn] = useState(0);
@@ -208,7 +377,7 @@ export function AuthScreen({
     <div className="fixed inset-0 flex flex-col px-5 bg-white">
       {step === "email" && (
         <>
-          <div className="flex flex-col gap-6 max-w-sm mx-auto w-full pt-[110px]">
+          <div className="flex flex-col gap-6 max-w-sm mx-auto w-full pt-[110px] [@media(max-height:760px)]:pt-16">
             <div className="flex flex-col items-center gap-2 text-center" style={{ letterSpacing: TRACKING }}>
               <h1 className="text-[28px] leading-[32px] font-semibold" style={{ color: COLOR_HEADER }}>
                 {intent === "login" ? "Войдите в аккаунт" : "Создайте аккаунт"}
@@ -249,9 +418,10 @@ export function AuthScreen({
               />
               {emailError && <FieldError text={emailError} />}
             </div>
+
           </div>
 
-          <div className="flex flex-col gap-6 max-w-sm mx-auto w-full mt-auto pb-[120px]">
+          <div className="flex flex-col gap-6 max-w-sm mx-auto w-full mt-auto pb-[120px] [@media(max-height:760px)]:pb-16">
             <CtaButton
               onClick={submitEmail}
               disabled={loading || (intent === "register" && !agreed)}
@@ -429,6 +599,10 @@ export function AuthScreen({
             </CtaButton>
           </div>
         </>
+      )}
+
+      {step === "email" && intent === "register" && !standalonePwa && !installNoticeDismissed && (
+        <RegistrationInstallNotice onClose={() => setInstallNoticeDismissed(true)} />
       )}
     </div>
   );
