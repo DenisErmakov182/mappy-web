@@ -90,19 +90,53 @@ function buildClusterElement(count: number, onSelect: () => void): HTMLElement {
   return el;
 }
 
-/* Группировка пинов, наезжающих друг на друга (порог в пикселях экрана) */
-function clusterPlaces(map: maplibregl.Map, places: Place[], thresholdPx = 56): Place[][] {
-  const clusters: { screen: maplibregl.PointLike & { x: number; y: number }; items: Place[] }[] = [];
+const SAME_ADDRESS_RADIUS_METERS = 150;
+
+function normalizeAddress(address: string): string {
+  return address
+    .trim()
+    .toLocaleLowerCase("ru-RU")
+    .replaceAll("ё", "е")
+    .replace(/[.,]/g, " ")
+    .replace(/\s+/g, " ");
+}
+
+function distanceMeters(first: Place, second: Place): number {
+  const earthRadius = 6_371_000;
+  const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
+  const latitudeDelta = toRadians(second.latitude - first.latitude);
+  const longitudeDelta = toRadians(second.longitude - first.longitude);
+  const firstLatitude = toRadians(first.latitude);
+  const secondLatitude = toRadians(second.latitude);
+  const a =
+    Math.sin(latitudeDelta / 2) ** 2 +
+    Math.cos(firstLatitude) * Math.cos(secondLatitude) * Math.sin(longitudeDelta / 2) ** 2;
+  return earthRadius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+/*
+ * Объединяем только записи одного адреса. Географический порог не даёт
+ * случайно склеить одинаковые названия улиц и домов в разных городах.
+ * В отличие от экранного расстояния состав группы не зависит от масштаба карты.
+ */
+function groupPlacesByAddress(places: Place[]): Place[][] {
+  const groups: Place[][] = [];
+
   for (const place of places) {
-    const p = map.project([place.longitude, place.latitude]);
-    const hit = clusters.find((c) => Math.hypot(c.screen.x - p.x, c.screen.y - p.y) < thresholdPx);
-    if (hit) {
-      hit.items.push(place);
-    } else {
-      clusters.push({ screen: p, items: [place] });
-    }
+    const address = normalizeAddress(place.address);
+    const matchingGroup = address
+      ? groups.find(
+          (group) =>
+            normalizeAddress(group[0].address) === address &&
+            distanceMeters(group[0], place) <= SAME_ADDRESS_RADIUS_METERS,
+        )
+      : undefined;
+
+    if (matchingGroup) matchingGroup.push(place);
+    else groups.push([place]);
   }
-  return clusters.map((c) => c.items);
+
+  return groups;
 }
 
 /*
@@ -142,7 +176,7 @@ export function MapView({ places, center, initialZoom = 12, onCenterChange, onSe
 
     const rebuild = () => {
       markersRef.current.forEach((m) => m.remove());
-      markersRef.current = clusterPlaces(map, placesRef.current).map((group) => {
+      markersRef.current = groupPlacesByAddress(placesRef.current).map((group) => {
         const anchor = group.length === 1 ? group[0] : groupCentroid(group);
         // Клик по одиночному пину или по кластеру одинаково открывает карточку(и)
         // выбранных мест — при нескольких местах в одной точке между ними можно
@@ -158,13 +192,11 @@ export function MapView({ places, center, initialZoom = 12, onCenterChange, onSe
     };
 
     map.on("load", rebuild);
-    map.on("zoomend", rebuild);
     map.on("movestart", () => onMovingChange?.(true));
     map.on("moveend", () => {
       onMovingChange?.(false);
       const c = map.getCenter();
       onCenterChange({ lat: c.lat, lng: c.lng });
-      rebuild();
     });
 
     const resizeObserver = new ResizeObserver(() => map.resize());

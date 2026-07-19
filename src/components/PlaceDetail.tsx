@@ -47,14 +47,14 @@ export function PlaceDetail({
         </div>
       </div>
 
-      <div className="relative flex-1 overflow-y-auto bg-white rounded-t-[24px] -mt-6 px-5 pt-6 pb-28">
-        <h1 className="text-[24px] font-semibold leading-[28px] mb-2" style={{ color: "var(--mappy-text-primary)" }}>
+      <div className="relative flex-1 min-w-0 w-full overflow-y-auto overflow-x-hidden bg-white rounded-t-[24px] -mt-6 px-5 pt-6 pb-28">
+        <h1 className="text-[24px] font-semibold leading-[28px] mb-2 [overflow-wrap:anywhere]" style={{ color: "var(--mappy-text-primary)" }}>
           {place.title}
         </h1>
 
-        <div className="flex items-center gap-2 mb-5">
+        <div className="flex items-start gap-2 min-w-0 mb-5">
           <RatingChip rating={place.rating} />
-          <span className="text-[16px]" style={{ color: "var(--mappy-text-secondary)" }}>
+          <span className="min-w-0 text-[16px] [overflow-wrap:anywhere]" style={{ color: "var(--mappy-text-secondary)" }}>
             {place.address}
           </span>
         </div>
@@ -89,7 +89,7 @@ export function PlaceDetail({
 
         {place.note && (
           <div
-            className="rounded-[14px] p-4 text-[16px] leading-snug"
+            className="min-w-0 max-w-full rounded-[14px] p-4 text-[16px] leading-snug whitespace-pre-wrap [overflow-wrap:anywhere]"
             style={{ backgroundColor: "var(--mappy-surface-primary)", color: "var(--mappy-text-primary)" }}
           >
             {place.note}
