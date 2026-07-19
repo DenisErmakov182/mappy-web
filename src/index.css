@@ -54,6 +54,7 @@
 .blur-edge-bottom {
   pointer-events: none;
   position: absolute;
+  z-index: 15;
   left: 0;
   right: 0;
   height: 127px;

@@ -345,7 +345,7 @@ function MapApp({
       {tab === "map" && (
         <button
           onClick={() => locateMe()}
-          className="absolute right-4 bottom-[110px] w-12 h-12 rounded-full bg-white flex items-center justify-center"
+          className="absolute right-4 bottom-[110px] z-20 flex h-12 w-12 items-center justify-center rounded-full bg-white"
           aria-label="Моё местоположение"
         >
           <img
@@ -358,7 +358,7 @@ function MapApp({
 
       {/* Плавающая карточка выбранного места (или карусель, если мест в одной точке несколько) над таббаром */}
       {tab === "map" && selectedPlaces.length > 0 && (
-        <div className="absolute left-0 right-0 bottom-[100px]">
+        <div className="absolute left-0 right-0 bottom-[100px] z-20">
           <div
             className={`mb-2 flex justify-end ${selectedPlaces.length === 1 ? "px-4" : "px-[7.5vw]"}`}
           >
