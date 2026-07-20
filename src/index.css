@@ -17,7 +17,6 @@
   --mappy-floating-bottom: max(env(safe-area-inset-bottom), 8px);
   --mappy-search-bar-height: 64px;
   --mappy-content-gap: 24px;
-  --mappy-notes-content-top: calc(var(--mappy-floating-top) + var(--mappy-search-bar-height) + var(--mappy-content-gap));
   color-scheme: light;
 }
 

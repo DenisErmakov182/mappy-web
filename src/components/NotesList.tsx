@@ -51,20 +51,22 @@ export function NotesList({
           </button>
         </div>
       ) : (
-        <div className="flex flex-col gap-3 px-4 pt-[var(--mappy-notes-content-top)]">
-          {places.map((place) => (
-            <SwipeablePlaceCard
-              key={place.id}
-              place={place}
-              isOpen={openPlaceId === place.id}
-              onOpen={() => setOpenPlaceId(place.id)}
-              onClose={() => setOpenPlaceId(null)}
-              onSelect={() => onSelectPlace(place)}
-              onDelete={() => onDeletePlace(place)}
-              onEdit={() => onEditPlace(place)}
-              onShare={() => onSharePlace(place)}
-            />
-          ))}
+        <div className="px-4 pt-[var(--mappy-floating-top)]">
+          <div className="flex flex-col gap-3 pt-[calc(var(--mappy-search-bar-height)+var(--mappy-content-gap))]">
+            {places.map((place) => (
+              <SwipeablePlaceCard
+                key={place.id}
+                place={place}
+                isOpen={openPlaceId === place.id}
+                onOpen={() => setOpenPlaceId(place.id)}
+                onClose={() => setOpenPlaceId(null)}
+                onSelect={() => onSelectPlace(place)}
+                onDelete={() => onDeletePlace(place)}
+                onEdit={() => onEditPlace(place)}
+                onShare={() => onSharePlace(place)}
+              />
+            ))}
+          </div>
         </div>
       )}
     </div>
