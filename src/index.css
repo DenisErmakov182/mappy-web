@@ -17,6 +17,7 @@
   --mappy-floating-bottom: max(env(safe-area-inset-bottom), 8px);
   --mappy-search-bar-height: 64px;
   --mappy-content-gap: 24px;
+  --mappy-standalone-height: 100vh;
   color-scheme: light;
 }
 
@@ -141,6 +142,24 @@
   .onboarding-screen {
     height: 100vh;
   }
+}
+
+/* iOS standalone может вычислять `100vh` короче физической области экрана и
+   поверх результата оставлять системную полосу Home Indicator. Корневой слой
+   получает фактическую высоту экрана из JS и становится absolute: WebKit не
+   обрезает его как fixed-слой, а карта и все плавающие элементы остаются внутри
+   одного полноэкранного контейнера. */
+html.ios-standalone,
+html.ios-standalone body,
+html.ios-standalone #root {
+  height: var(--mappy-standalone-height);
+  min-height: var(--mappy-standalone-height);
+  overflow: hidden;
+}
+
+html.ios-standalone .app-shell {
+  position: absolute;
+  height: var(--mappy-standalone-height);
 }
 
 /* Карточка места: мягкий последовательный flip адреса в духе аэропортового табло. */
