@@ -5,6 +5,7 @@ import { reverseGeocode, uploadPhoto } from "../lib/api";
 import { CategoryIcon } from "./CategoryIcon";
 import { CategoriesSheet } from "./CategoriesSheet";
 import { Sheet, CtaButton, StarIcon } from "./primitives";
+import { SplitFlapAddress } from "./SplitFlapAddress";
 import stickerMuseum from "../assets/photos/sticker-museum.png";
 import stickerCafe from "../assets/photos/sticker-cafe.png";
 import stickerRestaurant from "../assets/photos/sticker-restaurant.png";
@@ -124,6 +125,7 @@ export function AddPlaceSheet({
   const [showCategories, setShowCategories] = useState(false);
   const [addressLoading, setAddressLoading] = useState(false);
   const [addressError, setAddressError] = useState("");
+  const [showAddressAnimation, setShowAddressAnimation] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -133,11 +135,15 @@ export function AddPlaceSheet({
   useEffect(() => {
     if (initialPlace) return;
     let cancelled = false;
+    setShowAddressAnimation(false);
     setAddressLoading(true);
     setAddressError("");
     reverseGeocode(coordinate.lat, coordinate.lng)
       .then((addr) => {
-        if (!cancelled) setAddress(addr);
+        if (!cancelled) {
+          setAddress(addr);
+          setShowAddressAnimation(Boolean(addr));
+        }
       })
       .catch((error) => {
         if (!cancelled) {
@@ -152,6 +158,13 @@ export function AddPlaceSheet({
       cancelled = true;
     };
   }, [coordinate.lat, coordinate.lng, initialPlace]);
+
+  useEffect(() => {
+    if (!showAddressAnimation) return;
+    const duration = Array.from(address).length * 34 + 430;
+    const timeout = window.setTimeout(() => setShowAddressAnimation(false), duration);
+    return () => window.clearTimeout(timeout);
+  }, [address, showAddressAnimation]);
 
   const pickPhotos = () => fileInputRef.current?.click();
 
@@ -223,17 +236,35 @@ export function AddPlaceSheet({
             className="h-[46px] px-4 rounded-[14px] text-[16px] outline-none placeholder:text-[#99a1af]"
             style={inputStyle}
           />
-          <input
-            value={address}
-            onChange={(event) => {
-              setAddress(event.target.value);
-              if (addressError) setAddressError("");
-            }}
-            placeholder={addressLoading ? "Определяем адрес…" : addressError ? "Введите адрес вручную" : "Адрес"}
-            disabled={addressLoading}
-            className="h-[46px] px-4 rounded-[14px] text-[16px] outline-none placeholder:text-[#99a1af] disabled:opacity-100"
-            style={inputStyle}
-          />
+          <div className="relative">
+            <input
+              value={address}
+              onFocus={() => setShowAddressAnimation(false)}
+              onChange={(event) => {
+                setShowAddressAnimation(false);
+                setAddress(event.target.value);
+                if (addressError) setAddressError("");
+              }}
+              placeholder={addressLoading ? "Определяем адрес…" : addressError ? "Введите адрес вручную" : "Адрес"}
+              disabled={addressLoading}
+              aria-label="Адрес"
+              className="h-[46px] w-full px-4 rounded-[14px] text-[16px] outline-none placeholder:text-[#99a1af] disabled:opacity-100"
+              style={{
+                ...inputStyle,
+                color: showAddressAnimation ? "transparent" : inputStyle.color,
+                caretColor: showAddressAnimation ? "transparent" : "auto",
+              }}
+            />
+            {showAddressAnimation && (
+              <span
+                className="pointer-events-none absolute inset-0 flex items-center overflow-hidden rounded-[14px] px-4 text-[16px]"
+                style={{ color: "var(--mappy-text-primary)" }}
+                aria-hidden="true"
+              >
+                <SplitFlapAddress address={address} />
+              </span>
+            )}
+          </div>
           {addressError && (
             <p className="px-1 text-[12px] leading-[16px]" style={{ color: "var(--mappy-text-secondary)" }}>
               Не удалось определить автоматически — адрес можно ввести вручную
