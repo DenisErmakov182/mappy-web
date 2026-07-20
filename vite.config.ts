@@ -21,6 +21,10 @@ export default defineConfig({
         skipWaiting: true,
         clientsClaim: false,
         cleanupOutdatedCaches: true,
+        // HTML нельзя хранить в precache: CDN Timeweb может вернуть старый
+        // index.html под новой ревизией и тем самым смешать разные сборки.
+        globIgnores: ['**/index.html'],
+        navigateFallback: null,
       },
       includeAssets: ['favicon.ico', 'favicon.png', 'icons/apple-touch-icon.png'],
       manifest: {

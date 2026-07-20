@@ -12,10 +12,9 @@ async function recoverAppShell() {
   }
 
   // Не трогаем localStorage: аккаунт, онбординг и сохранённая геопозиция
-  // остаются на устройстве. Параметр заставляет CDN выполнить новую навигацию.
-  const recoveryUrl = new URL(window.location.href);
-  recoveryUrl.searchParams.set("recovery", Date.now().toString());
-  window.location.replace(recoveryUrl.toString());
+  // остаются на устройстве. Уникальный PATH (не query) обходит CDN Timeweb,
+  // который сейчас игнорирует query-параметры в ключе кэша.
+  window.location.replace(`/__mappy_recovery__/${Date.now()}`);
 }
 
 function AppRecoveryScreen() {

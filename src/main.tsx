@@ -5,9 +5,8 @@ import './index.css'
 import App from './App.tsx'
 import { AppErrorBoundary } from './components/AppRecoveryScreen.tsx'
 
-// Проверяем обновление при каждом запуске. Новый Service Worker устанавливается
-// в фоне, но больше не перехватывает уже открытую iOS PWA: он активируется после
-// полного закрытия старого окна и применяется при следующем естественном запуске.
+// Проверяем обновление при каждом запуске. Service Worker хранит только
+// хешированные ассеты и никогда не подменяет сетевую навигацию к HTML.
 registerSW({
   immediate: true,
   onRegisteredSW(_swUrl, registration) {
@@ -22,3 +21,11 @@ createRoot(document.getElementById('root')!).render(
     </AppErrorBoundary>
   </StrictMode>,
 )
+
+window.__MAPPY_MARK_BOOTED__?.()
+
+declare global {
+  interface Window {
+    __MAPPY_MARK_BOOTED__?: () => void
+  }
+}
