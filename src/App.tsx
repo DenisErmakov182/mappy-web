@@ -386,7 +386,7 @@ function MapApp({
       )}
 
       {/* Таббар */}
-      <div className="absolute bottom-0 left-0 right-0 z-20 px-4 pb-[max(env(safe-area-inset-bottom),12px)]">
+      <div className="absolute bottom-0 left-0 right-0 z-20 px-4 pb-2">
         <TabBar
           selection={tab}
           onSelect={(t) => {
