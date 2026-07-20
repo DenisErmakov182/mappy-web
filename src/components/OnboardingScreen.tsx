@@ -445,7 +445,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
         ))}
       </div>
 
-      <div className="flex flex-col items-center gap-10 flex-1">
+      <div className="flex flex-col items-center gap-10 flex-1 pb-[220px]">
         {step === 0 ? (
           <div key="h-0" className="onboarding-text-up text-center w-full">
             <p className="text-[28px] font-semibold leading-[32px] tracking-[-0.6px] text-black">{current.headingLine1}</p>
@@ -473,8 +473,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
         </p>
       </div>
 
-      <div className="shrink-0 flex flex-col gap-3 pt-4">
-        <CtaButton onClick={next} disabled={!assetsReady}>{assetsReady ? current.buttonLabel : "Загружаем превью…"}</CtaButton>
+      <div className="absolute left-5 right-5 bottom-[var(--mappy-primary-cta-bottom)] flex flex-col gap-3">
         <button
           onClick={finish}
           className="w-full h-14 rounded-[14px] text-[16px] font-medium"
@@ -482,6 +481,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
         >
           Пропустить
         </button>
+        <CtaButton onClick={next} disabled={!assetsReady}>{assetsReady ? current.buttonLabel : "Загружаем превью…"}</CtaButton>
       </div>
     </div>
   );

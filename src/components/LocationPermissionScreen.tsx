@@ -38,8 +38,8 @@ export function LocationPermissionScreen({
   };
 
   return (
-    <div className="fixed inset-0 bg-white flex flex-col overflow-y-auto px-5 pt-[max(env(safe-area-inset-top),28px)] pb-[max(env(safe-area-inset-bottom),16px)]">
-      <div className="flex-1 flex flex-col items-center justify-center text-center pb-8">
+    <div className="fixed inset-0 bg-white flex flex-col overflow-y-auto px-5 pt-[max(env(safe-area-inset-top),28px)]">
+      <div className="flex-1 flex flex-col items-center justify-center text-center pb-[220px]">
         <img src={pinMap} alt="" className="w-[220px] max-w-[62vw] h-auto object-contain mb-10" />
         <h1 className="text-[28px] font-semibold leading-[32px] tracking-[-0.6px] text-black max-w-[340px]">
           Сначала найдём вас на карте
@@ -55,10 +55,7 @@ export function LocationPermissionScreen({
         )}
       </div>
 
-      <div className="shrink-0 flex flex-col gap-3">
-        <CtaButton onClick={requestLocation} disabled={status === "requesting"}>
-          {status === "requesting" ? "Определяем местоположение…" : status === "error" ? "Попробовать ещё раз" : "Разрешить геолокацию"}
-        </CtaButton>
+      <div className="absolute left-5 right-5 bottom-[var(--mappy-primary-cta-bottom)] flex flex-col gap-3">
         <button
           onClick={onContinueWithoutLocation}
           disabled={status === "requesting"}
@@ -67,6 +64,9 @@ export function LocationPermissionScreen({
         >
           Открыть карту без геолокации
         </button>
+        <CtaButton onClick={requestLocation} disabled={status === "requesting"}>
+          {status === "requesting" ? "Определяем местоположение…" : status === "error" ? "Попробовать ещё раз" : "Разрешить геолокацию"}
+        </CtaButton>
       </div>
     </div>
   );

@@ -51,7 +51,7 @@ export function NotesList({
           </button>
         </div>
       ) : (
-        <div className="flex flex-col gap-3 px-4 pt-[110px]">
+        <div className="flex flex-col gap-3 px-4 pt-[var(--mappy-notes-content-top)]">
           {places.map((place) => (
             <SwipeablePlaceCard
               key={place.id}

@@ -315,7 +315,7 @@ function MapApp({
 
       {/* Верхняя зона: поиск + фильтр (на карте и в заметках) */}
       {tab !== "friends" && (
-        <div className="absolute top-0 left-0 right-0 z-20 px-4 pt-[max(env(safe-area-inset-top),12px)]">
+        <div className="absolute top-0 left-0 right-0 z-20 px-4 pt-[var(--mappy-floating-top)]">
           <SearchFilterBar
             query={query}
             onOpenSearch={() => setShowSearch(true)}
@@ -328,7 +328,7 @@ function MapApp({
 
       {/* Баннер ошибки загрузки мест — данные не потеряны, просто не подгрузились */}
       {placesError && (
-        <div className="absolute top-[max(env(safe-area-inset-top),12px)] left-4 right-4 z-50 mt-14 flex items-center justify-between gap-3 rounded-2xl bg-[#1e2939] px-4 py-3 text-sm text-white">
+        <div className="absolute top-[var(--mappy-floating-top)] left-4 right-4 z-50 mt-14 flex items-center justify-between gap-3 rounded-2xl bg-[#1e2939] px-4 py-3 text-sm text-white">
           <span>Не удалось загрузить места</span>
           <button
             onClick={loadPlaces}
@@ -386,7 +386,7 @@ function MapApp({
       )}
 
       {/* Таббар */}
-      <div className="absolute bottom-0 left-0 right-0 z-20 px-4 pb-2">
+      <div className="absolute bottom-0 left-0 right-0 z-20 px-4 pb-[var(--mappy-floating-bottom)]">
         <TabBar
           selection={tab}
           onSelect={(t) => {

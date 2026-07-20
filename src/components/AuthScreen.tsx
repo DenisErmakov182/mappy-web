@@ -377,7 +377,7 @@ export function AuthScreen({
     <div className="fixed inset-0 flex flex-col px-5 bg-white">
       {step === "email" && (
         <>
-          <div className="flex flex-col gap-6 max-w-sm mx-auto w-full pt-[110px] [@media(max-height:760px)]:pt-16">
+          <div className="flex flex-col gap-6 max-w-sm mx-auto w-full pt-[var(--mappy-registration-heading-top)]">
             <div className="flex flex-col items-center gap-2 text-center" style={{ letterSpacing: TRACKING }}>
               <h1 className="text-[28px] leading-[32px] font-semibold" style={{ color: COLOR_HEADER }}>
                 {intent === "login" ? "Войдите в аккаунт" : "Создайте аккаунт"}
@@ -421,7 +421,7 @@ export function AuthScreen({
 
           </div>
 
-          <div className="flex flex-col gap-6 max-w-sm mx-auto w-full mt-auto pb-[120px] [@media(max-height:760px)]:pb-16">
+          <div className="absolute left-5 right-5 bottom-[var(--mappy-primary-cta-bottom)] max-w-sm mx-auto">
             <CtaButton
               onClick={submitEmail}
               disabled={loading || (intent === "register" && !agreed)}
@@ -429,33 +429,34 @@ export function AuthScreen({
               {loading ? "Отправляем…" : intent === "login" ? "Дальше" : "Создать"}
             </CtaButton>
 
-            {intent === "register" && (
-              <div className="flex gap-2 items-start justify-center">
-                <button
-                  onClick={() => setAgreed(!agreed)}
-                  className="w-3.5 h-3.5 mt-0.5 rounded-[2px] shrink-0"
-                  style={{
-                    border: "1px solid rgba(3,7,18,0.08)",
-                    backgroundColor: agreed ? COLOR_BRAND : "transparent",
-                  }}
-                  aria-label="Согласие с условиями"
-                />
-                <p
-                  className="text-[14px] leading-[18px] text-center"
-                  style={{ color: COLOR_SECONDARY, letterSpacing: TRACKING }}
-                >
-                  Я согласен с <span style={{ color: COLOR_BRAND }}>Условиями использования</span> и{" "}
-                  <span style={{ color: COLOR_BRAND }}>Политикой конфиденциальности</span>
-                </p>
-              </div>
-            )}
           </div>
+
+          {intent === "register" && (
+            <div className="absolute left-5 right-5 bottom-6 flex gap-2 items-start justify-center max-w-sm mx-auto">
+              <button
+                onClick={() => setAgreed(!agreed)}
+                className="w-3.5 h-3.5 mt-0.5 rounded-[2px] shrink-0"
+                style={{
+                  border: "1px solid rgba(3,7,18,0.08)",
+                  backgroundColor: agreed ? COLOR_BRAND : "transparent",
+                }}
+                aria-label="Согласие с условиями"
+              />
+              <p
+                className="text-[14px] leading-[18px] text-center"
+                style={{ color: COLOR_SECONDARY, letterSpacing: TRACKING }}
+              >
+                Я согласен с <span style={{ color: COLOR_BRAND }}>Условиями использования</span> и{" "}
+                <span style={{ color: COLOR_BRAND }}>Политикой конфиденциальности</span>
+              </p>
+            </div>
+          )}
         </>
       )}
 
       {step === "code" && (
         <>
-          <div className="flex flex-col items-center gap-[30px] max-w-[324px] mx-auto w-full pt-[110px]">
+          <div className="flex flex-col items-center gap-[30px] max-w-[324px] mx-auto w-full pt-[var(--mappy-registration-heading-top)]">
             <div className="flex flex-col items-center gap-2.5 text-center" style={{ letterSpacing: TRACKING }}>
               <h1 className="text-[28px] leading-[32px] font-semibold" style={{ color: COLOR_HEADER }}>
                 Введите код
@@ -522,7 +523,7 @@ export function AuthScreen({
             </div>
           </div>
 
-          <div className="flex flex-col gap-6 max-w-sm mx-auto w-full mt-auto pb-[120px]">
+          <div className="absolute left-5 right-5 bottom-[var(--mappy-primary-cta-bottom)] max-w-sm mx-auto">
             <CtaButton onClick={() => submitCode()} disabled={codeDigits.some((d) => !d) || loading}>
               {loading ? "Проверяем…" : "Продолжить"}
             </CtaButton>
@@ -532,7 +533,7 @@ export function AuthScreen({
 
       {step === "profile" && (
         <>
-          <div className="flex flex-col gap-6 max-w-sm mx-auto w-full pt-[110px]">
+          <div className="flex flex-col gap-6 max-w-sm mx-auto w-full pt-[var(--mappy-registration-heading-top)]">
             <div className="flex flex-col items-center gap-2 text-center" style={{ letterSpacing: TRACKING }}>
               <h1 className="text-[28px] leading-[32px] font-semibold" style={{ color: COLOR_HEADER }}>
                 Познакомимся ближе!
@@ -593,7 +594,7 @@ export function AuthScreen({
             )}
           </div>
 
-          <div className="flex flex-col gap-6 max-w-sm mx-auto w-full mt-auto pb-[120px]">
+          <div className="absolute left-5 right-5 bottom-[var(--mappy-primary-cta-bottom)] max-w-sm mx-auto">
             <CtaButton onClick={submitProfile} disabled={loading}>
               {loading ? "Сохраняем…" : "Дальше"}
             </CtaButton>
