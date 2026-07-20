@@ -264,19 +264,7 @@ html.ios-standalone .app-shell {
 
 @keyframes install-guide-share-sheet-track {
   0%, 12% { transform: translate(-50%, calc(var(--install-guide-stage-height) + 28px)); }
-  42% { transform: translate(-50%, 44px); }
-  49% { transform: translate(-50%, 56px); }
-  56%, 65% { transform: translate(-50%, 52px); }
-  84% { transform: translate(-50%, -5px); }
-  92% { transform: translate(-50%, 2px); }
-  100% { transform: translate(-50%, 0); }
-}
-
-@keyframes install-guide-share-sheet-grow {
-  0%, 65% { transform: scale(1); }
-  84% { transform: scale(1.33); }
-  92% { transform: scale(1.29); }
-  100% { transform: scale(1.30375); }
+  100% { transform: translate(-50%, 25.62px); }
 }
 
 @keyframes install-guide-home-press {
@@ -348,33 +336,24 @@ html.ios-standalone .app-shell {
   position: absolute;
   top: 0;
   left: 50%;
-  /* Дочерний .install-guide-share-sheet увеличивается transform: scale()
-     до ~1.3x на пике анимации — трансформ не влияет на layout, поэтому
-     видимый край может вылезать за пределы этого блока и обрезаться по
-     overflow:hidden у .install-guide-stage. Ширина здесь занижена заранее,
-     чтобы после увеличения оставалось ~16px отступа со всех сторон. */
-  width: min(225px, calc(100% - 110px));
+  width: min(332px, calc(100% - 50px));
   transform: translate(-50%, calc(var(--install-guide-stage-height) + 28px));
-  animation: install-guide-share-sheet-track 1800ms 360ms both;
+  animation: install-guide-share-sheet-track 1000ms 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
   will-change: transform;
 }
 
 .install-guide-share-sheet {
   position: relative;
   width: 100%;
-  height: 276.24px;
-  transform: scale(1);
-  transform-origin: top center;
-  animation: install-guide-share-sheet-grow 1800ms 360ms both;
-  will-change: transform;
+  height: 313px;
 }
 
 .install-guide-grabber {
   position: absolute;
-  top: 3.64px;
+  top: 4.13px;
   left: 50%;
-  width: 26.24px;
-  height: 3.64px;
+  width: 29.73px;
+  height: 4.13px;
   border-radius: 999px;
   background: rgba(60, 60, 67, 0.3);
   transform: translateX(-50%);
@@ -382,23 +361,23 @@ html.ios-standalone .app-shell {
 
 .install-guide-actions-list {
   position: absolute;
-  top: 19.68px;
-  left: 11.66px;
+  top: 22.3px;
+  left: 13.21px;
   display: flex;
-  width: 269.68px;
+  width: calc(100% - 26.42px);
   flex-direction: column;
-  gap: 14.58px;
+  gap: 16.52px;
 }
 
 .install-guide-action-group {
   overflow: hidden;
-  border-radius: 18.95px;
+  border-radius: 21.47px;
   background: rgba(120, 120, 128, 0.16);
 }
 
 .install-guide-action {
   position: relative;
-  height: 37.9px;
+  height: 42.95px;
   color: #000;
 }
 
@@ -407,22 +386,22 @@ html.ios-standalone .app-shell {
   width: 100%;
   height: 100%;
   align-items: center;
-  padding: 0 8.02px 0 11.66px;
+  padding: 0 9.09px 0 13.21px;
   transform-origin: center;
 }
 
 .install-guide-action-icon {
   display: flex;
-  width: 32.07px;
-  height: 32.07px;
+  width: 36.34px;
+  height: 36.34px;
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
 }
 
 .install-guide-action-icon svg {
-  width: 18.6px;
-  height: 18.6px;
+  width: 21.08px;
+  height: 21.08px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.6;
@@ -436,7 +415,7 @@ html.ios-standalone .app-shell {
   height: 100%;
   flex: 1 1 auto;
   align-items: center;
-  border-top: 0.73px solid rgba(60, 60, 67, 0.16);
+  border-top: 0.83px solid rgba(60, 60, 67, 0.16);
 }
 
 .install-guide-action:first-child .install-guide-action-label-wrap {
@@ -446,9 +425,9 @@ html.ios-standalone .app-shell {
 .install-guide-action-label {
   overflow: hidden;
   font-family: "SF Pro Text", "SF Pro", -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 12.39px;
+  font-size: 14.04px;
   font-weight: 400;
-  line-height: 16.04px;
+  line-height: 18.17px;
   letter-spacing: -0.43px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -482,18 +461,13 @@ html.ios-standalone .app-shell {
   .install-guide-backdrop,
   .install-guide-bottom-sheet,
   .install-guide-share-sheet-track,
-  .install-guide-share-sheet,
   .install-guide-home-action,
   .install-guide-home-action .install-guide-action-content {
     animation: none;
   }
 
   .install-guide-share-sheet-track {
-    transform: translate(-50%, 0);
-  }
-
-  .install-guide-share-sheet {
-    transform: scale(1.30375);
+    transform: translate(-50%, 25.62px);
   }
 
   .install-guide-home-action {
