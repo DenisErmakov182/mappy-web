@@ -19,6 +19,9 @@ import {
   getToken,
   setToken as persistToken,
   clearToken,
+  getSessionUser,
+  persistUser,
+  isAuthenticationError,
   getMe,
   fetchPlaces,
   createPlace,
@@ -103,8 +106,10 @@ function toPlaceInput(place: Place): PlaceInput {
 
 export default function App() {
   const [token, setToken] = useState<string | null>(() => getToken());
-  const [user, setUser] = useState<ApiUser | null>(null);
-  const [authChecked, setAuthChecked] = useState(false);
+  const [user, setUser] = useState<ApiUser | null>(() => {
+    const storedToken = getToken();
+    return storedToken ? getSessionUser(storedToken) : null;
+  });
   const [showOnboarding, setShowOnboarding] = useState(() => !hasSeenOnboarding());
   const [mapLaunch, setMapLaunch] = useState<MapLaunchState | null>(() => {
     const stored = getStoredLocation();
@@ -113,26 +118,37 @@ export default function App() {
   });
 
   useEffect(() => {
+    // Снимаем аварийный boot-watchdog только после первого настоящего React-рендера.
+    window.__MAPPY_MARK_BOOTED__?.();
+  }, []);
+
+  useEffect(() => {
     if (!token) {
-      setAuthChecked(true);
       return;
     }
     getMe()
-      .then((u) => setUser(u))
-      .catch(() => {
-        clearToken();
-        setToken(null);
+      .then((u) => {
+        persistUser(u);
+        setUser(u);
       })
-      .finally(() => setAuthChecked(true));
+      .catch((error) => {
+        // Только подтверждённо недействительная сессия означает выход.
+        // Таймаут, VPN, offline и 5xx не должны выбрасывать пользователя
+        // из приложения или превращать экран в пустой.
+        if (isAuthenticationError(error)) {
+          clearToken();
+          setToken(null);
+          setUser(null);
+        }
+      });
   }, [token]);
-
-  if (!authChecked) return null;
 
   if (!token || !user) {
     return (
       <AuthScreen
         onAuthenticated={(newToken, newUser, isNew) => {
           persistToken(newToken);
+          persistUser(newUser);
           setToken(newToken);
           setUser(newUser);
           if (isNew) {

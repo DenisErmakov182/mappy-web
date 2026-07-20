@@ -22,8 +22,6 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>,
 )
 
-window.__MAPPY_MARK_BOOTED__?.()
-
 declare global {
   interface Window {
     __MAPPY_MARK_BOOTED__?: () => void

@@ -2,6 +2,34 @@ import type { Place, PlaceCategory, VisitStatus } from "../types";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 const TOKEN_KEY = "mappy_token";
+const USER_KEY = "mappy_user";
+const DEFAULT_TIMEOUT_MS = 20_000;
+
+export interface ApiUser {
+  id: string;
+  email: string;
+  username: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  name: string | null;
+  avatarUrl: string | null;
+}
+
+export class ApiError extends Error {
+  readonly status: number | null;
+  readonly kind: "http" | "network" | "timeout";
+
+  constructor(
+    message: string,
+    status: number | null,
+    kind: "http" | "network" | "timeout",
+  ) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.kind = kind;
+  }
+}
 
 export function getToken(): string | null {
   try {
@@ -21,12 +49,70 @@ export function setToken(token: string) {
 export function clearToken() {
   try {
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
   } catch {
     // Нечего очищать, если WebKit не дал доступ к хранилищу.
   }
 }
 
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+function tokenUserId(token: string): string | null {
+  try {
+    const payload = token.split(".")[1];
+    if (!payload) return null;
+    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+    const parsed = JSON.parse(atob(padded)) as { userId?: unknown };
+    return typeof parsed.userId === "string" ? parsed.userId : null;
+  } catch {
+    return null;
+  }
+}
+
+export function persistUser(user: ApiUser) {
+  try {
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+  } catch {
+    // Кэш профиля ускоряет запуск, но не является источником истины.
+  }
+}
+
+export function getSessionUser(token: string): ApiUser | null {
+  const userId = tokenUserId(token);
+  if (!userId) return null;
+
+  try {
+    const raw = localStorage.getItem(USER_KEY);
+    if (raw) {
+      const cached = JSON.parse(raw) as ApiUser;
+      if (cached?.id === userId) return cached;
+    }
+  } catch {
+    // Повреждённый или недоступный кэш не должен блокировать запуск.
+  }
+
+  // Старые установки ещё не имеют кэша профиля. JWT нужен здесь только для
+  // мгновенного отображения оболочки; все серверные действия всё равно
+  // проходят штатную проверку подписи JWT на API.
+  return {
+    id: userId,
+    email: "",
+    username: null,
+    firstName: null,
+    lastName: null,
+    name: null,
+    avatarUrl: null,
+  };
+}
+
+export function isAuthenticationError(error: unknown): boolean {
+  return error instanceof ApiError && (error.status === 401 || error.status === 403);
+}
+
+async function request<T>(
+  path: string,
+  options: RequestInit = {},
+  timeoutMs = DEFAULT_TIMEOUT_MS,
+): Promise<T> {
   const token = getToken();
   const headers: Record<string, string> = {
     ...(options.body ? { "Content-Type": "application/json" } : {}),
@@ -34,29 +120,45 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   };
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(`${API_URL}${path}`, { ...options, headers });
-  if (!res.ok) {
-    let message = `Ошибка ${res.status}`;
-    try {
-      const data = await res.json();
-      if (data?.error) message = data.error;
-    } catch {
-      // тело не JSON — оставляем дефолтное сообщение
-    }
-    throw new Error(message);
-  }
-  if (res.status === 204) return undefined as T;
-  return res.json() as Promise<T>;
-}
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+  const abortFromCaller = () => controller.abort();
+  if (options.signal?.aborted) controller.abort();
+  else options.signal?.addEventListener("abort", abortFromCaller, { once: true });
 
-export interface ApiUser {
-  id: string;
-  email: string;
-  username: string | null;
-  firstName: string | null;
-  lastName: string | null;
-  name: string | null;
-  avatarUrl: string | null;
+  try {
+    const res = await fetch(`${API_URL}${path}`, {
+      ...options,
+      headers,
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      let message = `Ошибка ${res.status}`;
+      try {
+        const data = await res.json();
+        if (data?.error) message = data.error;
+      } catch {
+        // тело не JSON — оставляем дефолтное сообщение
+      }
+      throw new ApiError(message, res.status, "http");
+    }
+    if (res.status === 204) return undefined as T;
+    return (await res.json()) as T;
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    if (controller.signal.aborted) {
+      throw new ApiError("Сервер не ответил вовремя", null, "timeout");
+    }
+    throw new ApiError(
+      error instanceof Error && error.message ? error.message : "Нет соединения с сервером",
+      null,
+      "network",
+    );
+  } finally {
+    window.clearTimeout(timeout);
+    options.signal?.removeEventListener("abort", abortFromCaller);
+  }
 }
 
 export function requestCode(email: string) {
@@ -81,7 +183,7 @@ export function completeProfile(firstName: string, lastName: string, username: s
 }
 
 export function getMe() {
-  return request<ApiUser>("/auth/me");
+  return request<ApiUser>("/auth/me", {}, 8_000);
 }
 
 export function deleteAccount() {
