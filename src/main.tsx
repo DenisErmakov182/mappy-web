@@ -3,13 +3,11 @@ import { createRoot } from 'react-dom/client'
 import { registerSW } from 'virtual:pwa-register'
 import './index.css'
 import App from './App.tsx'
+import { AppErrorBoundary } from './components/AppRecoveryScreen.tsx'
 
-// Раньше здесь была принудительная window.location.reload() при смене
-// Service Worker — это вызывало шторм перезагрузок в standalone-режиме PWA
-// на iOS Safari (белый экран / бесконечное мигание). Новая версия теперь
-// просто тихо становится активной в фоне (skipWaiting/clientsClaim в
-// vite.config.ts), без насильного рестарта текущей сессии — пользователь
-// получит её при следующем естественном открытии приложения.
+// Проверяем обновление при каждом запуске. Новый Service Worker устанавливается
+// в фоне, но больше не перехватывает уже открытую iOS PWA: он активируется после
+// полного закрытия старого окна и применяется при следующем естественном запуске.
 registerSW({
   immediate: true,
   onRegisteredSW(_swUrl, registration) {
@@ -19,6 +17,8 @@ registerSW({
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <AppErrorBoundary>
+      <App />
+    </AppErrorBoundary>
   </StrictMode>,
 )

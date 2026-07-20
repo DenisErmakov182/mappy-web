@@ -11,13 +11,15 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       injectRegister: false,
       workbox: {
-        // Новая оболочка приложения сразу забирает управление вкладками,
-        // вместо ожидания, пока Yandex/Safari выгрузит старую PWA-сессию.
-        skipWaiting: true,
-        clientsClaim: true,
+        // Не смешиваем старый HTML/JS с новым app shell внутри уже открытого
+        // standalone-окна. После закрытия всех старых клиентов ожидающий SW
+        // активируется штатно и следующий запуск получает цельную сборку.
+        skipWaiting: false,
+        clientsClaim: false,
+        cleanupOutdatedCaches: true,
       },
       includeAssets: ['favicon.ico', 'favicon.png', 'icons/apple-touch-icon.png'],
       manifest: {

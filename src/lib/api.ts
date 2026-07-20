@@ -4,13 +4,26 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 const TOKEN_KEY = "mappy_token";
 
 export function getToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY);
+  try {
+    return localStorage.getItem(TOKEN_KEY);
+  } catch {
+    return null;
+  }
 }
 export function setToken(token: string) {
-  localStorage.setItem(TOKEN_KEY, token);
+  try {
+    localStorage.setItem(TOKEN_KEY, token);
+  } catch {
+    // В редких сломанных/ограниченных PWA-сессиях WebKit может временно
+    // запретить хранилище. Текущая сессия продолжит работать из React state.
+  }
 }
 export function clearToken() {
-  localStorage.removeItem(TOKEN_KEY);
+  try {
+    localStorage.removeItem(TOKEN_KEY);
+  } catch {
+    // Нечего очищать, если WebKit не дал доступ к хранилищу.
+  }
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
