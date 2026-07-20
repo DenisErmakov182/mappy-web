@@ -4,6 +4,7 @@ import { categoryLabel } from "../types";
 import { CategoryIcon } from "./CategoryIcon";
 import { RatingChip, CloseButton, CtaButton } from "./primitives";
 import { ActionSheet } from "./ActionSheet";
+import { SplitFlapAddress } from "./SplitFlapAddress";
 
 /*
  * Просмотр созданного места по макету 1489:17577: фото на весь верх, поверх — кнопки
@@ -55,7 +56,7 @@ export function PlaceDetail({
         <div className="flex items-start gap-2 min-w-0 mb-5">
           <RatingChip rating={place.rating} />
           <span className="min-w-0 text-[16px] [overflow-wrap:anywhere]" style={{ color: "var(--mappy-text-secondary)" }}>
-            {place.address}
+            <SplitFlapAddress address={place.address} />
           </span>
         </div>
 
