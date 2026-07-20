@@ -272,7 +272,12 @@
   position: absolute;
   top: 0;
   left: 50%;
-  width: min(293px, calc(100% - 48px));
+  /* Дочерний .install-guide-share-sheet увеличивается transform: scale()
+     до ~1.3x на пике анимации — трансформ не влияет на layout, поэтому
+     видимый край может вылезать за пределы этого блока и обрезаться по
+     overflow:hidden у .install-guide-stage. Ширина здесь занижена заранее,
+     чтобы после увеличения оставалось ~16px отступа со всех сторон. */
+  width: min(225px, calc(100% - 110px));
   transform: translate(-50%, calc(var(--install-guide-stage-height) + 28px));
   animation: install-guide-share-sheet-track 1800ms 360ms both;
   will-change: transform;

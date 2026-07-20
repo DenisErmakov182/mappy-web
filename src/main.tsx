@@ -10,7 +10,7 @@ import App from './App.tsx'
 // просто тихо становится активной в фоне (skipWaiting/clientsClaim в
 // vite.config.ts), без насильного рестарта текущей сессии — пользователь
 // получит её при следующем естественном открытии приложения.
-const updateSW = registerSW({
+registerSW({
   immediate: true,
   onRegisteredSW(_swUrl, registration) {
     registration?.update().catch(() => undefined)
