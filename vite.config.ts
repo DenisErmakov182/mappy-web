@@ -14,10 +14,11 @@ export default defineConfig({
       registerType: 'prompt',
       injectRegister: false,
       workbox: {
-        // Не смешиваем старый HTML/JS с новым app shell внутри уже открытого
-        // standalone-окна. После закрытия всех старых клиентов ожидающий SW
-        // активируется штатно и следующий запуск получает цельную сборку.
-        skipWaiting: false,
+        // iOS может часами держать закрытую standalone-PWA как живого клиента,
+        // поэтому ожидающий worker так и не активируется. Активируем новый worker
+        // сразу, но НЕ забираем уже открытое окно: цельная новая оболочка будет
+        // использована только при следующей навигации/запуске приложения.
+        skipWaiting: true,
         clientsClaim: false,
         cleanupOutdatedCaches: true,
       },
