@@ -4,15 +4,19 @@ import { registerSW } from 'virtual:pwa-register'
 import './index.css'
 import App from './App.tsx'
 
-let reloadingForUpdate = false
-
 // WebKit в iOS иногда активирует новый Service Worker, но оставляет открытую
 // вкладку под управлением старого. Перезагружаем страницу сразу после смены
 // контроллера, чтобы HTML и JS всегда были из одной версии сборки.
+//
+// Флаг храним в sessionStorage, а не в переменной: window.location.reload()
+// полностью пересоздаёт JS-контекст, обычная переменная сбросится в false
+// на каждой перезагрузке и не защитит от зацикливания, если controllerchange
+// сработает повторно.
+const RELOAD_GUARD_KEY = 'mappy_reloading_for_update'
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (reloadingForUpdate) return
-    reloadingForUpdate = true
+    if (sessionStorage.getItem(RELOAD_GUARD_KEY)) return
+    sessionStorage.setItem(RELOAD_GUARD_KEY, '1')
     window.location.reload()
   })
 }
