@@ -424,7 +424,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-white flex flex-col px-5 pt-[max(env(safe-area-inset-top),16px)] pb-[max(env(safe-area-inset-bottom),16px)] overflow-hidden">
+    <div className="onboarding-screen z-[100] bg-white flex flex-col px-5 pt-[max(env(safe-area-inset-top),16px)] pb-[max(env(safe-area-inset-bottom),16px)] overflow-hidden">
       {/* Прогресс-бар как сторис в Instagram: пройденные шаги — залиты полностью,
           текущий доливается CTA-градиентом за 10 секунд и по завершении анимации
           сам переключает на следующий шаг (на последнем — завершает онбординг).

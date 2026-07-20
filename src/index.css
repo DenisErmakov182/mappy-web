@@ -92,10 +92,11 @@
   color: #ffb1c3;
 }
 
-/* Регистрация должна следовать именно видимой области iOS Safari. `inset: 0`
-   у fixed-контейнера может оставаться привязанным к layout viewport, пока
-   верхняя/нижняя панели Safari меняют размер visual viewport. */
-.auth-screen {
+/* Регистрация и онбординг должны следовать именно видимой области iOS Safari.
+   `inset: 0` у fixed-контейнера может оставаться привязанным к layout viewport,
+   пока верхняя/нижняя панели Safari меняют размер visual viewport. */
+.auth-screen,
+.onboarding-screen {
   position: fixed;
   top: 0;
   right: 0;
@@ -128,6 +129,18 @@
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
+}
+
+/* В standalone-режиме WebKit считает `dvh` без нижней safe-area, хотя
+   `viewport-fit=cover` должен включать её в доступную область. Обычный `vh`
+   в установленной PWA включает область Home Indicator и убирает белую полосу.
+   В Safari оставляем `dvh`, чтобы экран следовал за подвижными панелями. */
+@media (display-mode: standalone) {
+  .app-shell,
+  .auth-screen,
+  .onboarding-screen {
+    height: 100vh;
+  }
 }
 
 /* Карточка места: мягкий последовательный flip адреса в духе аэропортового табло. */

@@ -47,7 +47,7 @@ export function FriendsScreen({
 
   return (
     <div className="h-full overflow-y-auto pb-32" style={{ backgroundColor: "var(--mappy-surface-primary)" }}>
-      <div className="px-4 pt-[max(env(safe-area-inset-top),16px)] flex flex-col gap-1">
+      <div className="px-4 pt-[var(--mappy-floating-top)] flex flex-col gap-1">
         <ProfileHeader user={user} onLogout={onLogout} onDeleteAccount={onDeleteAccount} />
 
         {friends.length === 0 ? (
