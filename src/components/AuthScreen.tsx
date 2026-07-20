@@ -374,7 +374,7 @@ export function AuthScreen({
   };
 
   return (
-    <div className="fixed inset-0 flex flex-col px-5 bg-white">
+    <div className="auth-screen flex flex-col px-5 bg-white">
       {step === "email" && (
         <>
           <div className="flex flex-col gap-6 max-w-sm mx-auto w-full pt-[var(--mappy-registration-heading-top)]">
@@ -421,7 +421,7 @@ export function AuthScreen({
 
           </div>
 
-          <div className="absolute left-5 right-5 bottom-[var(--mappy-primary-cta-bottom)] max-w-sm mx-auto">
+          <div className="auth-primary-cta max-w-sm mx-auto">
             <CtaButton
               onClick={submitEmail}
               disabled={loading || (intent === "register" && !agreed)}
@@ -523,7 +523,7 @@ export function AuthScreen({
             </div>
           </div>
 
-          <div className="absolute left-5 right-5 bottom-[var(--mappy-primary-cta-bottom)] max-w-sm mx-auto">
+          <div className="auth-primary-cta max-w-sm mx-auto">
             <CtaButton onClick={() => submitCode()} disabled={codeDigits.some((d) => !d) || loading}>
               {loading ? "Проверяем…" : "Продолжить"}
             </CtaButton>
@@ -594,7 +594,7 @@ export function AuthScreen({
             )}
           </div>
 
-          <div className="absolute left-5 right-5 bottom-[var(--mappy-primary-cta-bottom)] max-w-sm mx-auto">
+          <div className="auth-primary-cta max-w-sm mx-auto">
             <CtaButton onClick={submitProfile} disabled={loading}>
               {loading ? "Сохраняем…" : "Дальше"}
             </CtaButton>
