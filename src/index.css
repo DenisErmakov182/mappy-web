@@ -116,6 +116,21 @@
   width: auto;
 }
 
+/* Standalone iOS PWA: карта должна заполнять динамический viewport целиком,
+   включая область под home indicator. Иначе `fixed inset: 0` иногда оставляет
+   снизу часть фона body, которая выглядит как отдельная белая полоса. */
+.app-shell {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: auto;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
 /* Карточка места: мягкий последовательный flip адреса в духе аэропортового табло. */
 @keyframes place-address-soft-flip {
   0% {

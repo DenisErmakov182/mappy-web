@@ -263,7 +263,7 @@ function MapApp({
   }, [places, filters, query]);
 
   return (
-    <div className="fixed inset-0 overflow-hidden bg-white">
+    <div className="app-shell bg-white">
       {/* Контент вкладок */}
       <div className="absolute inset-0">
         {tab === "map" && (
