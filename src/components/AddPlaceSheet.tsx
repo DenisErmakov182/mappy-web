@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Place, PlaceCategory, VisitStatus } from "../types";
 import { categoryLabel } from "../types";
 import { reverseGeocode, uploadPhoto } from "../lib/api";
+import { blockPwaUpdateReload } from "../lib/pwaUpdate";
 import { CategoryIcon } from "./CategoryIcon";
 import { CategoriesSheet } from "./CategoriesSheet";
 import { Sheet, CtaButton, StarIcon } from "./primitives";
@@ -151,6 +152,13 @@ export function AddPlaceSheet({
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    // An update may finish while a user is creating or editing a place. Keep
+    // the current runtime until the sheet is saved or closed, then apply the
+    // already downloaded build with a single reload.
+    return blockPwaUpdateReload();
+  }, []);
 
   // Адрес подтягивается автоматически из координат точки (обратный геокодинг)
   // и не редактируется вручную. При редактировании берём сохранённый адрес.

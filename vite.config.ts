@@ -61,12 +61,16 @@ export default defineConfig({
     tailwindcss(),
     legacyShellAliases(),
     VitePWA({
+      // The application decides when the waiting worker may activate and
+      // reload. autoUpdate could reload while a place form is being edited.
       registerType: 'prompt',
       injectRegister: false,
       workbox: {
         // HTML и его ассеты обновляются одной атомарной precache-ревизией. Старый
         // worker продолжает отдавать цельную старую сборку, новый — цельную новую.
-        skipWaiting: true,
+        // Новый worker ждёт команды приложения, поэтому открытая форма может
+        // безопасно отложить активацию до сохранения или закрытия.
+        skipWaiting: false,
         clientsClaim: true,
         cleanupOutdatedCaches: true,
         navigateFallback: 'index.html',
