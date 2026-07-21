@@ -473,14 +473,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
         </p>
       </div>
 
-      <div className="absolute left-5 right-5 bottom-[var(--mappy-primary-cta-bottom)] flex flex-col gap-3">
-        <button
-          onClick={finish}
-          className="w-full h-14 rounded-[14px] text-[16px] font-medium"
-          style={{ backgroundColor: "rgba(3,7,18,0.04)", color: "var(--mappy-text-primary)" }}
-        >
-          Пропустить
-        </button>
+      <div className="absolute left-5 right-5 bottom-[var(--mappy-primary-cta-bottom)]">
         <CtaButton onClick={next} disabled={!assetsReady}>{assetsReady ? current.buttonLabel : "Загружаем превью…"}</CtaButton>
       </div>
     </div>
