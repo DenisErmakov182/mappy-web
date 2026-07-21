@@ -198,6 +198,7 @@ export interface PlaceInput {
   rating: number;
   categories: PlaceCategory[];
   note: string;
+  isPrivate: boolean;
   status: VisitStatus;
   photoUrls: string[];
 }
@@ -249,6 +250,9 @@ export interface ApiFriend {
 
 export function fetchFriends() {
   return request<ApiFriend[]>("/friends");
+}
+export function fetchFriendPlaces(friendId: string) {
+  return request<Place[]>(`/friends/${friendId}/places`);
 }
 export function addFriendByUsername(username: string) {
   return request<ApiFriend>("/friends", { method: "POST", body: JSON.stringify({ username }) });

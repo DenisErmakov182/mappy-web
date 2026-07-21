@@ -1,6 +1,7 @@
 import { useRef, useState, type ReactNode } from "react";
 import { ratingChipColors } from "../types";
 import starGold from "../assets/icons/star-gold.png";
+import starSoftMask from "../assets/icons/star-soft-mask.png";
 
 /* Чип оценки: цифра + звезда на цветном фоне (surface/success|warning|danger) */
 export function RatingChip({ rating, size = "m" }: { rating: number; size?: "m" | "l" }) {
@@ -17,18 +18,29 @@ export function RatingChip({ rating, size = "m" }: { rating: number; size?: "m" 
   );
 }
 
-/* Звезда оценки: выбранная — объёмная золотая из макета (844:14102), пустая — серая */
-export function StarIcon({ filled, size = 52 }: { filled: boolean; size?: number }) {
+/* Звезда оценки: выбранная — объёмная золотая, пустая — мягкая маска из Figma (844:17051). */
+export function StarIcon({ filled, size = 60 }: { filled: boolean; size?: number }) {
   if (filled) {
     return <img src={starGold} alt="" width={size} height={size} style={{ objectFit: "contain" }} />;
   }
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24">
-      <path
-        d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3l-5.8 3.1 1.1-6.5L2.6 9.3l6.5-.9L12 2.5z"
-        fill="#e5e7eb"
-      />
-    </svg>
+    <span
+      aria-hidden="true"
+      className="block"
+      style={{
+        width: size,
+        height: size,
+        backgroundColor: "#e5e7eb",
+        WebkitMaskImage: `url(${starSoftMask})`,
+        maskImage: `url(${starSoftMask})`,
+        WebkitMaskRepeat: "no-repeat",
+        maskRepeat: "no-repeat",
+        WebkitMaskPosition: "center",
+        maskPosition: "center",
+        WebkitMaskSize: "120.3% 120.3%",
+        maskSize: "120.3% 120.3%",
+      }}
+    />
   );
 }
 

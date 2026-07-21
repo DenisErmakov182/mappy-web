@@ -25,6 +25,28 @@ function PlusIcon({ size = 18 }: { size?: number }) {
   );
 }
 
+function PrivacyToggle({ checked, onChange }: { checked: boolean; onChange: (checked: boolean) => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label="Личная заметка"
+      onClick={() => onChange(!checked)}
+      className="relative h-[28px] w-[53px] shrink-0 overflow-hidden rounded-[32px] transition-colors duration-200"
+      style={{ backgroundColor: checked ? "#ff637e" : "var(--mappy-surface-primary)" }}
+    >
+      <span
+        className="absolute top-[3px] h-[22px] w-[22px] rounded-[32px] transition-[left,background-color] duration-200"
+        style={{
+          left: checked ? 28 : 3,
+          backgroundColor: checked ? "var(--mappy-surface-primary)" : "#99a1af",
+        }}
+      />
+    </button>
+  );
+}
+
 function RatingStarButton({
   star,
   filled,
@@ -84,7 +106,7 @@ function RatingStarButton({
   };
 
   return (
-    <span className="relative isolate w-[52px] h-[52px] shrink-0">
+    <span className="relative isolate size-[60px] shrink-0">
       <span ref={particleLayerRef} className="absolute inset-0 z-0 pointer-events-none overflow-visible" aria-hidden="true" />
       <button
         type="button"
@@ -119,6 +141,7 @@ export function AddPlaceSheet({
   const [rating, setRating] = useState(initialPlace?.rating ?? 0);
   const [categories, setCategories] = useState<Set<PlaceCategory>>(new Set(initialPlace?.categories));
   const [note, setNote] = useState(initialPlace?.note ?? "");
+  const [isPrivate, setIsPrivate] = useState(initialPlace?.isPrivate ?? false);
   const [photos, setPhotos] = useState<PhotoSlot[]>(
     (initialPlace?.photoUrls ?? []).map((url) => ({ url })),
   );
@@ -200,6 +223,7 @@ export function AddPlaceSheet({
         rating,
         categories: [...categories],
         note: note.trim(),
+        isPrivate,
         status,
         photoUrls,
       });
@@ -309,60 +333,79 @@ export function AddPlaceSheet({
         </div>
 
         {photos.length === 0 ? (
-          /* Пустое состояние: розовый блок с пунктиром и коллажем стикеров из макета */
+          /* Пустое состояние: полноценный CTA загрузки из макета 860:20927. */
           <div
-            className="relative rounded-[20px] p-4"
+            className="relative -mx-1 flex h-[168px] w-[calc(100%+8px)] flex-col gap-[10px] overflow-hidden rounded-[24px] border border-dashed p-4"
             style={{
-              background: "linear-gradient(180deg, #ffeef1 0%, #ffe3e9 100%)",
-              border: "1.5px dashed #ffa1ad",
+              backgroundColor: "rgba(255, 32, 86, 0.11)",
+              borderColor: "rgba(255, 32, 86, 0.7)",
             }}
           >
-            <div className="absolute -top-5 right-2 w-[118px] h-[122px] pointer-events-none select-none">
+            <div className="pointer-events-none absolute inset-0 select-none" aria-hidden="true">
               <img
                 src={stickerRestaurant}
                 alt=""
-                className="absolute right-0 top-0 w-[82px] h-[62px] object-cover rounded-md border-[3px] border-white shadow-md rotate-[8deg]"
+                className="absolute right-[8px] top-[-28px] h-[63px] w-[95px] rotate-[15.53deg] rounded-[13px] border-[2px] border-[#f5f5f5] object-cover shadow-[0_12px_20.2px_rgba(145,12,12,0.25)]"
               />
               <img
                 src={stickerCafe}
                 alt=""
-                className="absolute right-[46px] top-[42px] w-[72px] h-[54px] object-cover rounded-md border-[3px] border-white shadow-md -rotate-[7deg]"
+                className="absolute right-[57px] top-[5px] h-[54px] w-[82px] rotate-[11.05deg] rounded-[13px] border-[2px] border-[#f5f5f5] object-cover shadow-[0_12px_20.2px_rgba(145,12,12,0.25)]"
               />
               <img
                 src={stickerMuseum}
                 alt=""
-                className="absolute right-[-2px] top-[58px] w-[74px] h-[56px] object-cover rounded-md border-[3px] border-white shadow-md rotate-[3deg]"
+                className="absolute right-[-23px] top-[17px] h-[58px] w-[87px] -rotate-[7.9deg] rounded-[13px] border-[2px] border-[#f5f5f5] object-cover shadow-[0_12px_20.2px_rgba(145,12,12,0.25)]"
               />
             </div>
 
-            <p className="text-[18px] font-semibold mb-0.5" style={{ color: "var(--mappy-text-primary)" }}>
-              Добавьте фото <span className="font-normal" style={{ color: "var(--mappy-pink)" }}>до 10 шт</span>
-            </p>
-            <p className="text-[13px] leading-snug max-w-[220px] mb-4" style={{ color: "var(--mappy-text-secondary)" }}>
-              Вашим друзьям будет легче понять, как выглядит место
-            </p>
-            <CtaButton onClick={pickPhotos}>
+            <div className="relative z-10 flex flex-col gap-1.5">
+              <div className="flex items-start gap-2 text-[20px] leading-6">
+                <p className="font-medium tracking-[-0.6px]" style={{ color: "var(--mappy-text-primary)" }}>
+                  Добавьте фото
+                </p>
+                <p className="font-normal" style={{ color: "var(--mappy-text-secondary)" }}>
+                  до 10 шт
+                </p>
+              </div>
+              <p
+                className="w-[260px] text-[14px] leading-5 tracking-[-0.32px]"
+                style={{ color: "var(--mappy-text-secondary)" }}
+              >
+                Вам и вашим друзьям будет легче вспомнить, что понравилось, а что нет
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={pickPhotos}
+              className="relative z-10 flex h-14 w-full shrink-0 items-center justify-center gap-1 rounded-[14px] text-[16px] leading-[18px] font-medium tracking-[-0.6px] text-white"
+              style={{ backgroundColor: "#ff637e" }}
+            >
               <PlusIcon size={20} />
               <span>Добавить фото</span>
-            </CtaButton>
+            </button>
           </div>
         ) : (
           /* Заполненное состояние: заголовок + сетка 5 колонок со слотами (макет 1489:16383) */
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[18px] font-semibold" style={{ color: "var(--mappy-text-primary)" }}>
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <p
+                className="px-1 text-[20px] leading-6 font-medium tracking-[-0.6px]"
+                style={{ color: "var(--mappy-text-primary)" }}
+              >
                 Добавьте фото <span className="font-normal" style={{ color: "#99a1af" }}>до 10 штук</span>
               </p>
               <button
+                type="button"
                 onClick={pickPhotos}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-[18px]"
+                className="flex size-7 shrink-0 items-center justify-center rounded-full"
                 style={{ backgroundColor: "var(--mappy-surface-secondary)", color: "var(--mappy-text-primary)" }}
                 aria-label="Добавить ещё фото"
               >
-                <PlusIcon />
+                <PlusIcon size={20} />
               </button>
             </div>
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-5 gap-3">
               {Array.from({ length: MAX_PHOTOS }).map((_, i) =>
                 photos[i] ? (
                   <div key={i} className="relative aspect-square">
@@ -380,16 +423,22 @@ export function AddPlaceSheet({
                 ) : (
                   <button
                     key={i}
+                    type="button"
                     onClick={pickPhotos}
-                    className="aspect-square rounded-[10px] flex items-center justify-center text-[18px]"
+                    className="flex aspect-square items-center justify-center rounded-[14px]"
                     style={{
-                      border: "1.5px dashed #d1d5dc",
+                      border: "1px dashed rgba(3, 7, 18, 0.08)",
                       backgroundColor: "var(--mappy-surface-primary)",
-                      color: "#99a1af",
+                      color: "var(--mappy-text-primary)",
                     }}
                     aria-label="Добавить фото"
                   >
-                    <PlusIcon />
+                    <span
+                      className="flex size-[26px] items-center justify-center rounded-full"
+                      style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
+                    >
+                      <PlusIcon size={16} />
+                    </span>
                   </button>
                 ),
               )}
@@ -397,37 +446,46 @@ export function AddPlaceSheet({
           </div>
         )}
 
-        <div className="flex items-center justify-between">
-          <h3 className="text-[20px] font-semibold" style={{ color: "var(--mappy-text-primary)" }}>
-            Добавьте категории
-          </h3>
-          <button
-            onClick={() => setShowCategories(true)}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-[20px] shrink-0"
-            style={{ backgroundColor: "var(--mappy-surface-secondary)", color: "var(--mappy-text-primary)" }}
-            aria-label="Добавить категории"
-          >
-            <PlusIcon size={20} />
-          </button>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <h3
+              className="px-1 text-[20px] leading-6 font-medium tracking-[-0.6px]"
+              style={{ color: "var(--mappy-text-primary)" }}
+            >
+              Добавьте категории
+            </h3>
+            <button
+              type="button"
+              onClick={() => setShowCategories(true)}
+              className="flex size-7 shrink-0 items-center justify-center rounded-full"
+              style={{ backgroundColor: "var(--mappy-surface-secondary)", color: "var(--mappy-text-primary)" }}
+              aria-label="Добавить категории"
+            >
+              <PlusIcon size={20} />
+            </button>
+          </div>
+
+          {categories.size > 0 && (
+            <div className="flex flex-wrap gap-x-2 gap-y-3">
+              {[...categories].map((category) => (
+                <span
+                  key={category}
+                  className="inline-flex items-center gap-1 rounded-[14px] py-3 pl-2 pr-3 text-[16px] leading-[18px] font-medium tracking-[-0.6px]"
+                  style={{ backgroundColor: "var(--mappy-surface-primary)", color: "var(--mappy-text-primary)" }}
+                >
+                  <CategoryIcon category={category} size={20} />
+                  {categoryLabel[category]}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
-        {categories.size > 0 && (
-          <div className="flex flex-wrap gap-2 -mt-1">
-            {[...categories].map((category) => (
-              <span
-                key={category}
-                className="inline-flex items-center gap-1 pl-2 pr-3 py-2 rounded-[14px] text-[15px] font-medium"
-                style={{ backgroundColor: "var(--mappy-surface-primary)", color: "var(--mappy-text-primary)" }}
-              >
-                <CategoryIcon category={category} size={20} />
-                {categoryLabel[category]}
-              </span>
-            ))}
-          </div>
-        )}
-
-        <div>
-          <h3 className="text-[20px] font-semibold mb-3" style={{ color: "var(--mappy-text-primary)" }}>
+        <div className="flex flex-col gap-4">
+          <h3
+            className="px-1 text-[20px] leading-6 font-medium tracking-[-0.6px]"
+            style={{ color: "var(--mappy-text-primary)" }}
+          >
             Поделитесь впечатлениями
           </h3>
           <textarea
@@ -438,6 +496,26 @@ export function AddPlaceSheet({
             className="w-full p-4 rounded-[14px] text-[16px] outline-none resize-none placeholder:text-[#99a1af]"
             style={inputStyle}
           />
+        </div>
+
+        <div className="flex items-start justify-between">
+          <div className="flex px-1">
+            <div className="flex flex-col gap-1">
+              <p
+                className="text-[20px] leading-6 font-medium tracking-[-0.6px]"
+                style={{ color: "var(--mappy-text-primary)" }}
+              >
+                Личная заметка
+              </p>
+              <p
+                className="text-[12px] leading-4 tracking-[-0.6px]"
+                style={{ color: "#99a1af" }}
+              >
+                Только вы увидите это место
+              </p>
+            </div>
+          </div>
+          <PrivacyToggle checked={isPrivate} onChange={setIsPrivate} />
         </div>
 
         {saveError && (

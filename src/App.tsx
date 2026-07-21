@@ -99,6 +99,7 @@ function toPlaceInput(place: Place): PlaceInput {
     rating: place.rating,
     categories: place.categories,
     note: place.note,
+    isPrivate: place.isPrivate,
     status: place.status,
     photoUrls: place.photoUrls,
   };

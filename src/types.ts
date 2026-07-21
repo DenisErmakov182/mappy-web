@@ -50,6 +50,7 @@ export interface Place {
   rating: number;
   categories: PlaceCategory[];
   note: string;
+  isPrivate: boolean;
   status: VisitStatus;
   photoUrls: string[];
 }

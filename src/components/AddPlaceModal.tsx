@@ -34,6 +34,7 @@ export function AddPlaceModal({ coordinate, onSave, onClose }: Props) {
       rating,
       categories: [...categories],
       note: note.trim(),
+      isPrivate: false,
       status,
       photoUrls: [],
     });
