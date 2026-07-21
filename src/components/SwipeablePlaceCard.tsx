@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import deleteIcon from "../assets/icons/swipe-delete.svg";
 import editIcon from "../assets/icons/swipe-edit.svg";
+import friendAvatarBlur from "../assets/icons/friend-avatar-blur.svg";
 import shareIcon from "../assets/icons/swipe-share.svg";
 import type { Place } from "../types";
 import { CategoryIcon } from "./CategoryIcon";
@@ -9,6 +10,17 @@ import { RatingChip } from "./primitives";
 const ACTION_WIDTH = 80;
 const ACTIONS_WIDTH = ACTION_WIDTH * 3;
 const SWIPE_THRESHOLD = ACTION_WIDTH;
+
+function formatPlaceDate(createdAt?: string): string | null {
+  if (!createdAt) return null;
+  const date = new Date(createdAt);
+  if (Number.isNaN(date.getTime())) return null;
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(date);
+}
 
 type Gesture = {
   pointerId: number;
@@ -41,16 +53,24 @@ export function SwipeablePlaceCard({
   const [offset, setOffset] = useState(isOpen ? -ACTIONS_WIDTH : 0);
   const [dragging, setDragging] = useState(false);
   const [showOpenShadow, setShowOpenShadow] = useState(isOpen);
+  const isFriendPlace = Boolean(place.owner);
+  const createdAt = formatPlaceDate(place.createdAt);
   const gesture = useRef<Gesture | null>(null);
   const suppressClick = useRef(false);
 
   useEffect(() => {
     if (dragging) return;
+    if (isFriendPlace) {
+      setShowOpenShadow(false);
+      setOffset(0);
+      return;
+    }
     if (!isOpen) setShowOpenShadow(false);
     setOffset(isOpen ? -ACTIONS_WIDTH : 0);
-  }, [dragging, isOpen]);
+  }, [dragging, isFriendPlace, isOpen]);
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (isFriendPlace) return;
     if (event.pointerType === "mouse" && event.button !== 0) return;
     setShowOpenShadow(false);
     gesture.current = {
@@ -111,34 +131,36 @@ export function SwipeablePlaceCard({
 
   return (
     <div className="relative h-[148px] w-full overflow-hidden rounded-[28px] bg-white [touch-action:pan-y]">
-      <div className="absolute inset-y-0 right-0 flex w-[240px]">
-        <SwipeAction
-          right={0}
-          zIndex={1}
-          label="Поделиться"
-          background="var(--mappy-surface-canvas)"
-          icon={shareIcon}
-          onClick={() => runAction(onShare)}
-        />
-        <SwipeAction
-          right={ACTION_WIDTH}
-          zIndex={2}
-          label="Редактировать"
-          background="var(--mappy-surface-primary)"
-          icon={editIcon}
-          shadow="8px 2px 30.4px #e9e9e9"
-          onClick={() => runAction(onEdit)}
-        />
-        <SwipeAction
-          right={ACTION_WIDTH * 2}
-          zIndex={3}
-          label="Удалить"
-          background="#e7000b"
-          icon={deleteIcon}
-          shadow="8px 2px 30.4px #e9e9e9"
-          onClick={() => runAction(onDelete)}
-        />
-      </div>
+      {!isFriendPlace && (
+        <div className="absolute inset-y-0 right-0 flex w-[240px]">
+          <SwipeAction
+            right={0}
+            zIndex={1}
+            label="Поделиться"
+            background="var(--mappy-surface-canvas)"
+            icon={shareIcon}
+            onClick={() => runAction(onShare)}
+          />
+          <SwipeAction
+            right={ACTION_WIDTH}
+            zIndex={2}
+            label="Редактировать"
+            background="var(--mappy-surface-primary)"
+            icon={editIcon}
+            shadow="8px 2px 30.4px #e9e9e9"
+            onClick={() => runAction(onEdit)}
+          />
+          <SwipeAction
+            right={ACTION_WIDTH * 2}
+            zIndex={3}
+            label="Удалить"
+            background="#e7000b"
+            icon={deleteIcon}
+            shadow="8px 2px 30.4px #e9e9e9"
+            onClick={() => runAction(onDelete)}
+          />
+        </div>
+      )}
 
       <div
         className="absolute inset-0 z-10 rounded-[28px]"
@@ -177,28 +199,61 @@ export function SwipeablePlaceCard({
           aria-label={`Открыть место ${place.title}`}
         >
           <div
-            className="h-[132px] w-[46.9%] max-w-[196px] shrink-0 overflow-hidden rounded-[20px]"
+            className="relative h-[132px] w-[46.9%] max-w-[196px] shrink-0 overflow-hidden rounded-[20px]"
             style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
           >
             {place.photoUrls[0] && (
               <img src={place.photoUrls[0]} alt="" className="h-full w-full object-cover" />
             )}
+            {place.owner && (
+              <>
+                <img
+                  src={friendAvatarBlur}
+                  alt=""
+                  className="pointer-events-none absolute -left-[32px] -top-[32px] h-[104px] w-[104px] max-w-none"
+                />
+                <span
+                  className="absolute left-[5px] top-[5px] z-10 block h-10 w-10 overflow-hidden rounded-full border-2 border-[#f3f4f6] bg-[#f9fafb]"
+                  title={place.owner.name}
+                >
+                  {place.owner.avatarUrl && (
+                    <img
+                      src={place.owner.avatarUrl}
+                      alt={place.owner.name}
+                      className="h-full w-full object-cover"
+                    />
+                  )}
+                </span>
+              </>
+            )}
           </div>
 
-          <div className="flex h-[132px] min-w-0 flex-1 flex-col items-start justify-between pt-1">
-            <div className="flex min-w-0 flex-col gap-1 px-1">
+          <div className="flex h-[132px] min-w-0 flex-1 flex-col items-start justify-between overflow-hidden pt-1">
+            <div className="flex w-full min-w-0 flex-col gap-1 overflow-hidden">
+              <div className="w-full min-w-0 overflow-hidden pl-1">
+                <p
+                  className="block max-h-[36px] w-[160px] max-w-full overflow-hidden text-ellipsis text-[16px] font-semibold leading-[18px] tracking-[-0.6px] [overflow-wrap:anywhere] [word-break:break-word]"
+                  style={{
+                    color: "var(--mappy-text-primary)",
+                    display: "-webkit-box",
+                    WebkitBoxOrient: "vertical",
+                    WebkitLineClamp: 2,
+                  }}
+                >
+                  {place.title}
+                </p>
+              </div>
               <p
-                className="line-clamp-2 text-[16px] font-semibold leading-[18px]"
-                style={{ color: "var(--mappy-text-primary)" }}
-              >
-                {place.title}
-              </p>
-              <p
-                className="line-clamp-2 text-[12px] font-medium leading-[15px]"
+                className="w-full min-w-0 truncate px-1 text-[12px] font-medium leading-[16px]"
                 style={{ color: "var(--mappy-text-secondary)" }}
               >
                 {place.address}
               </p>
+              {createdAt && (
+                <p className="w-full min-w-0 truncate px-1 text-[12px] font-medium leading-[16px]" style={{ color: "#99a1af" }}>
+                  {createdAt}
+                </p>
+              )}
             </div>
 
             <div className="flex items-center gap-1">

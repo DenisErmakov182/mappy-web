@@ -37,12 +37,12 @@ function pinBoundsFromTip(places: Place[]) {
 function appendOwnerAvatar(
   element: HTMLElement,
   place: Place,
-  { left = 11, top = 0, size = 40, zIndex = 3 }: { left?: number; top?: number; size?: number; zIndex?: number } = {},
+  { left = 11, top = 0, size = 40, zIndex = 1 }: { left?: number; top?: number; size?: number; zIndex?: number } = {},
 ) {
   if (!place.owner) return;
   const avatar = document.createElement("span");
   avatar.title = place.owner.name;
-  avatar.style.cssText = `position:absolute;left:${left}px;top:${top}px;z-index:${zIndex};width:${size}px;height:${size}px;border-radius:999px;background:#f9fafb;overflow:hidden;pointer-events:none;`;
+  avatar.style.cssText = `position:absolute;left:${left}px;top:${top}px;z-index:${zIndex};box-sizing:border-box;width:${size}px;height:${size}px;border:2px solid #f3f4f6;border-radius:999px;background:#f9fafb;overflow:hidden;pointer-events:none;`;
   if (place.owner.avatarUrl) {
     const image = document.createElement("img");
     image.src = place.owner.avatarUrl;
@@ -93,13 +93,13 @@ function buildPinElement(place: Place, onSelect: () => void): HTMLElement {
   const { bg, text } = ratingChipColors(place.rating);
   const rating = document.createElement("span");
   rating.textContent = String(place.rating);
-  rating.style.cssText = `position:absolute;left:0;top:${7 + topOffset}px;z-index:1;height:26px;min-width:26px;padding:0 8px;border-radius:999px;background:${bg};color:${text};font-size:15px;font-weight:500;display:flex;align-items:center;justify-content:center;`;
+  rating.style.cssText = `position:absolute;left:0;top:${7 + topOffset}px;z-index:2;height:26px;min-width:26px;padding:0 8px;border-radius:999px;background:${bg};color:${text};font-size:15px;font-weight:500;display:flex;align-items:center;justify-content:center;`;
   el.appendChild(rating);
 
   const mainCategory = place.categories[0];
   if (mainCategory) {
     const tag = document.createElement("span");
-    tag.style.cssText = `position:absolute;left:28px;top:${14 + topOffset}px;z-index:1;height:28px;padding:4px 8px;border-radius:999px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;`;
+    tag.style.cssText = `position:absolute;left:28px;top:${14 + topOffset}px;z-index:2;height:28px;padding:4px 8px;border-radius:999px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;`;
     const icon = document.createElement("img");
     icon.src = categoryIcons[mainCategory];
     icon.style.cssText = "width:24px;height:20px;object-fit:contain;";
@@ -109,7 +109,7 @@ function buildPinElement(place: Place, onSelect: () => void): HTMLElement {
 
   const pin = document.createElement("img");
   pin.src = mainPin;
-  pin.style.cssText = `position:absolute;left:7px;top:${9 + topOffset}px;z-index:2;width:40px;height:49px;object-fit:contain;`;
+  pin.style.cssText = `position:absolute;left:7px;top:${9 + topOffset}px;z-index:3;width:40px;height:49px;object-fit:contain;`;
   el.appendChild(pin);
 
   appendOwnerAvatar(el, place);
@@ -140,12 +140,12 @@ function buildClusterElement(places: Place[], onSelect: () => void): HTMLElement
 
   const badge = document.createElement("span");
   badge.textContent = String(places.length);
-  badge.style.cssText = `position:absolute;left:34px;top:${8 + topOffset}px;z-index:1;height:26px;min-width:26px;padding:0 8px;border-radius:999px;background:#fff;color:var(--mappy-pink);font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,0.10);`;
+  badge.style.cssText = `position:absolute;left:34px;top:${8 + topOffset}px;z-index:2;height:26px;min-width:26px;padding:0 8px;border-radius:999px;background:#fff;color:var(--mappy-pink);font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,0.10);`;
   el.appendChild(badge);
 
   const pin = document.createElement("img");
   pin.src = mainPin;
-  pin.style.cssText = `position:absolute;left:7px;top:${9 + topOffset}px;z-index:2;width:40px;height:49px;object-fit:contain;`;
+  pin.style.cssText = `position:absolute;left:7px;top:${9 + topOffset}px;z-index:3;width:40px;height:49px;object-fit:contain;`;
   el.appendChild(pin);
 
   const owners = [...new Map(places.filter((place) => place.owner).map((place) => [place.owner!.id, place])).values()];
@@ -154,7 +154,7 @@ function buildClusterElement(places: Place[], onSelect: () => void): HTMLElement
       left: 11 + index * 22,
       top: index * 4,
       size: index === 0 ? 40 : 32,
-      zIndex: 4 - index,
+      zIndex: 1,
     }),
   );
 

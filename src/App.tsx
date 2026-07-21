@@ -369,7 +369,7 @@ function MapApp({
         )}
         {tab === "notes" && (
           <NotesList
-            places={visiblePlaces}
+            places={mapPlaces}
             onSelectPlace={setDetailPlace}
             onGoToMap={() => setTab("map")}
             onEditPlace={(place) => setEditingPlace(place)}
@@ -478,7 +478,7 @@ function MapApp({
 
       {/* Плавающая карточка выбранного места (или карусель, если мест в одной точке несколько) над таббаром */}
       {tab === "map" && selectedPlaces.length > 0 && (
-        <div className="absolute left-0 right-0 bottom-[100px] z-20">
+        <div className="absolute left-0 right-0 bottom-[calc(var(--mappy-floating-bottom)+84px)] z-20">
           <div
             className={`mb-2 flex justify-end ${selectedPlaces.length === 1 ? "px-4" : "px-[7.5vw]"}`}
           >

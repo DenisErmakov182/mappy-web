@@ -41,7 +41,7 @@ export function PlaceRowCard({ place, onClick }: { place: Place; onClick?: () =>
               className="pointer-events-none absolute -left-[32px] -top-[32px] h-[104px] w-[104px] max-w-none"
             />
             <span
-              className="absolute left-[5px] top-[5px] z-10 block h-10 w-10 overflow-hidden rounded-full bg-[#f9fafb] backdrop-blur-[10px]"
+              className="absolute left-[5px] top-[5px] z-10 block h-10 w-10 overflow-hidden rounded-full border-2 border-[#f3f4f6] bg-[#f9fafb]"
               title={place.owner.name}
             >
               {place.owner.avatarUrl && (
@@ -52,24 +52,29 @@ export function PlaceRowCard({ place, onClick }: { place: Place; onClick?: () =>
         )}
       </div>
 
-      <div className="flex h-[132px] flex-col justify-between flex-1 min-w-0 pt-1">
-        <div className="flex min-w-0 flex-col gap-1 px-1">
+      <div className="flex h-[132px] min-w-0 flex-1 flex-col justify-between overflow-hidden pt-1">
+        <div className="flex w-full min-w-0 flex-col gap-1 overflow-hidden">
+          <div className="w-full min-w-0 overflow-hidden pl-1">
+            <p
+              className="block max-h-[36px] w-[160px] max-w-full overflow-hidden text-ellipsis text-[16px] font-semibold leading-[18px] tracking-[-0.6px] [overflow-wrap:anywhere] [word-break:break-word]"
+              style={{
+                color: "var(--mappy-text-primary)",
+                display: "-webkit-box",
+                WebkitBoxOrient: "vertical",
+                WebkitLineClamp: 2,
+              }}
+            >
+              {place.title}
+            </p>
+          </div>
           <p
-            className="h-[36px] w-[160px] max-w-full overflow-hidden text-ellipsis text-[16px] font-semibold leading-[18px] tracking-[-0.6px] [overflow-wrap:anywhere] [text-wrap:balance]"
-            style={{
-              color: "var(--mappy-text-primary)",
-              display: "-webkit-box",
-              WebkitBoxOrient: "vertical",
-              WebkitLineClamp: 2,
-            }}
+            className="w-full min-w-0 truncate px-1 text-[12px] font-medium leading-[16px]"
+            style={{ color: "var(--mappy-text-secondary)" }}
           >
-            {place.title}
-          </p>
-          <p className="text-[12px] font-medium leading-[16px]" style={{ color: "var(--mappy-text-secondary)" }}>
             {place.address}
           </p>
           {createdAt && (
-            <p className="text-[12px] font-medium leading-[16px]" style={{ color: "#99a1af" }}>
+            <p className="w-full min-w-0 truncate px-1 text-[12px] font-medium leading-[16px]" style={{ color: "#99a1af" }}>
               {createdAt}
             </p>
           )}

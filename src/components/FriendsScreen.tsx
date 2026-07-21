@@ -231,10 +231,10 @@ function Avatar({ name, avatarUrl }: { name: string; avatarUrl?: string }) {
     .toUpperCase();
   return (
     <div
-      className="w-10 h-10 rounded-full flex items-center justify-center text-[14px] font-semibold text-white shrink-0"
+      className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-[14px] font-semibold text-white shrink-0"
       style={{ background: avatarUrl ? "#e5e7eb" : "linear-gradient(135deg, #99a1af, #4a5565)" }}
     >
-      {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : initials}
+      {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full rounded-full object-cover" /> : initials}
     </div>
   );
 }
