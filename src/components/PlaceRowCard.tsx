@@ -43,11 +43,16 @@ export function PlaceRowCard({
         )}
         {showOwnerAvatar && place.owner && (
           <>
-            <img
-              src={friendAvatarBlur}
-              alt=""
-              className="pointer-events-none absolute -left-[32px] -top-[32px] h-[104px] w-[104px] max-w-none"
-            />
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute -left-[32px] -top-[32px] h-[104.389px] w-[104.389px]"
+            >
+              <img
+                src={friendAvatarBlur}
+                alt=""
+                className="absolute -inset-[29.99%] h-[159.98%] w-[159.98%] max-w-none"
+              />
+            </span>
             <span
               className="absolute left-[5px] top-[5px] z-10 block h-10 w-10 overflow-hidden rounded-full border-2 border-[#f3f4f6] bg-[#f9fafb]"
               title={place.owner.name}
