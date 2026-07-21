@@ -8,7 +8,6 @@ import { Sheet, CtaButton, StarIcon } from "./primitives";
 import { SplitFlapAddress } from "./SplitFlapAddress";
 import stickerMuseum from "../assets/photos/sticker-museum.webp";
 import stickerCafe from "../assets/photos/sticker-cafe.webp";
-import stickerRestaurant from "../assets/photos/sticker-restaurant.webp";
 
 const MAX_PHOTOS = 10;
 
@@ -251,7 +250,7 @@ export function AddPlaceSheet({
         onChange={(e) => onFilesSelected(e.target.files)}
       />
 
-      <div className="px-5 pb-4 flex flex-col gap-4">
+      <div className="px-5 pb-4 flex flex-col gap-6">
         <div className="flex flex-col gap-1.5">
           <input
             value={title}
@@ -355,35 +354,39 @@ export function AddPlaceSheet({
         {photos.length === 0 ? (
           /* Пустое состояние: полноценный CTA загрузки из макета 860:20927. */
           <div
-            className="relative -mx-1 flex h-[168px] w-[calc(100%+8px)] flex-col gap-[10px] overflow-hidden rounded-[24px] border border-dashed p-4"
+            className="relative -mx-1 flex h-[174px] w-[calc(100%+8px)] flex-col gap-4 overflow-hidden rounded-[24px] border border-dashed p-4"
             style={{
               backgroundColor: "rgba(255, 32, 86, 0.11)",
               borderColor: "rgba(255, 32, 86, 0.7)",
             }}
           >
             <div
-              className="pointer-events-none absolute right-[-30px] top-[-28px] h-[114px] w-[169px] origin-top-right scale-[0.78] select-none min-[420px]:scale-100"
+              className="pointer-events-none absolute left-[284px] top-[-11px] flex h-[69.081px] w-[90.646px] items-center justify-center select-none"
               aria-hidden="true"
             >
-              <img
-                src={stickerRestaurant}
-                alt=""
-                className="absolute left-[37px] top-0 h-[63px] w-[95px] rotate-[15.53deg] rounded-[13px] border-[2px] border-[#f5f5f5] object-cover shadow-[0_12px_20.2px_rgba(145,12,12,0.25)]"
-              />
-              <img
-                src={stickerCafe}
-                alt=""
-                className="absolute left-0 top-[33px] h-[54px] w-[82px] rotate-[11.05deg] rounded-[13px] border-[2px] border-[#f5f5f5] object-cover shadow-[0_12px_20.2px_rgba(145,12,12,0.25)]"
-              />
-              <img
-                src={stickerMuseum}
-                alt=""
-                className="absolute left-[75px] top-[45px] h-[58px] w-[87px] -rotate-[7.9deg] rounded-[13px] border-[2px] border-[#f5f5f5] object-cover shadow-[0_12px_20.2px_rgba(145,12,12,0.25)]"
-              />
+              <div className="rotate-[11.05deg]">
+                <img
+                  src={stickerCafe}
+                  alt=""
+                  className="h-[54.427px] w-[81.731px] rounded-[13.331px] border-[1.666px] border-[#f5f5f5] object-cover shadow-[0_12px_20.2px_rgba(145,12,12,0.25)]"
+                />
+              </div>
+            </div>
+            <div
+              className="pointer-events-none absolute left-[319px] top-[15px] flex h-[69.525px] w-[94.315px] items-center justify-center select-none"
+              aria-hidden="true"
+            >
+              <div className="-rotate-[7.9deg]">
+                <img
+                  src={stickerMuseum}
+                  alt=""
+                  className="h-[58.099px] w-[87.158px] rounded-[13.031px] border-[1.629px] border-[#f5f5f5] object-cover shadow-[0_12px_20.2px_rgba(145,12,12,0.25)]"
+                />
+              </div>
             </div>
 
-            <div className="relative z-10 flex flex-col gap-1.5">
-              <div className="flex items-start gap-2 text-[20px] leading-6">
+            <div className="relative z-10 flex w-[268px] flex-col gap-1.5 px-1">
+              <div className="flex items-start gap-2 whitespace-nowrap text-[20px] leading-6">
                 <p className="font-medium tracking-[-0.6px]" style={{ color: "var(--mappy-text-primary)" }}>
                   Добавьте фото
                 </p>
@@ -435,11 +438,12 @@ export function AddPlaceSheet({
                     <img src={photos[i].url} alt="" className="w-full h-full object-cover rounded-[10px]" />
                     <button
                       onClick={() => removePhoto(i)}
-                      className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-white shadow flex items-center justify-center"
+                      className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full"
+                      style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
                       aria-label="Удалить фото"
                     >
                       <svg width="9" height="9" viewBox="0 0 16 16" fill="none">
-                        <path d="M12 4L4 12M4 4L12 12" stroke="#4A5565" strokeWidth="2" strokeLinecap="round" />
+                        <path d="M12 4L4 12M4 4L12 12" stroke="#1E2939" strokeWidth="2" strokeLinecap="round" />
                       </svg>
                     </button>
                   </div>
