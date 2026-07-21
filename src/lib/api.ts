@@ -271,14 +271,43 @@ export interface ApiFriend {
   avatarUrl?: string | null;
 }
 
+export type FriendRelation = "none" | "friend" | "incoming" | "outgoing";
+
+export interface ApiFriendProfile extends ApiFriend {
+  relation: FriendRelation;
+  requestId?: string | null;
+  requestedAt?: string;
+}
+
+export interface ApiFriendRequests {
+  incoming: ApiFriendProfile[];
+  outgoing: ApiFriendProfile[];
+}
+
 export function fetchFriends() {
   return request<ApiFriend[]>("/friends");
 }
 export function fetchFriendPlaces(friendId: string) {
   return request<Place[]>(`/friends/${friendId}/places`);
 }
-export function addFriendByUsername(username: string) {
-  return request<ApiFriend>("/friends", { method: "POST", body: JSON.stringify({ username }) });
+export function searchFriends(query: string) {
+  const params = new URLSearchParams({ q: query });
+  return request<ApiFriendProfile[]>(`/friends/search?${params}`);
+}
+export function fetchFriendRequests() {
+  return request<ApiFriendRequests>("/friends/requests");
+}
+export function sendFriendRequest(username: string) {
+  return request<ApiFriendProfile>("/friends/requests", {
+    method: "POST",
+    body: JSON.stringify({ username }),
+  });
+}
+export function acceptFriendRequest(requestId: string) {
+  return request<ApiFriendProfile>(`/friends/requests/${requestId}/accept`, { method: "POST" });
+}
+export function cancelFriendRequest(requestId: string) {
+  return request<{ ok: true }>(`/friends/requests/${requestId}`, { method: "DELETE" });
 }
 export function removeFriend(id: string) {
   return request<{ ok: true }>(`/friends/${id}`, { method: "DELETE" });

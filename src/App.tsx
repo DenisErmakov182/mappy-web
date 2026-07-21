@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { TabBar, type AppTab } from "./components/TabBar";
 import { SearchFilterBar } from "./components/SearchFilterBar";
 import { FilterSheet } from "./components/FilterSheet";
@@ -273,31 +273,30 @@ function MapApp({
     loadPlaces();
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-    fetchFriends()
-      .then(async (apiFriends) => {
-        const friends = apiFriends.map(toFriend);
-        const placeGroups = await Promise.all(
-          friends.map(async (friend) => {
-            try {
-              const publicPlaces = await fetchFriendPlaces(friend.id);
-              return publicPlaces.map((place) => ({ ...place, owner: friend }));
-            } catch {
-              // Ошибка одного друга не должна скрыть остальные места и свои точки.
-              return [];
-            }
-          }),
-        );
-        if (!cancelled) setFriendPlaces(placeGroups.flat());
-      })
-      .catch(() => {
-        // Карта со своими местами остаётся полностью рабочей и без списка друзей.
-      });
-    return () => {
-      cancelled = true;
-    };
+  const refreshFriendPlaces = useCallback(async () => {
+    try {
+      const apiFriends = await fetchFriends();
+      const friends = apiFriends.map(toFriend);
+      const placeGroups = await Promise.all(
+        friends.map(async (friend) => {
+          try {
+            const publicPlaces = await fetchFriendPlaces(friend.id);
+            return publicPlaces.map((place) => ({ ...place, owner: friend }));
+          } catch {
+            // Ошибка одного друга не должна скрыть остальные места и свои точки.
+            return [];
+          }
+        }),
+      );
+      setFriendPlaces(placeGroups.flat());
+    } catch {
+      // Карта со своими местами остаётся полностью рабочей и без списка друзей.
+    }
   }, []);
+
+  useEffect(() => {
+    void refreshFriendPlaces();
+  }, [refreshFriendPlaces]);
 
   const locateMe = (silent = false) => {
     if (!navigator.geolocation) return;
@@ -388,32 +387,8 @@ function MapApp({
             onUserUpdated={onUserUpdated}
             onLogout={onLogout}
             onDeleteAccount={onDeleteAccount}
-            onOpenFriend={async (friend) => {
-              let placesForFriend = friendPlaces.filter((place) => place.owner?.id === friend.id);
-              setFocusedFriendId(friend.id);
-              setFilters((prev) => ({ ...prev, includeFriendPlaces: true }));
-              setTab("map");
-              setSelectedPlaces([]);
-
-              if (placesForFriend.length === 0) {
-                try {
-                  const loaded = await fetchFriendPlaces(friend.id);
-                  placesForFriend = loaded.map((place) => ({ ...place, owner: friend }));
-                  setFriendPlaces((prev) => [
-                    ...prev.filter((place) => place.owner?.id !== friend.id),
-                    ...placesForFriend,
-                  ]);
-                } catch {
-                  // Экран карты уже открыт: отсутствие сети не должно блокировать навигацию.
-                }
-              }
-
-              const firstPlace = placesForFriend[0];
-              if (firstPlace) {
-                setCenter({ lat: firstPlace.latitude, lng: firstPlace.longitude });
-                setFlyTo({ lat: firstPlace.latitude, lng: firstPlace.longitude, ts: Date.now() });
-              }
-            }}
+            onOpenPlace={setDetailPlace}
+            onFriendsChanged={() => void refreshFriendPlaces()}
           />
         )}
       </div>
