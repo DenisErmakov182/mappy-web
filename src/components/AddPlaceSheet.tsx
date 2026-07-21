@@ -34,7 +34,7 @@ function PrivacyToggle({ checked, onChange }: { checked: boolean; onChange: (che
       aria-label="Личная заметка"
       onClick={() => onChange(!checked)}
       className="relative h-[28px] w-[53px] shrink-0 overflow-hidden rounded-[32px] transition-colors duration-200"
-      style={{ backgroundColor: checked ? "#ff637e" : "var(--mappy-surface-primary)" }}
+      style={{ backgroundColor: checked ? "#ff637e" : "#f3f4f6" }}
     >
       <span
         className="absolute top-[3px] h-[22px] w-[22px] rounded-[32px] transition-[left,background-color] duration-200"
@@ -332,6 +332,26 @@ export function AddPlaceSheet({
           ))}
         </div>
 
+        <div className="flex items-start justify-between">
+          <div className="flex px-1">
+            <div className="flex flex-col gap-1">
+              <p
+                className="text-[20px] leading-6 font-medium tracking-[-0.6px]"
+                style={{ color: "var(--mappy-text-primary)" }}
+              >
+                Личная заметка
+              </p>
+              <p
+                className="text-[12px] leading-4 tracking-[-0.6px]"
+                style={{ color: "#99a1af" }}
+              >
+                Только вы увидите это место
+              </p>
+            </div>
+          </div>
+          <PrivacyToggle checked={isPrivate} onChange={setIsPrivate} />
+        </div>
+
         {photos.length === 0 ? (
           /* Пустое состояние: полноценный CTA загрузки из макета 860:20927. */
           <div
@@ -341,21 +361,24 @@ export function AddPlaceSheet({
               borderColor: "rgba(255, 32, 86, 0.7)",
             }}
           >
-            <div className="pointer-events-none absolute inset-0 select-none" aria-hidden="true">
+            <div
+              className="pointer-events-none absolute right-[-30px] top-[-28px] h-[114px] w-[169px] origin-top-right scale-[0.78] select-none min-[420px]:scale-100"
+              aria-hidden="true"
+            >
               <img
                 src={stickerRestaurant}
                 alt=""
-                className="absolute right-[8px] top-[-28px] h-[63px] w-[95px] rotate-[15.53deg] rounded-[13px] border-[2px] border-[#f5f5f5] object-cover shadow-[0_12px_20.2px_rgba(145,12,12,0.25)]"
+                className="absolute left-[37px] top-0 h-[63px] w-[95px] rotate-[15.53deg] rounded-[13px] border-[2px] border-[#f5f5f5] object-cover shadow-[0_12px_20.2px_rgba(145,12,12,0.25)]"
               />
               <img
                 src={stickerCafe}
                 alt=""
-                className="absolute right-[57px] top-[5px] h-[54px] w-[82px] rotate-[11.05deg] rounded-[13px] border-[2px] border-[#f5f5f5] object-cover shadow-[0_12px_20.2px_rgba(145,12,12,0.25)]"
+                className="absolute left-0 top-[33px] h-[54px] w-[82px] rotate-[11.05deg] rounded-[13px] border-[2px] border-[#f5f5f5] object-cover shadow-[0_12px_20.2px_rgba(145,12,12,0.25)]"
               />
               <img
                 src={stickerMuseum}
                 alt=""
-                className="absolute right-[-23px] top-[17px] h-[58px] w-[87px] -rotate-[7.9deg] rounded-[13px] border-[2px] border-[#f5f5f5] object-cover shadow-[0_12px_20.2px_rgba(145,12,12,0.25)]"
+                className="absolute left-[75px] top-[45px] h-[58px] w-[87px] -rotate-[7.9deg] rounded-[13px] border-[2px] border-[#f5f5f5] object-cover shadow-[0_12px_20.2px_rgba(145,12,12,0.25)]"
               />
             </div>
 
@@ -496,26 +519,6 @@ export function AddPlaceSheet({
             className="w-full p-4 rounded-[14px] text-[16px] outline-none resize-none placeholder:text-[#99a1af]"
             style={inputStyle}
           />
-        </div>
-
-        <div className="flex items-start justify-between">
-          <div className="flex px-1">
-            <div className="flex flex-col gap-1">
-              <p
-                className="text-[20px] leading-6 font-medium tracking-[-0.6px]"
-                style={{ color: "var(--mappy-text-primary)" }}
-              >
-                Личная заметка
-              </p>
-              <p
-                className="text-[12px] leading-4 tracking-[-0.6px]"
-                style={{ color: "#99a1af" }}
-              >
-                Только вы увидите это место
-              </p>
-            </div>
-          </div>
-          <PrivacyToggle checked={isPrivate} onChange={setIsPrivate} />
         </div>
 
         {saveError && (

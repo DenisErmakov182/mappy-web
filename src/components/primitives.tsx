@@ -1,7 +1,7 @@
 import { useRef, useState, type ReactNode } from "react";
 import { ratingChipColors } from "../types";
 import starGold from "../assets/icons/star-gold.png";
-import starSoftMask from "../assets/icons/star-soft-mask.png";
+import starSoft from "../assets/icons/star-soft.svg";
 
 /* Чип оценки: цифра + звезда на цветном фоне (surface/success|warning|danger) */
 export function RatingChip({ rating, size = "m" }: { rating: number; size?: "m" | "l" }) {
@@ -18,7 +18,7 @@ export function RatingChip({ rating, size = "m" }: { rating: number; size?: "m" 
   );
 }
 
-/* Звезда оценки: выбранная — объёмная золотая, пустая — мягкая маска из Figma (844:17051). */
+/* Звезда оценки: выбранная — объёмная золотая, пустая — точный ассет из Figma (844:17051). */
 export function StarIcon({ filled, size = 60 }: { filled: boolean; size?: number }) {
   if (filled) {
     return <img src={starGold} alt="" width={size} height={size} style={{ objectFit: "contain" }} />;
@@ -26,21 +26,21 @@ export function StarIcon({ filled, size = 60 }: { filled: boolean; size?: number
   return (
     <span
       aria-hidden="true"
-      className="block"
-      style={{
-        width: size,
-        height: size,
-        backgroundColor: "#e5e7eb",
-        WebkitMaskImage: `url(${starSoftMask})`,
-        maskImage: `url(${starSoftMask})`,
-        WebkitMaskRepeat: "no-repeat",
-        maskRepeat: "no-repeat",
-        WebkitMaskPosition: "center",
-        maskPosition: "center",
-        WebkitMaskSize: "120.3% 120.3%",
-        maskSize: "120.3% 120.3%",
-      }}
-    />
+      className="relative block shrink-0"
+      style={{ width: size, height: size }}
+    >
+      <img
+        src={starSoft}
+        alt=""
+        className="absolute block max-w-none"
+        style={{
+          left: size * 0.08737,
+          top: size * 0.05133,
+          width: size * 0.84194,
+          height: size * 0.80486,
+        }}
+      />
+    </span>
   );
 }
 
