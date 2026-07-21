@@ -24,11 +24,13 @@ export function FilterSheet({
   places,
   onApply,
   onClose,
+  showFriendPlacesToggle = true,
 }: {
   filters: PlaceFilters;
   places: Place[];
   onApply: (filters: PlaceFilters) => void;
   onClose: () => void;
+  showFriendPlacesToggle?: boolean;
 }) {
   const [draft, setDraft] = useState<PlaceFilters>(cloneFilters(filters));
 
@@ -153,30 +155,32 @@ export function FilterSheet({
           </div>
         </section>
 
-        <button
-          type="button"
-          onClick={() =>
-            setDraft((prev) => ({ ...cloneFilters(prev), includeFriendPlaces: !prev.includeFriendPlaces }))
-          }
-          className="flex w-full items-center justify-between py-1 text-left"
-          aria-pressed={draft.includeFriendPlaces}
-        >
-          <span className="text-[16px] font-medium" style={{ color: "var(--mappy-text-primary)" }}>
-            Места друзей
-          </span>
-          <span
-            className="relative h-7 w-[53px] rounded-full transition-colors"
-            style={{ backgroundColor: draft.includeFriendPlaces ? "#ff637e" : "#f3f4f6" }}
+        {showFriendPlacesToggle && (
+          <button
+            type="button"
+            onClick={() =>
+              setDraft((prev) => ({ ...cloneFilters(prev), includeFriendPlaces: !prev.includeFriendPlaces }))
+            }
+            className="flex w-full items-center justify-between py-1 text-left"
+            aria-pressed={draft.includeFriendPlaces}
           >
+            <span className="text-[16px] font-medium" style={{ color: "var(--mappy-text-primary)" }}>
+              Места друзей
+            </span>
             <span
-              className="absolute top-[3px] h-[22px] w-[22px] rounded-full transition-transform"
-              style={{
-                backgroundColor: draft.includeFriendPlaces ? "white" : "#99a1af",
-                transform: draft.includeFriendPlaces ? "translateX(28px)" : "translateX(3px)",
-              }}
-            />
-          </span>
-        </button>
+              className="relative h-7 w-[53px] rounded-full transition-colors"
+              style={{ backgroundColor: draft.includeFriendPlaces ? "#ff637e" : "#f3f4f6" }}
+            >
+              <span
+                className="absolute top-[3px] h-[22px] w-[22px] rounded-full transition-transform"
+                style={{
+                  backgroundColor: draft.includeFriendPlaces ? "white" : "#99a1af",
+                  transform: draft.includeFriendPlaces ? "translateX(28px)" : "translateX(3px)",
+                }}
+              />
+            </span>
+          </button>
+        )}
         </div>
 
         <div className="sticky bottom-0 -mx-5 mt-6 bg-gradient-to-t from-white via-white to-white/0 px-5 pt-6">

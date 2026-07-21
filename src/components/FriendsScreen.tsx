@@ -1,5 +1,12 @@
 import { forwardRef, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import type { Friend, Place } from "../types";
+import {
+  emptyFilters,
+  filtersAreEmpty,
+  placeMatchesFilters,
+  type Friend,
+  type Place,
+  type PlaceFilters,
+} from "../types";
 import {
   acceptFriendRequest,
   cancelFriendRequest,
@@ -18,7 +25,10 @@ import { PlaceRowCard } from "./PlaceRowCard";
 import friendsEmptyIllustration from "../assets/illustrations/friends-empty.webp";
 import pinMap from "../assets/illustrations/pin-map.webp";
 import searchIcon from "../assets/icons/search-icon.svg";
+import filterIcon from "../assets/icons/filter-icon.svg";
+import dotsHorizontalIcon from "../assets/icons/dots-horizontal.svg";
 import { AccountScreen } from "./AccountScreen";
+import { FilterSheet } from "./FilterSheet";
 
 type FriendsView =
   | { kind: "home" }
@@ -350,6 +360,8 @@ function FriendProfileView({
   const [error, setError] = useState("");
   const [showMenu, setShowMenu] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
+  const [filters, setFilters] = useState<PlaceFilters>(emptyFilters());
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     setPerson(initialPerson);
@@ -375,9 +387,13 @@ function FriendProfileView({
 
   const visiblePlaces = useMemo(() => {
     const value = query.trim().toLowerCase();
-    if (!value) return places;
-    return places.filter((place) => place.title.toLowerCase().includes(value) || place.address.toLowerCase().includes(value));
-  }, [places, query]);
+    return places.filter((place) => {
+      if (value && !place.title.toLowerCase().includes(value) && !place.address.toLowerCase().includes(value)) {
+        return false;
+      }
+      return placeMatchesFilters(place, filters);
+    });
+  }, [places, query, filters]);
 
   const act = async (action: () => Promise<ApiFriendProfile | void>, destination: "profile" | "home" = "profile") => {
     if (busy) return;
@@ -409,10 +425,10 @@ function FriendProfileView({
           <button
             type="button"
             aria-label="Действия с другом"
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[22px] leading-none text-[var(--mappy-text-secondary)] shadow-sm"
+            className="flex h-7 w-7 items-center justify-center p-0"
             onClick={() => setShowMenu((value) => !value)}
           >
-            ···
+            <img src={dotsHorizontalIcon} alt="" className="h-1 w-[18px]" />
           </button>
           {showMenu && (
             <button
@@ -488,11 +504,23 @@ function FriendProfileView({
 
           {person.relation === "friend" && (
             <div className="flex flex-col gap-4">
-              <SearchField value={query} onChange={setQuery} placeholder="Поиск по местам" />
+              <FriendPlacesSearchBar
+                value={query}
+                onChange={setQuery}
+                hasActiveFilters={!filtersAreEmpty(filters)}
+                onFilterTap={() => setShowFilters(true)}
+              />
               <div className="flex flex-col gap-3">
                 {visiblePlaces.map((place) => {
                   const ownedPlace = { ...place, owner: friend };
-                  return <PlaceRowCard key={place.id} place={ownedPlace} onClick={() => onOpenPlace(ownedPlace)} />;
+                  return (
+                    <PlaceRowCard
+                      key={place.id}
+                      place={ownedPlace}
+                      showOwnerAvatar={false}
+                      onClick={() => onOpenPlace(ownedPlace)}
+                    />
+                  );
                 })}
                 {visiblePlaces.length === 0 && (
                   <div className="rounded-[16px] bg-white px-5 py-8 text-center text-[14px] text-[#99a1af]">
@@ -540,6 +568,55 @@ function FriendProfileView({
           </div>
         </div>
       )}
+
+      {showFilters && (
+        <FilterSheet
+          filters={filters}
+          places={places}
+          showFriendPlacesToggle={false}
+          onApply={setFilters}
+          onClose={() => setShowFilters(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+function FriendPlacesSearchBar({
+  value,
+  onChange,
+  hasActiveFilters,
+  onFilterTap,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  hasActiveFilters: boolean;
+  onFilterTap: () => void;
+}) {
+  return (
+    <div className="flex h-16 w-full items-center gap-1 rounded-[32px] bg-white p-2">
+      <label className="flex h-12 min-w-0 flex-1 items-center gap-2.5 rounded-l-[32px] rounded-r-[10px] bg-[var(--mappy-surface-secondary)] px-4 py-3">
+        <img src={searchIcon} alt="" className="h-6 w-6 shrink-0" />
+        <input
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder="Поиск по адресу, названию"
+          className="min-w-0 flex-1 bg-transparent text-[16px] font-medium leading-[18px] tracking-[-0.6px] text-[var(--mappy-text-primary)] outline-none placeholder:text-[var(--mappy-text-secondary)]"
+        />
+      </label>
+      <button
+        type="button"
+        onClick={onFilterTap}
+        aria-label="Фильтры мест"
+        aria-pressed={hasActiveFilters}
+        className="relative flex h-12 shrink-0 items-center justify-center rounded-l-[10px] rounded-r-[32px] px-4"
+        style={{ backgroundColor: hasActiveFilters ? "var(--mappy-brand-subtle)" : "rgba(3,7,18,0.04)" }}
+      >
+        <img src={filterIcon} alt="" className="h-6 w-6" />
+        {hasActiveFilters && (
+          <span className="absolute right-2.5 top-1.5 h-2 w-2 rounded-full bg-[var(--mappy-pink)]" />
+        )}
+      </button>
     </div>
   );
 }

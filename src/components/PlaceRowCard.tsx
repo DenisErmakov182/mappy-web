@@ -18,7 +18,15 @@ function formatPlaceDate(createdAt?: string): string | null {
  * Карточка места по макету 1489:15401: белая, radius 28, фото слева 196x132 (radius 20),
  * справа название/адрес и снизу чип оценки + тег категории.
  */
-export function PlaceRowCard({ place, onClick }: { place: Place; onClick?: () => void }) {
+export function PlaceRowCard({
+  place,
+  onClick,
+  showOwnerAvatar = true,
+}: {
+  place: Place;
+  onClick?: () => void;
+  showOwnerAvatar?: boolean;
+}) {
   const createdAt = formatPlaceDate(place.createdAt);
 
   return (
@@ -33,7 +41,7 @@ export function PlaceRowCard({ place, onClick }: { place: Place; onClick?: () =>
         {place.photoUrls[0] && (
           <img src={place.photoUrls[0]} alt="" className="w-full h-full object-cover" />
         )}
-        {place.owner && (
+        {showOwnerAvatar && place.owner && (
           <>
             <img
               src={friendAvatarBlur}
