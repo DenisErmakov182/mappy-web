@@ -18,11 +18,21 @@ export function RatingChip({ rating, size = "m" }: { rating: number; size?: "m" 
   );
 }
 
-/* Звезда оценки: выбранная — объёмная золотая, пустая — точный ассет из Figma (844:17051). */
+/* Звезда оценки: оба варианта живут в строгом контейнере 60×60 из Figma (844:14101). */
 export function StarIcon({ filled, size = 60 }: { filled: boolean; size?: number }) {
   if (filled) {
-    return <img src={starGold} alt="" width={size} height={size} style={{ objectFit: "contain" }} />;
+    return (
+      <img
+        src={starGold}
+        alt=""
+        width={size}
+        height={size}
+        className="block max-w-none"
+        style={{ objectFit: "cover", objectPosition: "bottom" }}
+      />
+    );
   }
+
   return (
     <span
       aria-hidden="true"
@@ -34,10 +44,10 @@ export function StarIcon({ filled, size = 60 }: { filled: boolean; size?: number
         alt=""
         className="absolute block max-w-none"
         style={{
-          left: size * 0.08737,
-          top: size * 0.05133,
-          width: size * 0.84194,
-          height: size * 0.80486,
+          left: "7.19%",
+          top: "5.22%",
+          width: "85.62%",
+          height: "81.85%",
         }}
       />
     </span>

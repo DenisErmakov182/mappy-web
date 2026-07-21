@@ -321,7 +321,7 @@ export function AddPlaceSheet({
           ))}
         </div>
 
-        <div className="flex justify-center gap-3 py-1">
+        <div className="flex h-[68px] w-full items-center justify-center gap-2 overflow-hidden rounded-[16px] py-1">
           {[1, 2, 3, 4, 5].map((star) => (
             <RatingStarButton
               key={star}
