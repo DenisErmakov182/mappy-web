@@ -64,10 +64,10 @@ export function FilterSheet({
   return (
     <Sheet onClose={onClose}>
       <div className="px-5 pb-4">
-        <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center justify-between mb-6">
           <button
             onClick={() => setDraft(emptyFilters())}
-            className="text-[20px] font-medium"
+            className="text-[20px] leading-6 font-medium"
             style={{ color: "#99a1af" }}
           >
             Сбросить
@@ -75,11 +75,12 @@ export function FilterSheet({
           <CloseButton onClick={onClose} />
         </div>
 
-        <section className="mb-6">
-          <h3 className="text-[16px] font-semibold mb-3" style={{ color: "var(--mappy-text-primary)" }}>
+        <div className="flex flex-col gap-6">
+        <section>
+          <h3 className="text-[16px] font-semibold mb-2" style={{ color: "var(--mappy-text-primary)" }}>
             Категории
           </h3>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1">
             {allCategories.map((category) => {
               const isSelected = draft.categories.has(category);
               return (
@@ -100,11 +101,11 @@ export function FilterSheet({
           </div>
         </section>
 
-        <section className="mb-6">
-          <h3 className="text-[16px] font-semibold mb-3" style={{ color: "var(--mappy-text-primary)" }}>
+        <section>
+          <h3 className="text-[16px] font-semibold mb-2" style={{ color: "var(--mappy-text-primary)" }}>
             Оценка
           </h3>
-          <div className="flex gap-2">
+          <div className="flex gap-1">
             {[5, 4, 3, 2].map((rating) => {
               const { bg, text } = ratingChipColors(rating);
               const isSelected = draft.ratings.has(rating);
@@ -112,7 +113,7 @@ export function FilterSheet({
                 <button
                   key={rating}
                   onClick={() => toggleRating(rating)}
-                  className="flex items-center gap-0.5 h-[40px] px-3 rounded-[12px] text-[16px] font-medium"
+                  className="flex items-center gap-0.5 h-[40px] px-2 rounded-[10px] text-[16px] font-medium"
                   style={{
                     backgroundColor: bg,
                     color: text,
@@ -128,18 +129,18 @@ export function FilterSheet({
           </div>
         </section>
 
-        <section className="mb-7">
-          <h3 className="text-[16px] font-semibold mb-3" style={{ color: "var(--mappy-text-primary)" }}>
+        <section>
+          <h3 className="text-[16px] font-semibold mb-2" style={{ color: "var(--mappy-text-primary)" }}>
             Посещения
           </h3>
-          <div className="flex gap-2">
+          <div className="flex gap-1">
             {(["been", "planning"] as VisitStatus[]).map((status) => {
               const isSelected = draft.statuses.has(status);
               return (
                 <button
                   key={status}
                   onClick={() => toggleStatus(status)}
-                  className="h-[44px] px-4 rounded-[14px] text-[16px] font-medium"
+                  className="h-[42px] px-3 rounded-[14px] text-[16px] font-medium"
                   style={{
                     backgroundColor: isSelected ? "var(--mappy-brand-subtle)" : "var(--mappy-surface-primary)",
                     color: isSelected ? "var(--mappy-pink)" : "var(--mappy-text-primary)",
@@ -152,15 +153,43 @@ export function FilterSheet({
           </div>
         </section>
 
-        <CtaButton
-          onClick={() => {
-            onApply(draft);
-            onClose();
-          }}
-          disabled={matchCount === 0}
+        <button
+          type="button"
+          onClick={() =>
+            setDraft((prev) => ({ ...cloneFilters(prev), includeFriendPlaces: !prev.includeFriendPlaces }))
+          }
+          className="flex w-full items-center justify-between py-1 text-left"
+          aria-pressed={draft.includeFriendPlaces}
         >
-          {matchCount === 0 ? "Ничего не найдено" : `Показать: ${matchCount} мест`}
-        </CtaButton>
+          <span className="text-[16px] font-medium" style={{ color: "var(--mappy-text-primary)" }}>
+            Места друзей
+          </span>
+          <span
+            className="relative h-7 w-[53px] rounded-full transition-colors"
+            style={{ backgroundColor: draft.includeFriendPlaces ? "#ff637e" : "#f3f4f6" }}
+          >
+            <span
+              className="absolute top-[3px] h-[22px] w-[22px] rounded-full transition-transform"
+              style={{
+                backgroundColor: draft.includeFriendPlaces ? "white" : "#99a1af",
+                transform: draft.includeFriendPlaces ? "translateX(28px)" : "translateX(3px)",
+              }}
+            />
+          </span>
+        </button>
+        </div>
+
+        <div className="sticky bottom-0 -mx-5 mt-6 bg-gradient-to-t from-white via-white to-white/0 px-5 pt-6">
+          <CtaButton
+            onClick={() => {
+              onApply(draft);
+              onClose();
+            }}
+            disabled={matchCount === 0}
+          >
+            {matchCount === 0 ? "Ничего не найдено" : `Показать: ${matchCount} мест`}
+          </CtaButton>
+        </div>
       </div>
     </Sheet>
   );

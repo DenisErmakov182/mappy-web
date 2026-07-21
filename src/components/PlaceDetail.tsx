@@ -2,132 +2,187 @@ import { useState } from "react";
 import type { Place } from "../types";
 import { categoryLabel } from "../types";
 import { CategoryIcon } from "./CategoryIcon";
-import { RatingChip, CloseButton, CtaButton } from "./primitives";
+import { RatingChip, CloseButton } from "./primitives";
 import { ActionSheet } from "./ActionSheet";
 
+function formatPlaceDate(createdAt?: string): string | null {
+  if (!createdAt) return null;
+  const date = new Date(createdAt);
+  if (Number.isNaN(date.getTime())) return null;
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(date);
+}
+
 /*
- * Просмотр созданного места по макету 1489:17577: фото на весь верх, поверх — кнопки
- * закрыть/меню; белый лист со скруглением наезжает на фото; внизу CTA «Поделиться местом».
- * Кнопка «...» открывает action sheet (1489:17684) с редактированием и удалением.
+ * Открытая карточка по макету 1829:23152. У места друга тот же просмотр,
+ * но действия read-only: сохранить независимую копию себе или поделиться.
  */
 export function PlaceDetail({
   place,
   onClose,
   onEdit,
   onDelete,
+  onSaveCopy,
+  onShare,
 }: {
   place: Place;
   onClose: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  onSaveCopy?: () => Promise<void>;
+  onShare: () => void | Promise<void>;
 }) {
   const [showActions, setShowActions] = useState(false);
+  const [savingCopy, setSavingCopy] = useState(false);
+  const createdAt = formatPlaceDate(place.createdAt);
+
+  const share = () => {
+    setShowActions(false);
+    void onShare();
+  };
+
+  const saveCopy = async () => {
+    if (!onSaveCopy || savingCopy) return;
+    setShowActions(false);
+    setSavingCopy(true);
+    try {
+      await onSaveCopy();
+    } finally {
+      setSavingCopy(false);
+    }
+  };
+
+  const actions = place.owner
+    ? [
+        { label: savingCopy ? "Сохраняем…" : "Сохранить себе", onClick: () => void saveCopy() },
+        { label: "Поделиться", onClick: share },
+      ]
+    : [
+        { label: "Поделиться", onClick: share },
+        ...(onEdit
+          ? [
+              {
+                label: "Редактировать",
+                onClick: () => {
+                  setShowActions(false);
+                  onEdit();
+                },
+              },
+            ]
+          : []),
+        ...(onDelete
+          ? [
+              {
+                label: "Удалить",
+                color: "#ff3b30",
+                onClick: () => {
+                  setShowActions(false);
+                  onDelete();
+                },
+              },
+            ]
+          : []),
+      ];
 
   return (
-    <div className="fixed inset-0 z-50 bg-white flex flex-col">
-      <div className="relative h-[252px] shrink-0" style={{ backgroundColor: "var(--mappy-surface-secondary)" }}>
-        {place.photoUrls[0] && (
-          <img src={place.photoUrls[0]} alt="" className="absolute inset-0 w-full h-full object-cover" />
-        )}
-        <div className="absolute top-[max(env(safe-area-inset-top),12px)] left-4 right-4 flex justify-between">
-          <span className="rounded-full bg-white/80 backdrop-blur">
-            <CloseButton onClick={onClose} size={30} />
-          </span>
+    <div className="fixed inset-0 z-50 overflow-y-auto overflow-x-hidden bg-white">
+      <div className="flex min-h-full flex-col gap-3 px-4 pb-[calc(env(safe-area-inset-bottom)+34px)] pt-[calc(env(safe-area-inset-top)+11px)]">
+        <div className="flex h-7 shrink-0 items-center justify-between">
+          <CloseButton onClick={onClose} size={28} backgroundColor="rgba(255,255,255,0.6)" />
           <button
+            type="button"
             onClick={() => setShowActions(true)}
-            className="w-[30px] h-[30px] rounded-full bg-white/80 backdrop-blur flex items-center justify-center"
-            aria-label="Действия"
+            className="flex h-7 w-7 items-center justify-center rounded-full bg-white/60"
+            aria-label={place.owner ? `Действия с местом ${place.owner.name}` : "Действия с местом"}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <circle cx="5" cy="12" r="1.8" fill="#4A5565" />
-              <circle cx="12" cy="12" r="1.8" fill="#4A5565" />
-              <circle cx="19" cy="12" r="1.8" fill="#4A5565" />
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="5" cy="12" r="1.5" fill="#1e2939" />
+              <circle cx="12" cy="12" r="1.5" fill="#1e2939" />
+              <circle cx="19" cy="12" r="1.5" fill="#1e2939" />
             </svg>
           </button>
         </div>
-      </div>
 
-      <div className="relative flex-1 min-w-0 w-full overflow-y-auto overflow-x-hidden bg-white rounded-t-[24px] -mt-6 px-5 pt-6 pb-28">
-        <h1 className="text-[24px] font-semibold leading-[28px] mb-2 [overflow-wrap:anywhere]" style={{ color: "var(--mappy-text-primary)" }}>
-          {place.title}
-        </h1>
-
-        <div className="flex items-start gap-2 min-w-0 mb-5">
-          <RatingChip rating={place.rating} />
-          <span className="min-w-0 text-[16px] [overflow-wrap:anywhere]" style={{ color: "var(--mappy-text-secondary)" }}>
-            {place.address}
-          </span>
+        <div
+          className="h-[253px] w-full shrink-0 overflow-hidden rounded-[28px] bg-white shadow-[8px_2px_30.4px_#e9e9e9]"
+          style={{ backgroundColor: place.photoUrls[0] ? undefined : "var(--mappy-surface-secondary)" }}
+        >
+          {place.photoUrls[0] && <img src={place.photoUrls[0]} alt="" className="h-full w-full object-cover" />}
         </div>
 
-        {place.photoUrls.length > 0 && (
-          <div className="flex gap-1 overflow-x-auto -mx-5 px-5 mb-4">
-            {place.photoUrls.map((url, i) => (
-              <img
-                key={i}
-                src={url}
-                alt=""
-                className="w-[120px] h-[120px] rounded-xl object-cover shrink-0"
-              />
-            ))}
-          </div>
-        )}
-
-        {place.categories.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-4">
-            {place.categories.map((category) => (
-              <span
-                key={category}
-                className="inline-flex items-center gap-1 pl-2 pr-3 py-3 rounded-[14px] text-[16px] font-medium"
-                style={{ backgroundColor: "var(--mappy-surface-primary)", color: "var(--mappy-text-primary)" }}
-              >
-                <CategoryIcon category={category} />
-                {categoryLabel[category]}
+        <div className="mt-3 flex w-full flex-col gap-6">
+          <div className="flex flex-col gap-2 px-1">
+            <h1
+              className="truncate text-[28px] font-semibold leading-8 tracking-[-0.6px]"
+              style={{ color: "var(--mappy-text-primary)" }}
+            >
+              {place.title}
+            </h1>
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="[&>span]:h-[26px] [&>span]:rounded-[10px]">
+                <RatingChip rating={place.rating} />
               </span>
-            ))}
+              <span
+                className="min-w-0 truncate text-[20px] leading-6"
+                style={{ color: "var(--mappy-text-secondary)" }}
+              >
+                {place.address}
+              </span>
+            </div>
+            {createdAt && (
+              <p className="text-[16px] font-medium leading-[18px] tracking-[-0.6px]" style={{ color: "#99a1af" }}>
+                {createdAt}
+              </p>
+            )}
           </div>
-        )}
 
-        {place.note && (
-          <div
-            className="min-w-0 max-w-full rounded-[14px] p-4 text-[16px] leading-snug whitespace-pre-wrap [overflow-wrap:anywhere]"
-            style={{ backgroundColor: "var(--mappy-surface-primary)", color: "var(--mappy-text-primary)" }}
-          >
-            {place.note}
+          <div className="flex w-full flex-col gap-4">
+            {place.photoUrls.length > 0 && (
+              <div className="-mr-4 flex gap-1 overflow-x-auto pr-4 [&::-webkit-scrollbar]:hidden">
+                {place.photoUrls.map((url, index) => (
+                  <img
+                    key={`${url}-${index}`}
+                    src={url}
+                    alt=""
+                    className="h-[120px] w-[120px] shrink-0 rounded-[10px] object-cover"
+                  />
+                ))}
+              </div>
+            )}
+
+            {place.categories.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {place.categories.map((category) => (
+                  <span
+                    key={category}
+                    className="inline-flex items-center justify-center gap-1 rounded-[14px] py-3 pl-2 pr-3 text-[16px] font-medium leading-[18px]"
+                    style={{ backgroundColor: "var(--mappy-surface-primary)", color: "var(--mappy-text-primary)" }}
+                  >
+                    <CategoryIcon category={category} />
+                    {categoryLabel[category]}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {place.note && (
+              <div
+                className="w-full whitespace-pre-wrap rounded-[20px] p-4 text-[16px] leading-5 tracking-[-0.6px] [overflow-wrap:anywhere]"
+                style={{ backgroundColor: "var(--mappy-surface-secondary)", color: "var(--mappy-text-primary)" }}
+              >
+                {place.note}
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
-      <div className="absolute bottom-0 left-0 right-0 px-4 pb-[max(env(safe-area-inset-bottom),12px)] pt-3 bg-gradient-to-t from-white via-white/90 to-transparent">
-        <CtaButton>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="mr-1">
-            <path d="M20 4L10 14M20 4L14 20L10 14M20 4L4 10L10 14" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Поделиться местом
-        </CtaButton>
-      </div>
+      <div className="pointer-events-none fixed bottom-0 left-0 right-0 z-10 h-[148px] bg-gradient-to-b from-white/0 to-[#f3f4f6] backdrop-blur-[10px]" />
 
-      {showActions && (
-        <ActionSheet
-          actions={[
-            {
-              label: "Редактировать",
-              onClick: () => {
-                setShowActions(false);
-                onEdit();
-              },
-            },
-            {
-              label: "Удалить",
-              color: "#ff3b30",
-              onClick: () => {
-                setShowActions(false);
-                onDelete();
-              },
-            },
-          ]}
-          onCancel={() => setShowActions(false)}
-        />
-      )}
+      {showActions && <ActionSheet actions={actions} onCancel={() => setShowActions(false)} />}
     </div>
   );
 }

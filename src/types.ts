@@ -43,6 +43,7 @@ export function ratingChipColors(rating: number): { bg: string; text: string } {
 
 export interface Place {
   id: string;
+  createdAt?: string;
   title: string;
   address: string;
   latitude: number;
@@ -53,6 +54,8 @@ export interface Place {
   isPrivate: boolean;
   status: VisitStatus;
   photoUrls: string[];
+  /** Владелец присутствует только у публичного места друга. Свои места owner не имеют. */
+  owner?: Friend;
 }
 
 export interface Friend {
@@ -66,10 +69,16 @@ export interface PlaceFilters {
   categories: Set<PlaceCategory>;
   ratings: Set<number>;
   statuses: Set<VisitStatus>;
+  includeFriendPlaces: boolean;
 }
 
 export function emptyFilters(): PlaceFilters {
-  return { categories: new Set(), ratings: new Set(), statuses: new Set() };
+  return {
+    categories: new Set(),
+    ratings: new Set(),
+    statuses: new Set(),
+    includeFriendPlaces: false,
+  };
 }
 
 export function cloneFilters(f: PlaceFilters): PlaceFilters {
@@ -77,6 +86,7 @@ export function cloneFilters(f: PlaceFilters): PlaceFilters {
     categories: new Set(f.categories),
     ratings: new Set(f.ratings),
     statuses: new Set(f.statuses),
+    includeFriendPlaces: f.includeFriendPlaces,
   };
 }
 
@@ -84,11 +94,13 @@ export function filtersAreEmpty(filters: PlaceFilters): boolean {
   return (
     filters.categories.size === 0 &&
     filters.ratings.size === 0 &&
-    filters.statuses.size === 0
+    filters.statuses.size === 0 &&
+    !filters.includeFriendPlaces
   );
 }
 
 export function placeMatchesFilters(place: Place, filters: PlaceFilters): boolean {
+  if (place.owner && !filters.includeFriendPlaces) return false;
   if (filters.categories.size > 0 && !place.categories.some((c) => filters.categories.has(c))) {
     return false;
   }

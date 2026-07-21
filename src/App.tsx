@@ -24,11 +24,14 @@ import {
   isAuthenticationError,
   getMe,
   fetchPlaces,
+  fetchFriends,
+  fetchFriendPlaces,
   createPlace,
   updatePlace,
   deletePlace,
   deleteAccount,
   type ApiUser,
+  type ApiFriend,
   type PlaceInput,
 } from "./lib/api";
 import {
@@ -37,6 +40,7 @@ import {
   placeMatchesFilters,
   type Place,
   type PlaceFilters,
+  type Friend,
 } from "./types";
 
 const LAST_LOCATION_KEY = "mappy_last_location";
@@ -102,6 +106,15 @@ function toPlaceInput(place: Place): PlaceInput {
     isPrivate: place.isPrivate,
     status: place.status,
     photoUrls: place.photoUrls,
+  };
+}
+
+function toFriend(friend: ApiFriend): Friend {
+  return {
+    id: friend.id,
+    name: friend.name ?? friend.username ?? "Без имени",
+    username: friend.username ?? "",
+    avatarUrl: friend.avatarUrl ?? undefined,
   };
 }
 
@@ -225,6 +238,8 @@ function MapApp({
 }) {
   const [tab, setTab] = useState<AppTab>("map");
   const [places, setPlaces] = useState<Place[]>([]);
+  const [friendPlaces, setFriendPlaces] = useState<Place[]>([]);
+  const [focusedFriendId, setFocusedFriendId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<PlaceFilters>(emptyFilters());
   const [showFilters, setShowFilters] = useState(false);
@@ -258,6 +273,32 @@ function MapApp({
     loadPlaces();
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    fetchFriends()
+      .then(async (apiFriends) => {
+        const friends = apiFriends.map(toFriend);
+        const placeGroups = await Promise.all(
+          friends.map(async (friend) => {
+            try {
+              const publicPlaces = await fetchFriendPlaces(friend.id);
+              return publicPlaces.map((place) => ({ ...place, owner: friend }));
+            } catch {
+              // Ошибка одного друга не должна скрыть остальные места и свои точки.
+              return [];
+            }
+          }),
+        );
+        if (!cancelled) setFriendPlaces(placeGroups.flat());
+      })
+      .catch(() => {
+        // Карта со своими местами остаётся полностью рабочей и без списка друзей.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const locateMe = (silent = false) => {
     if (!navigator.geolocation) return;
     if (!silent) setLocating(true);
@@ -285,13 +326,39 @@ function MapApp({
     });
   }, [places, filters, query]);
 
+  const mapPlaces = useMemo(() => {
+    if (!filters.includeFriendPlaces) return visiblePlaces;
+    const q = query.trim().toLowerCase();
+    const visibleFriendPlaces = friendPlaces.filter((place) => {
+      if (focusedFriendId && place.owner?.id !== focusedFriendId) return false;
+      if (!placeMatchesFilters(place, filters)) return false;
+      if (!q) return true;
+      return place.title.toLowerCase().includes(q) || place.address.toLowerCase().includes(q);
+    });
+    return [...visiblePlaces, ...visibleFriendPlaces];
+  }, [visiblePlaces, friendPlaces, focusedFriendId, filters, query]);
+
+  const sharePlace = async (place: Place) => {
+    const text = `${place.title}\n${place.address}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: place.title, text });
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        await navigator.clipboard?.writeText(text);
+      }
+      return;
+    }
+    await navigator.clipboard?.writeText(text);
+  };
+
   return (
     <div className="app-shell bg-white">
       {/* Контент вкладок */}
       <div className="absolute inset-0">
         {tab === "map" && (
           <MapView
-            places={visiblePlaces}
+            places={mapPlaces}
             center={center}
             initialZoom={initialZoom}
             onCenterChange={setCenter}
@@ -312,19 +379,7 @@ function MapApp({
               setPlaces((prev) => prev.filter((item) => item.id !== place.id));
               setSelectedPlaces((prev) => prev.filter((item) => item.id !== place.id));
             }}
-            onSharePlace={async (place) => {
-              const text = `${place.title}\n${place.address}`;
-              if (navigator.share) {
-                try {
-                  await navigator.share({ title: place.title, text });
-                } catch (error) {
-                  if (error instanceof DOMException && error.name === "AbortError") return;
-                  await navigator.clipboard?.writeText(text);
-                }
-                return;
-              }
-              await navigator.clipboard?.writeText(text);
-            }}
+            onSharePlace={sharePlace}
           />
         )}
         {tab === "friends" && (
@@ -333,6 +388,32 @@ function MapApp({
             onUserUpdated={onUserUpdated}
             onLogout={onLogout}
             onDeleteAccount={onDeleteAccount}
+            onOpenFriend={async (friend) => {
+              let placesForFriend = friendPlaces.filter((place) => place.owner?.id === friend.id);
+              setFocusedFriendId(friend.id);
+              setFilters((prev) => ({ ...prev, includeFriendPlaces: true }));
+              setTab("map");
+              setSelectedPlaces([]);
+
+              if (placesForFriend.length === 0) {
+                try {
+                  const loaded = await fetchFriendPlaces(friend.id);
+                  placesForFriend = loaded.map((place) => ({ ...place, owner: friend }));
+                  setFriendPlaces((prev) => [
+                    ...prev.filter((place) => place.owner?.id !== friend.id),
+                    ...placesForFriend,
+                  ]);
+                } catch {
+                  // Экран карты уже открыт: отсутствие сети не должно блокировать навигацию.
+                }
+              }
+
+              const firstPlace = placesForFriend[0];
+              if (firstPlace) {
+                setCenter({ lat: firstPlace.latitude, lng: firstPlace.longitude });
+                setFlyTo({ lat: firstPlace.latitude, lng: firstPlace.longitude, ts: Date.now() });
+              }
+            }}
           />
         )}
       </div>
@@ -442,8 +523,11 @@ function MapApp({
       {showFilters && (
         <FilterSheet
           filters={filters}
-          places={places}
-          onApply={setFilters}
+          places={[...places, ...friendPlaces]}
+          onApply={(nextFilters) => {
+            setFocusedFriendId(null);
+            setFilters(nextFilters);
+          }}
           onClose={() => setShowFilters(false)}
         />
       )}
@@ -453,8 +537,9 @@ function MapApp({
           coordinate={draftCoordinate}
           onSave={async (place) => {
             const saved = await createPlace(toPlaceInput(place));
-            // API возвращает места в таком же порядке: сначала новые. Этот порядок
-            // делает координату только что сохранённого места якорем адресной группы.
+            // Новую запись сразу показываем в интерфейсе. Географический якорь
+            // адресной группы определяется отдельно по createdAt, поэтому порядок
+            // массива больше не способен сдвинуть уже существующий пин.
             setPlaces((prev) => [saved, ...prev]);
           }}
           onClose={() => setDraftCoordinate(null)}
@@ -465,16 +550,34 @@ function MapApp({
         <PlaceDetail
           place={detailPlace}
           onClose={() => setDetailPlace(null)}
-          onEdit={() => {
-            setEditingPlace(detailPlace);
-            setDetailPlace(null);
-          }}
-          onDelete={async () => {
-            await deletePlace(detailPlace.id);
-            setPlaces((prev) => prev.filter((p) => p.id !== detailPlace.id));
-            setSelectedPlaces([]);
-            setDetailPlace(null);
-          }}
+          onShare={() => sharePlace(detailPlace)}
+          onEdit={
+            detailPlace.owner
+              ? undefined
+              : () => {
+                  setEditingPlace(detailPlace);
+                  setDetailPlace(null);
+                }
+          }
+          onDelete={
+            detailPlace.owner
+              ? undefined
+              : async () => {
+                  await deletePlace(detailPlace.id);
+                  setPlaces((prev) => prev.filter((p) => p.id !== detailPlace.id));
+                  setSelectedPlaces([]);
+                  setDetailPlace(null);
+                }
+          }
+          onSaveCopy={
+            detailPlace.owner
+              ? async () => {
+                  const saved = await createPlace(toPlaceInput(detailPlace));
+                  setPlaces((prev) => [saved, ...prev]);
+                  setDetailPlace(null);
+                }
+              : undefined
+          }
         />
       )}
 
