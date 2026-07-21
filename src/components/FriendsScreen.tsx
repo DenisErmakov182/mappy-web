@@ -5,6 +5,7 @@ import { CtaButton, Sheet } from "./primitives";
 import friendsEmptyIllustration from "../assets/illustrations/friends-empty.webp";
 import pinMap from "../assets/illustrations/pin-map.webp";
 import searchIcon from "../assets/icons/search-icon.svg";
+import { AccountScreen } from "./AccountScreen";
 
 function toFriend(f: ApiFriend): Friend {
   return {
@@ -22,13 +23,16 @@ export function FriendsScreen({
   user,
   onLogout,
   onDeleteAccount,
+  onUserUpdated,
 }: {
   user: ApiUser;
   onLogout: () => void;
   onDeleteAccount: () => Promise<void>;
+  onUserUpdated: (user: ApiUser) => void;
 }) {
   const [friends, setFriends] = useState<Friend[]>([]);
   const [showAdd, setShowAdd] = useState(false);
+  const [showAccount, setShowAccount] = useState(false);
   const [query, setQuery] = useState("");
 
   useEffect(() => {
@@ -48,7 +52,7 @@ export function FriendsScreen({
   return (
     <div className="h-full overflow-y-auto pb-32" style={{ backgroundColor: "var(--mappy-surface-primary)" }}>
       <div className="px-4 pt-[var(--mappy-floating-top)] flex flex-col gap-1">
-        <ProfileHeader user={user} onLogout={onLogout} onDeleteAccount={onDeleteAccount} />
+        <ProfileHeader user={user} onOpenAccount={() => setShowAccount(true)} />
 
         {friends.length === 0 ? (
           <div className="bg-white rounded-[24px] px-6 py-6 text-center">
@@ -122,7 +126,7 @@ export function FriendsScreen({
                 className="flex items-center gap-3 py-2.5"
                 style={{ borderTop: i > 0 ? "1px solid var(--mappy-divider)" : "none" }}
               >
-                <Avatar name={friend.name} />
+                <Avatar name={friend.name} avatarUrl={friend.avatarUrl} />
                 <div>
                   <p className="text-[16px] font-semibold" style={{ color: "var(--mappy-text-primary)" }}>
                     {friend.name}
@@ -143,38 +147,27 @@ export function FriendsScreen({
           onClose={() => setShowAdd(false)}
         />
       )}
+
+      {showAccount && (
+        <AccountScreen
+          user={user}
+          onClose={() => setShowAccount(false)}
+          onUserUpdated={onUserUpdated}
+          onLogout={onLogout}
+          onDeleteAccount={onDeleteAccount}
+        />
+      )}
     </div>
   );
 }
 
 function ProfileHeader({
   user,
-  onLogout,
-  onDeleteAccount,
+  onOpenAccount,
 }: {
   user: ApiUser;
-  onLogout: () => void;
-  onDeleteAccount: () => Promise<void>;
+  onOpenAccount: () => void;
 }) {
-  const [showMenu, setShowMenu] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-
-  const handleDeleteAccount = async () => {
-    if (
-      !window.confirm(
-        "Удалить аккаунт насовсем? Все ваши места, фото и друзья будут удалены без возможности восстановления.",
-      )
-    ) {
-      return;
-    }
-    setDeleting(true);
-    try {
-      await onDeleteAccount();
-    } catch {
-      setDeleting(false);
-      window.alert("Не удалось удалить аккаунт, попробуйте ещё раз");
-    }
-  };
   const displayName = user.name ?? user.username ?? user.email;
   const initials = displayName
     .split(" ")
@@ -184,7 +177,12 @@ function ProfileHeader({
     .toUpperCase();
 
   return (
-    <div className="relative bg-white rounded-[24px] px-6 pt-6 pb-5 mb-1">
+    <button
+      type="button"
+      onClick={onOpenAccount}
+      className="relative w-full bg-white rounded-[24px] px-6 pt-6 pb-5 mb-1 text-left"
+      aria-label="Открыть аккаунт"
+    >
       <span
         className="absolute -top-2.5 left-6 text-[12px] font-medium px-2.5 py-1 rounded-full bg-white"
         style={{ color: "var(--mappy-pink)", border: "1px solid var(--mappy-pink)" }}
@@ -202,60 +200,25 @@ function ProfileHeader({
             </p>
           )}
         </div>
-        <div className="relative">
+        <div className="relative shrink-0">
           <div
-            className="w-[74px] h-[74px] rounded-full flex items-center justify-center text-[26px] font-semibold text-white"
-            style={{ background: "linear-gradient(135deg, #ffa1ad, #ff2056)" }}
+            className="w-[74px] h-[74px] rounded-full overflow-hidden flex items-center justify-center text-[26px] font-semibold text-white"
+            style={{ background: user.avatarUrl ? "#e5e7eb" : "linear-gradient(135deg, #ffa1ad, #ff2056)" }}
           >
-            {initials}
+            {user.avatarUrl ? <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" /> : initials}
           </div>
-          <button
-            onClick={() => setShowMenu((v) => !v)}
-            className="absolute -top-1 -right-1 w-[30px] h-[30px] rounded-full bg-white shadow flex items-center justify-center"
-            aria-label="Настройки"
-          >
+          <span className="absolute -top-1 -right-1 w-[30px] h-[30px] rounded-full bg-white shadow flex items-center justify-center">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="3" stroke="#4A5565" strokeWidth="1.8" />
-              <path
-                d="M19 12a7 7 0 00-.1-1.2l2-1.5-2-3.4-2.3 1a7 7 0 00-2-1.2L14.2 3h-4l-.4 2.5a7 7 0 00-2 1.2l-2.3-1-2 3.4 2 1.5A7 7 0 005.4 12a7 7 0 00.1 1.2l-2 1.5 2 3.4 2.3-1a7 7 0 002 1.2l.4 2.5h4l.4-2.5a7 7 0 002-1.2l2.3 1 2-3.4-2-1.5a7 7 0 00.1-1.2z"
-                stroke="#4A5565"
-                strokeWidth="1.5"
-              />
+              <path d="M5 12h14M13 6l6 6-6 6" stroke="#4A5565" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-          </button>
-          {showMenu && (
-            <div className="absolute top-9 right-0 bg-white rounded-[14px] shadow-lg py-1.5 w-[160px] z-10">
-              <p
-                className="px-4 py-2 text-[13px] truncate"
-                style={{ color: "var(--mappy-text-secondary)" }}
-                title={user.email}
-              >
-                {user.email}
-              </p>
-              <button
-                onClick={onLogout}
-                className="w-full text-left px-4 py-2 text-[15px] font-medium"
-                style={{ color: "var(--mappy-text-primary)" }}
-              >
-                Выйти
-              </button>
-              <button
-                onClick={handleDeleteAccount}
-                disabled={deleting}
-                className="w-full text-left px-4 py-2 text-[15px] font-medium disabled:opacity-50"
-                style={{ color: "#fb2c36" }}
-              >
-                {deleting ? "Удаление..." : "Удалить аккаунт"}
-              </button>
-            </div>
-          )}
+          </span>
         </div>
       </div>
-    </div>
+    </button>
   );
 }
 
-function Avatar({ name }: { name: string }) {
+function Avatar({ name, avatarUrl }: { name: string; avatarUrl?: string }) {
   const initials = name
     .split(" ")
     .map((w) => w[0])
@@ -265,9 +228,9 @@ function Avatar({ name }: { name: string }) {
   return (
     <div
       className="w-10 h-10 rounded-full flex items-center justify-center text-[14px] font-semibold text-white shrink-0"
-      style={{ background: "linear-gradient(135deg, #99a1af, #4a5565)" }}
+      style={{ background: avatarUrl ? "#e5e7eb" : "linear-gradient(135deg, #99a1af, #4a5565)" }}
     >
-      {initials}
+      {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : initials}
     </div>
   );
 }

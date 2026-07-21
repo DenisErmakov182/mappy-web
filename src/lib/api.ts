@@ -190,6 +190,29 @@ export function deleteAccount() {
   return request<{ ok: true }>("/auth/me", { method: "DELETE" });
 }
 
+async function getAvatarUploadUrl(contentType: "image/webp" | "image/jpeg" | "image/png") {
+  return request<{ uploadUrl: string; publicUrl: string }>("/auth/avatar-upload-url", {
+    method: "POST",
+    body: JSON.stringify({ contentType }),
+  });
+}
+
+export async function uploadAvatar(file: File): Promise<ApiUser> {
+  const contentType = file.type as "image/webp" | "image/jpeg" | "image/png";
+  const { uploadUrl, publicUrl } = await getAvatarUploadUrl(contentType);
+  const uploadResponse = await fetch(uploadUrl, {
+    method: "PUT",
+    headers: { "Content-Type": contentType },
+    body: file,
+  });
+  if (!uploadResponse.ok) throw new Error("Не удалось загрузить фотографию");
+
+  return request<ApiUser>("/auth/me/avatar", {
+    method: "PATCH",
+    body: JSON.stringify({ avatarUrl: publicUrl }),
+  });
+}
+
 export interface PlaceInput {
   title: string;
   address: string;

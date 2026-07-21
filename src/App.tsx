@@ -189,6 +189,10 @@ export default function App() {
       user={user}
       initialCenter={mapLaunch.center}
       initialZoom={mapLaunch.zoom}
+      onUserUpdated={(updatedUser) => {
+        persistUser(updatedUser);
+        setUser(updatedUser);
+      }}
       onLogout={() => {
         clearToken();
         setToken(null);
@@ -208,12 +212,14 @@ function MapApp({
   user,
   initialCenter,
   initialZoom,
+  onUserUpdated,
   onLogout,
   onDeleteAccount,
 }: {
   user: ApiUser;
   initialCenter: { lat: number; lng: number };
   initialZoom: number;
+  onUserUpdated: (user: ApiUser) => void;
   onLogout: () => void;
   onDeleteAccount: () => Promise<void>;
 }) {
@@ -322,7 +328,12 @@ function MapApp({
           />
         )}
         {tab === "friends" && (
-          <FriendsScreen user={user} onLogout={onLogout} onDeleteAccount={onDeleteAccount} />
+          <FriendsScreen
+            user={user}
+            onUserUpdated={onUserUpdated}
+            onLogout={onLogout}
+            onDeleteAccount={onDeleteAccount}
+          />
         )}
       </div>
 
