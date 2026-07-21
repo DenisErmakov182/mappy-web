@@ -1,5 +1,5 @@
 import { useState } from "react";
-import pinMap from "../assets/illustrations/pin-map.png";
+import pinMap from "../assets/illustrations/pin-map.webp";
 import { CtaButton } from "./primitives";
 
 type Coordinates = { lat: number; lng: number };

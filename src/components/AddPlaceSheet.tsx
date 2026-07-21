@@ -6,9 +6,9 @@ import { CategoryIcon } from "./CategoryIcon";
 import { CategoriesSheet } from "./CategoriesSheet";
 import { Sheet, CtaButton, StarIcon } from "./primitives";
 import { SplitFlapAddress } from "./SplitFlapAddress";
-import stickerMuseum from "../assets/photos/sticker-museum.png";
-import stickerCafe from "../assets/photos/sticker-cafe.png";
-import stickerRestaurant from "../assets/photos/sticker-restaurant.png";
+import stickerMuseum from "../assets/photos/sticker-museum.webp";
+import stickerCafe from "../assets/photos/sticker-cafe.webp";
+import stickerRestaurant from "../assets/photos/sticker-restaurant.webp";
 
 const MAX_PHOTOS = 10;
 

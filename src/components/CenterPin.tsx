@@ -1,10 +1,10 @@
-import bigPin from "../assets/icons/big-pin.png";
-import raisedPinShadow from "../assets/icons/center-pin-shadow-raised.png";
-import restingPinShadow from "../assets/icons/center-pin-shadow-rest.png";
+import bigPin from "../assets/icons/big-pin.webp";
+import raisedPinShadow from "../assets/icons/center-pin-shadow-raised.webp";
+import restingPinShadow from "../assets/icons/center-pin-shadow-rest.webp";
 
 /*
  * Главный пин в центре карты по макету 1489:15484 (71x88 + рассеянная тень).
- * При движении карты пин приподнимается, а PNG-тени из Figma сменяются
+ * При движении карты пин приподнимается, а точные тени из Figma сменяются
  * кроссфейдом без браузерного масштабирования blur-фильтра.
  * Тап по пину — добавить место в точке под остриём.
  */

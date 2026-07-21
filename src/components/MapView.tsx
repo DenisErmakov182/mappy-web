@@ -3,15 +3,15 @@ import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { Place } from "../types";
 import { ratingChipColors } from "../types";
-import mainPin from "../assets/icons/main-pin.png";
-import placedPinShadow from "../assets/icons/placed-pin-shadow.png";
-import food from "../assets/categories/food.png";
-import shopping from "../assets/categories/shopping.png";
-import nature from "../assets/categories/nature.png";
-import monuments from "../assets/categories/monuments.png";
-import fun from "../assets/categories/fun.png";
-import culture from "../assets/categories/culture.png";
-import sports from "../assets/categories/sports.png";
+import mainPin from "../assets/icons/main-pin.webp";
+import placedPinShadow from "../assets/icons/placed-pin-shadow.webp";
+import food from "../assets/categories/food.webp";
+import shopping from "../assets/categories/shopping.webp";
+import nature from "../assets/categories/nature.webp";
+import monuments from "../assets/categories/monuments.webp";
+import fun from "../assets/categories/fun.webp";
+import culture from "../assets/categories/culture.webp";
+import sports from "../assets/categories/sports.webp";
 
 const categoryIcons: Record<string, string> = { food, shopping, nature, monuments, fun, culture, sports };
 

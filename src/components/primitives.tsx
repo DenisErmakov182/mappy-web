@@ -1,6 +1,6 @@
 import { useRef, useState, type ReactNode } from "react";
 import { ratingChipColors } from "../types";
-import starGold from "../assets/icons/star-gold.png";
+import starGold from "../assets/icons/star-gold.webp";
 import starSoft from "../assets/icons/star-soft.svg";
 
 /* Чип оценки: цифра + звезда на цветном фоне (surface/success|warning|danger) */

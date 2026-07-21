@@ -1,6 +1,6 @@
-import tabMap from "../assets/icons/tab-map.png";
-import tabNotes from "../assets/icons/tab-notes.png";
-import tabFriends from "../assets/icons/tab-friends.png";
+import tabMap from "../assets/icons/tab-map.webp";
+import tabNotes from "../assets/icons/tab-notes.webp";
+import tabFriends from "../assets/icons/tab-friends.webp";
 
 export type AppTab = "map" | "notes" | "friends";
 

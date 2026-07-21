@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import type { Friend } from "../types";
 import { fetchFriends, addFriendByUsername, type ApiFriend, type ApiUser } from "../lib/api";
 import { CtaButton, Sheet } from "./primitives";
-import friendsEmptyIllustration from "../assets/illustrations/friends-empty.png";
-import pinMap from "../assets/illustrations/pin-map.png";
+import friendsEmptyIllustration from "../assets/illustrations/friends-empty.webp";
+import pinMap from "../assets/illustrations/pin-map.webp";
 import searchIcon from "../assets/icons/search-icon.svg";
 
 function toFriend(f: ApiFriend): Friend {

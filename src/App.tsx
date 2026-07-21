@@ -14,7 +14,7 @@ import { AuthScreen } from "./components/AuthScreen";
 import { OnboardingScreen, hasSeenOnboarding } from "./components/OnboardingScreen";
 import { LocationPermissionScreen } from "./components/LocationPermissionScreen";
 import { CloseButton } from "./components/primitives";
-import locateMeIcon from "./assets/icons/locate-me-3d.png";
+import locateMeIcon from "./assets/icons/locate-me-3d.webp";
 import {
   getToken,
   setToken as persistToken,

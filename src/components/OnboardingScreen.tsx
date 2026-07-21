@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
 import { CtaButton } from "./primitives";
-import mapCrop from "../assets/onboarding/map-crop.png";
-import notesPreview from "../assets/onboarding/notes-preview.jpg";
-import friendsPreview from "../assets/onboarding/friends-preview.png";
-import searchBlur from "../assets/onboarding/search-blur.png";
-import mainPin from "../assets/icons/main-pin.png";
+import mapCrop from "../assets/onboarding/map-crop.webp";
+import notesPreview from "../assets/onboarding/notes-preview.webp";
+import friendsPreview from "../assets/onboarding/friends-preview.webp";
+import searchBlur from "../assets/onboarding/search-blur.webp";
+import mainPin from "../assets/icons/main-pin.webp";
 import searchIcon from "../assets/icons/search-icon.svg";
 import filterIcon from "../assets/icons/filter-icon.svg";
-import tabMap from "../assets/icons/tab-map.png";
-import tabNotes from "../assets/icons/tab-notes.png";
-import tabFriends from "../assets/icons/tab-friends.png";
+import tabMap from "../assets/icons/tab-map.webp";
+import tabNotes from "../assets/icons/tab-notes.webp";
+import tabFriends from "../assets/icons/tab-friends.webp";
 
 const ONBOARDING_KEY = "mappy_onboarding_seen";
 
@@ -68,14 +68,14 @@ const CARD_H = 348;
 const MOCK_H = 685;
 // Блюр-накладки растянуты не по своим пропорциям, а под края конкретных
 // элементов, которые они «поддерживают»:
-// под поиском (search-blur.png) — нижним краем по низу поисковой строки
+// под поиском (search-blur.webp) — нижним краем по низу поисковой строки
 // (top:32 + h:35 + padding 6+6)
 const EDGE_BLUR_TOP_H = 79;
 // в заметках та же подложка чуть выше (поднята дополнительно на глаз)
 const NOTES_EDGE_BLUR_TOP_H = EDGE_BLUR_TOP_H + 12;
 // под таббаром — верхним краем на 8px выше верха таббара (bottom:12 + h:32 + padding 6+6 + 8)
 const EDGE_BLUR_BOTTOM_H = 64;
-// Сам файл search-blur.png заранее обрезан (см. скрипт в истории) до чистого
+// Сам файл search-blur.webp заранее обрезан до чистого
 // вертикального градиента без прозрачных полей по бокам — поэтому рендерим
 // его ровно в ширину карточки, без доп. запаса на обрезку оверфлоу
 const EDGE_BLUR_W = CARD_W;
@@ -227,7 +227,7 @@ function MapPage({ step }: { step: number }) {
           className="absolute top-0 pointer-events-none"
           style={{ left: "50%", width: EDGE_BLUR_W, height: EDGE_BLUR_TOP_H, transform: "translateX(-50%) rotate(180deg)" }}
         />
-        {/* Пин как в проде (main-pin.png), по центру блока: покачивается вокруг своего
+        {/* Пин как в проде (main-pin.webp), по центру блока: покачивается вокруг своего
             металлического носика (transform-origin снизу по центру img), носик стоит
             на месте, под ним статичная рассеянная тень — не крутится вместе с пином.
             Показываем только на шагах 0-1: центрирование посчитано под окно шага 0,

@@ -1,6 +1,6 @@
 import type { Place } from "../types";
 import { useEffect, useState } from "react";
-import pinMap from "../assets/illustrations/pin-map.png";
+import pinMap from "../assets/illustrations/pin-map.webp";
 import { SwipeablePlaceCard } from "./SwipeablePlaceCard";
 
 /*

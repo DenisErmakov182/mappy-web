@@ -1,11 +1,11 @@
 import type { PlaceCategory } from "../types";
-import food from "../assets/categories/food.png";
-import shopping from "../assets/categories/shopping.png";
-import nature from "../assets/categories/nature.png";
-import monuments from "../assets/categories/monuments.png";
-import fun from "../assets/categories/fun.png";
-import culture from "../assets/categories/culture.png";
-import sports from "../assets/categories/sports.png";
+import food from "../assets/categories/food.webp";
+import shopping from "../assets/categories/shopping.webp";
+import nature from "../assets/categories/nature.webp";
+import monuments from "../assets/categories/monuments.webp";
+import fun from "../assets/categories/fun.webp";
+import culture from "../assets/categories/culture.webp";
+import sports from "../assets/categories/sports.webp";
 
 const icons: Record<PlaceCategory, string> = {
   food,
