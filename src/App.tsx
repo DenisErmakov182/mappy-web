@@ -395,7 +395,7 @@ function MapApp({
 
       {/* Блюр-градиенты сверху и снизу (по макету 1489:15421 — без белых подложек) */}
       {tab !== "friends" && <div className="blur-edge-top" />}
-      <div className="blur-edge-bottom" />
+      {!detailPlace && <div className="blur-edge-bottom" />}
 
       {/* Верхняя зона: поиск + фильтр (на карте и в заметках) */}
       {tab !== "friends" && (
