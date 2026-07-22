@@ -180,8 +180,6 @@ export function PlaceDetail({
         </div>
       </div>
 
-      <div className="pointer-events-none fixed bottom-0 left-0 right-0 z-10 h-[148px] bg-gradient-to-b from-white/0 to-[#f3f4f6] backdrop-blur-[10px]" />
-
       {showActions && <ActionSheet actions={actions} onCancel={() => setShowActions(false)} />}
     </div>
   );
