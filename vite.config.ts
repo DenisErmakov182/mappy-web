@@ -16,9 +16,6 @@ const legacyCssAliases = [
   'assets/index-BZl3ly6z.css',
 ]
 
-const buildRevision =
-  process.env.GITHUB_SHA ?? process.env.COMMIT_SHA ?? process.env.SOURCE_VERSION ?? Date.now().toString(36)
-
 /**
  * Timeweb can keep an older index.html on one CDN edge after App Platform has
  * already removed that build's hashed assets. Keep aliases for the shells we
@@ -61,33 +58,19 @@ export default defineConfig({
     tailwindcss(),
     legacyShellAliases(),
     VitePWA({
-      // The application decides when the waiting worker may activate and
-      // reload. autoUpdate could reload while a place form is being edited.
+      // Mappy needs the network for its map, API and photos. The service worker
+      // therefore provides installation support without caching the UI shell.
+      // This prevents an old HTML/JS bundle from surviving an App Platform
+      // deploy and reappearing on a later PWA launch.
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
       registerType: 'prompt',
       injectRegister: false,
-      workbox: {
-        // HTML и его ассеты обновляются одной атомарной precache-ревизией. Старый
-        // worker продолжает отдавать цельную старую сборку, новый — цельную новую.
-        // Новый worker ждёт команды приложения, поэтому открытая форма может
-        // безопасно отложить активацию до сохранения или закрытия.
-        skipWaiting: false,
-        clientsClaim: true,
-        cleanupOutdatedCaches: true,
-        navigateFallback: 'index.html',
-        manifestTransforms: [
-          async (entries) => ({
-            // Stable URLs are intentional, but Workbox otherwise writes
-            // `revision: null` for Vite output and never refreshes them. Tie all
-            // unversioned precache entries to the concrete deploy revision.
-            manifest: entries.map((entry) =>
-              entry.revision === null ? { ...entry, revision: buildRevision } : entry,
-            ),
-            warnings: [],
-          }),
-        ],
-        // Алиасы нужны только старым CDN-страницам. В precache достаточно одного
-        // стабильного app.js/index.css, иначе одинаковый код хранится несколько раз.
-        globIgnores: [...legacyJavaScriptAliases.map((path) => `**/${path}`), ...legacyCssAliases.map((path) => `**/${path}`)],
+      injectManifest: {
+        // The custom worker intentionally has no precache manifest or fetch
+        // handler. It becomes active only after every PWA window is closed.
+        injectionPoint: undefined,
       },
       includeAssets: ['favicon.ico', 'favicon.png', 'icons/apple-touch-icon.png'],
       manifest: {
