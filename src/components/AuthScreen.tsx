@@ -1,8 +1,16 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
-import { requestCode, verifyCode, completeProfile, type ApiUser } from "../lib/api";
+import { requestCode, verifyCode, completeProfile, rateLimitRetryAfter, type ApiUser } from "../lib/api";
 import { CloseButton, CtaButton } from "./primitives";
 
 const RESEND_COOLDOWN_SEC = 25;
+
+// Своя пауза укладывается в минуту, но сервер при лимите частоты может попросить
+// подождать до десяти, поэтому формат должен переживать минуты.
+function formatCountdown(totalSec: number): string {
+  const min = Math.floor(totalSec / 60);
+  const sec = totalSec % 60;
+  return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+}
 
 // Токены взяты из макета (node 1564-15087/15115/16601, 1569-36106/36183)
 const COLOR_HEADER = "#232323";
@@ -258,18 +266,24 @@ export function AuthScreen({
       setResendIn(RESEND_COOLDOWN_SEC);
       setStep("code");
     } catch (e) {
+      // Сервер ограничил частоту: показываем его паузу, а не свою — иначе
+      // кнопка разблокируется раньше, чем запрос снова будет принят.
+      const wait = rateLimitRetryAfter(e);
+      if (wait !== null) setResendIn(wait);
       setEmailError(e instanceof Error ? e.message : "Не удалось отправить код");
     } finally {
       setLoading(false);
     }
   };
 
-  // Тикающий таймер до разблокировки повторной отправки кода
+  // Тикающий таймер до разблокировки повторной отправки кода.
+  // Тикает на любом шаге: лимит частоты может сработать ещё на вводе почты,
+  // и тогда пауза, поставленная сервером, не должна застыть.
   useEffect(() => {
-    if (step !== "code" || resendIn <= 0) return;
+    if (resendIn <= 0) return;
     const id = setInterval(() => setResendIn((s) => Math.max(0, s - 1)), 1000);
     return () => clearInterval(id);
-  }, [step, resendIn > 0]);
+  }, [resendIn > 0]);
 
   const resendCode = async () => {
     if (resending || resendIn > 0) return;
@@ -281,6 +295,8 @@ export function AuthScreen({
       setResendIn(RESEND_COOLDOWN_SEC);
       digitRefs.current[0]?.focus();
     } catch (e) {
+      const wait = rateLimitRetryAfter(e);
+      if (wait !== null) setResendIn(wait);
       setError(e instanceof Error ? e.message : "Не удалось отправить код");
     } finally {
       setResending(false);
@@ -497,7 +513,7 @@ export function AuthScreen({
                   className="flex gap-1 text-[14px] leading-[18px]"
                   style={{ color: "rgba(4,4,19,0.55)", letterSpacing: TRACKING }}
                 >
-                  Запросить повторно можно через 00:{String(resendIn).padStart(2, "0")}
+                  Запросить повторно можно через {formatCountdown(resendIn)}
                 </p>
               ) : (
                 <button

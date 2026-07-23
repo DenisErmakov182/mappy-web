@@ -22,17 +22,27 @@ export interface ApiUser {
 export class ApiError extends Error {
   readonly status: number | null;
   readonly kind: "http" | "network" | "timeout" | "staging";
+  /** Сколько секунд ждать до повтора. Приходит с 429 от лимита запросов кода. */
+  readonly retryAfterSec: number | null;
 
   constructor(
     message: string,
     status: number | null,
     kind: "http" | "network" | "timeout" | "staging",
+    retryAfterSec: number | null = null,
   ) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.kind = kind;
+    this.retryAfterSec = retryAfterSec;
   }
+}
+
+/** Возвращает паузу в секундах, если сервер ограничил частоту запросов кода. */
+export function rateLimitRetryAfter(error: unknown): number | null {
+  if (!(error instanceof ApiError) || error.status !== 429) return null;
+  return error.retryAfterSec;
 }
 
 export function getToken(): string | null {
@@ -152,16 +162,22 @@ async function request<T>(
     if (!res.ok) {
       let message = `Ошибка ${res.status}`;
       let kind: "http" | "staging" = "http";
+      let retryAfterSec: number | null = null;
       try {
         const data = await res.json();
         if (data?.error) message = data.error;
         // Сервер отказал как стенд — например, при попытке регистрации,
         // которую клиентский белый список пропускает как обычный вход.
         if (data?.code === "STAGING_READ_ONLY") kind = "staging";
+        if (typeof data?.retryAfterSec === "number") retryAfterSec = data.retryAfterSec;
       } catch {
         // тело не JSON — оставляем дефолтное сообщение
       }
-      throw new ApiError(message, res.status, kind);
+      if (retryAfterSec === null) {
+        const header = Number(res.headers.get("Retry-After"));
+        if (Number.isFinite(header) && header > 0) retryAfterSec = header;
+      }
+      throw new ApiError(message, res.status, kind, retryAfterSec);
     }
     if (res.status === 204) return undefined as T;
     return (await res.json()) as T;
