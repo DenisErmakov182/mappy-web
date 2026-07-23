@@ -4,6 +4,7 @@ import './index.css'
 import App from './App.tsx'
 import { AppErrorBoundary } from './components/AppRecoveryScreen.tsx'
 import { registerPwaUpdateHandling } from './lib/pwaUpdate.ts'
+import { disablePwaForReadOnlyStaging, isReadOnlyStaging } from './lib/staging.ts'
 
 const configureIosStandaloneViewport = () => {
   const navigatorWithStandalone = navigator as Navigator & { standalone?: boolean }
@@ -36,7 +37,13 @@ const configureIosStandaloneViewport = () => {
 
 configureIosStandaloneViewport()
 
-registerPwaUpdateHandling()
+// На стенде service worker не нужен: тестовая сборка меняется часто, а
+// установленная PWA легко пережила бы её кешем и показала вчерашнюю версию.
+if (isReadOnlyStaging()) {
+  void disablePwaForReadOnlyStaging()
+} else {
+  registerPwaUpdateHandling()
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

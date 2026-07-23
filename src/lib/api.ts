@@ -1,4 +1,8 @@
 import type { Place, PlaceCategory, VisitStatus } from "../types";
+import {
+  READ_ONLY_STAGING_MESSAGE,
+  isAllowedReadOnlyStagingRequest,
+} from "./staging";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 const TOKEN_KEY = "mappy_token";
@@ -17,12 +21,12 @@ export interface ApiUser {
 
 export class ApiError extends Error {
   readonly status: number | null;
-  readonly kind: "http" | "network" | "timeout";
+  readonly kind: "http" | "network" | "timeout" | "staging";
 
   constructor(
     message: string,
     status: number | null,
-    kind: "http" | "network" | "timeout",
+    kind: "http" | "network" | "timeout" | "staging",
   ) {
     super(message);
     this.name = "ApiError";
@@ -104,7 +108,14 @@ export function getSessionUser(token: string): ApiUser | null {
   };
 }
 
+export function isReadOnlyStagingError(error: unknown): boolean {
+  return error instanceof ApiError && error.kind === "staging";
+}
+
 export function isAuthenticationError(error: unknown): boolean {
+  // Отказ стенда приходит с 403, но сессия при этом полностью валидна —
+  // без этой проверки просмотр на staging выкидывал бы из аккаунта.
+  if (isReadOnlyStagingError(error)) return false;
   return error instanceof ApiError && (error.status === 401 || error.status === 403);
 }
 
@@ -113,6 +124,11 @@ async function request<T>(
   options: RequestInit = {},
   timeoutMs = DEFAULT_TIMEOUT_MS,
 ): Promise<T> {
+  const method = (options.method ?? "GET").toUpperCase();
+  if (!isAllowedReadOnlyStagingRequest(method, path)) {
+    throw new ApiError(READ_ONLY_STAGING_MESSAGE, 403, "staging");
+  }
+
   const token = getToken();
   const headers: Record<string, string> = {
     ...(options.body ? { "Content-Type": "application/json" } : {}),
@@ -135,13 +151,17 @@ async function request<T>(
 
     if (!res.ok) {
       let message = `Ошибка ${res.status}`;
+      let kind: "http" | "staging" = "http";
       try {
         const data = await res.json();
         if (data?.error) message = data.error;
+        // Сервер отказал как стенд — например, при попытке регистрации,
+        // которую клиентский белый список пропускает как обычный вход.
+        if (data?.code === "STAGING_READ_ONLY") kind = "staging";
       } catch {
         // тело не JSON — оставляем дефолтное сообщение
       }
-      throw new ApiError(message, res.status, "http");
+      throw new ApiError(message, res.status, kind);
     }
     if (res.status === 204) return undefined as T;
     return (await res.json()) as T;
