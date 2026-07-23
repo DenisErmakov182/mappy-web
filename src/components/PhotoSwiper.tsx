@@ -53,11 +53,13 @@ export function PhotoSwiper({ photoUrls }: { photoUrls: string[] }) {
       ) : (
         // Скролл-контейнер вырывается во всю ширину экрана (родитель — px-4) и
         // задаёт отступы сам: 16px по бокам — инсет карточки, вертикальные —
-        // место под тень, которую overflow-x иначе обрезает сверху и снизу.
+        // место под мягкую тень (blur ~30px), которую overflow-x иначе режет
+        // сверху и снизу. Отрицательные -my-8 возвращают раскладку, чтобы этот
+        // вертикальный запас не добавлял пустоты вокруг свайпера.
         // Карточка = ширина контента контейнера, поэтому ровно с инсетом 16px.
         <div
           ref={scrollRef}
-          className="-mx-4 flex w-screen max-w-[calc(100%+32px)] snap-x snap-mandatory gap-8 overflow-x-auto scroll-smooth px-4 py-3 [&::-webkit-scrollbar]:hidden"
+          className="-mx-4 -my-8 flex w-screen max-w-[calc(100%+32px)] snap-x snap-mandatory gap-8 overflow-x-auto scroll-smooth px-4 py-8 [&::-webkit-scrollbar]:hidden"
         >
           {photoUrls.map((url, index) => (
             <div key={`${url}-${index}`} data-photo-card className={CARD}>
