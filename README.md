@@ -11,17 +11,17 @@ npm run build      # продакшен-сборка в dist/
 npm run preview    # локальный просмотр собранной версии
 ```
 
-## Деплой на Cloudflare Pages
+## Деплой
 
-1. Залить этот репозиторий на GitHub (см. ниже).
-2. В Cloudflare: **Workers & Pages → Create → Pages → Connect to Git**, выбрать репозиторий.
-3. Настройки сборки:
-   - **Framework preset:** Vite
-   - **Build command:** `npm run build`
-   - **Build output directory:** `dist`
-4. Deploy. Дальше каждый `git push` пересобирает и публикует автоматически.
+Продакшен — **Timeweb App Platform** (не Cloudflare — этот раздел раньше был ошибочным, проект переехал на российскую инфраструктуру по требованиям 152-ФЗ, см. `mappy-docs/04 Решения/ADR-003 Timeweb и 152-ФЗ.md`).
 
-HTTPS, геолокация и установка на экран Домой работают из коробки на выданном `*.pages.dev` домене (или на своём после привязки).
+- Репозиторий подключён к Timeweb App Platform, автодеплой на push в `main`.
+- Framework: Vite / React, Node.js 22.
+- Build command: `npm run build`, output: `dist`.
+- Переменная окружения `VITE_API_URL` указывает на прод-API (`https://api.mymappy.ru`).
+- Публичный домен `app.mymappy.ru` подключён через Yandex Cloud CDN (гасит HTTP/3, кэширует статику).
+
+Подробности и история решений — `mappy-docs/02 Архитектура/` и `mappy-docs/04 Решения/`.
 
 ## Первая заливка на GitHub
 
