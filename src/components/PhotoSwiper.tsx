@@ -47,7 +47,7 @@ export function PhotoSwiper({ photoUrls }: { photoUrls: string[] }) {
   const segmentCount = Math.max(photoUrls.length, 1);
 
   return (
-    <div className="-mx-4 flex w-[calc(100%+32px)] shrink-0 flex-col items-center gap-4">
+    <div className="flex w-full shrink-0 flex-col items-center gap-4">
       {photoUrls.length === 0 ? (
         <div className={CARD} style={{ backgroundColor: "var(--mappy-surface-secondary)" }} />
       ) : (
