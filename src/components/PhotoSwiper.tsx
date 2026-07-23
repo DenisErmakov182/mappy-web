@@ -7,7 +7,8 @@ import { useEffect, useRef, useState } from "react";
  * мест на карте (см. PlaceCardCarousel).
  *
  * Под фото — сегментная полоса (как в сторис): по сегменту на снимок, активный
- * подсвечен. Нет фото — один пустой сегмент и карточка-заглушка.
+ * подсвечен. Полоса появляется только когда фото два и больше — при одном
+ * листать нечего, а при нуле карточка-заглушка и так одна.
  * Макет: Figma Place Detail, node 1868:38725 / ProgressBarContainer 1868:38717.
  */
 
@@ -43,8 +44,8 @@ export function PhotoSwiper({ photoUrls }: { photoUrls: string[] }) {
     return () => container.removeEventListener("scroll", update);
   }, [photoUrls.length]);
 
-  // Карточка-заглушка и один серый сегмент, если фото ещё нет.
-  const segmentCount = Math.max(photoUrls.length, 1);
+  // Полоса нужна только при нескольких фото: одно — листать нечего.
+  const showSegments = photoUrls.length >= 2;
 
   return (
     <div className="flex w-full shrink-0 flex-col items-center gap-4">
@@ -69,17 +70,19 @@ export function PhotoSwiper({ photoUrls }: { photoUrls: string[] }) {
         </div>
       )}
 
-      <div className="flex w-[89%] items-center gap-1">
-        {Array.from({ length: segmentCount }, (_, index) => (
-          <span
-            key={index}
-            className="h-2 min-w-px flex-1 rounded-full"
-            style={{
-              backgroundColor: index === active && photoUrls.length > 0 ? SEGMENT_ACTIVE : "var(--mappy-surface-secondary)",
-            }}
-          />
-        ))}
-      </div>
+      {showSegments && (
+        <div className="flex w-[89%] items-center gap-1">
+          {photoUrls.map((_, index) => (
+            <span
+              key={index}
+              className="h-2 min-w-px flex-1 rounded-full"
+              style={{
+                backgroundColor: index === active ? SEGMENT_ACTIVE : "var(--mappy-surface-secondary)",
+              }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
