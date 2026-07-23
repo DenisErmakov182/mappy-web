@@ -1,5 +1,6 @@
 import { useRef, useState, type ReactNode } from "react";
 import { uploadAvatar, type ApiUser } from "../lib/api";
+import { cropSquareImage } from "../lib/image";
 
 type ConfirmAction = "logout" | "delete" | null;
 
@@ -230,33 +231,5 @@ function AccountIcon({ name }: { name: "chevron" | "edit" | "logout" | "trash" |
 async function prepareAvatar(file: File): Promise<File> {
   if (!file.type.startsWith("image/")) throw new Error("Выберите изображение");
   if (file.size > 15 * 1024 * 1024) throw new Error("Фотография должна весить не больше 15 МБ");
-
-  const objectUrl = URL.createObjectURL(file);
-  try {
-    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
-      const element = new Image();
-      element.onload = () => resolve(element);
-      element.onerror = () => reject(new Error("Не удалось прочитать фотографию"));
-      element.src = objectUrl;
-    });
-
-    const outputSize = 512;
-    const canvas = document.createElement("canvas");
-    canvas.width = outputSize;
-    canvas.height = outputSize;
-    const context = canvas.getContext("2d");
-    if (!context) throw new Error("Не удалось обработать фотографию");
-
-    const sourceSize = Math.min(image.naturalWidth, image.naturalHeight);
-    const sourceX = (image.naturalWidth - sourceSize) / 2;
-    const sourceY = (image.naturalHeight - sourceSize) / 2;
-    context.drawImage(image, sourceX, sourceY, sourceSize, sourceSize, 0, 0, outputSize, outputSize);
-
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", 0.84));
-    if (!blob) throw new Error("Не удалось подготовить фотографию");
-    const extension = blob.type === "image/webp" ? "webp" : blob.type === "image/png" ? "png" : "jpg";
-    return new File([blob], `avatar-${Date.now()}.${extension}`, { type: blob.type });
-  } finally {
-    URL.revokeObjectURL(objectUrl);
-  }
+  return cropSquareImage(file, 512, "avatar");
 }

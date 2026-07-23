@@ -1,4 +1,5 @@
 import type { Place, PlaceCategory, VisitStatus } from "../types";
+import { downscaleImage } from "./image";
 import {
   READ_ONLY_STAGING_MESSAGE,
   isAllowedReadOnlyStagingRequest,
@@ -287,14 +288,17 @@ async function getPhotoUploadUrl(contentType: string) {
   });
 }
 
-// Загружает файл напрямую в S3 по presigned-ссылке, минуя сервер API.
+// Ужимаем до 1600px по длинной стороне: этого хватает для карточки и просмотра
+// на весь экран телефона, а снимок с камеры (~4000px, 3–5 МБ) превращается в
+// ~250–400 КБ. Загрузка идёт напрямую в S3 по presigned-ссылке, минуя API,
+// поэтому уменьшать надо здесь, на клиенте.
 export async function uploadPhoto(file: File): Promise<string> {
-  const contentType = file.type || "image/jpeg";
-  const { uploadUrl, publicUrl } = await getPhotoUploadUrl(contentType);
+  const prepared = await downscaleImage(file, 1600, "place");
+  const { uploadUrl, publicUrl } = await getPhotoUploadUrl(prepared.type);
   const res = await fetch(uploadUrl, {
     method: "PUT",
-    headers: { "Content-Type": contentType },
-    body: file,
+    headers: { "Content-Type": prepared.type },
+    body: prepared,
   });
   if (!res.ok) throw new Error("Не удалось загрузить фото");
   return publicUrl;
