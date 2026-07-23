@@ -4,6 +4,7 @@ import { categoryLabel } from "../types";
 import { CategoryIcon } from "./CategoryIcon";
 import { RatingChip, CloseButton } from "./primitives";
 import { ActionSheet } from "./ActionSheet";
+import { PhotoSwiper } from "./PhotoSwiper";
 
 function formatPlaceDate(createdAt?: string): string | null {
   if (!createdAt) return null;
@@ -106,12 +107,7 @@ export function PlaceDetail({
           </button>
         </div>
 
-        <div
-          className="h-[253px] w-full shrink-0 overflow-hidden rounded-[28px] bg-white shadow-[8px_2px_30.4px_#e9e9e9]"
-          style={{ backgroundColor: place.photoUrls[0] ? undefined : "var(--mappy-surface-secondary)" }}
-        >
-          {place.photoUrls[0] && <img src={place.photoUrls[0]} alt="" className="h-full w-full object-cover" />}
-        </div>
+        <PhotoSwiper photoUrls={place.photoUrls} />
 
         <div className="mt-3 flex w-full flex-col gap-6">
           <div className="flex flex-col gap-2 px-1">
@@ -140,19 +136,6 @@ export function PlaceDetail({
           </div>
 
           <div className="flex w-full flex-col gap-4">
-            {place.photoUrls.length > 0 && (
-              <div className="-mr-4 flex gap-1 overflow-x-auto pr-4 [&::-webkit-scrollbar]:hidden">
-                {place.photoUrls.map((url, index) => (
-                  <img
-                    key={`${url}-${index}`}
-                    src={url}
-                    alt=""
-                    className="h-[120px] w-[120px] shrink-0 rounded-[10px] object-cover"
-                  />
-                ))}
-              </div>
-            )}
-
             {place.categories.length > 0 && (
               <div className="flex flex-wrap gap-1">
                 {place.categories.map((category) => (
