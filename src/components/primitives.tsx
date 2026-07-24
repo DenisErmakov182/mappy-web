@@ -54,6 +54,21 @@ export function StarIcon({ filled, size = 60 }: { filled: boolean; size?: number
   );
 }
 
+/* Иконка фильтра через currentColor — розовая в активном состоянии (851:14573). */
+export function FilterIcon({ className, color }: { className?: string; color?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} style={{ color }} aria-hidden="true">
+      <path
+        d="M6 12H18M3 6H21M9 18H15"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 /* Иконка поиска через currentColor — меняет цвет вместе с текстом поля (пусто/заполнено). */
 export function SearchIcon({ className, color }: { className?: string; color?: string }) {
   return (

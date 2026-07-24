@@ -3,6 +3,7 @@ import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { Place } from "../types";
 import { ratingChipColors } from "../types";
+import { CENTER_PIN_SCREEN_OFFSET_Y } from "./CenterPin";
 import mainPin from "../assets/icons/main-pin.webp";
 import placedPinShadow from "../assets/icons/placed-pin-shadow.webp";
 import food from "../assets/categories/food.webp";
@@ -382,6 +383,12 @@ export function MapView({ places, center, initialZoom = 12, onCenterChange, onSe
       zoom: initialZoom,
       attributionControl: false,
     });
+    // Пин нарисован на 32px ниже геометрического центра контейнера (см.
+    // CenterPin.tsx) — сразу подправляем камеру, чтобы его остриё указывало
+    // на исходную center-координату, а не на точку выше неё. jumpTo игнорирует
+    // offset (проверено в исходниках maplibre-gl — учитывает его только
+    // easeTo/flyTo), поэтому используем easeTo с нулевой длительностью.
+    map.easeTo({ center: [center.lng, center.lat], zoom: initialZoom, offset: [0, CENTER_PIN_SCREEN_OFFSET_Y], duration: 0 });
     mapRef.current = map;
 
     const rebuild = () => {
@@ -443,7 +450,10 @@ export function MapView({ places, center, initialZoom = 12, onCenterChange, onSe
     map.on("movestart", () => onMovingChange?.(true));
     map.on("moveend", () => {
       onMovingChange?.(false);
-      const c = map.getCenter();
+      // Читаем координату под остриём пина (сдвинутым на CENTER_PIN_SCREEN_OFFSET_Y
+      // от геометрического центра контейнера), а не голый map.getCenter().
+      const { clientWidth, clientHeight } = map.getContainer();
+      const c = map.unproject([clientWidth / 2, clientHeight / 2 + CENTER_PIN_SCREEN_OFFSET_Y]);
       onCenterChange({ lat: c.lat, lng: c.lng });
     });
 
@@ -470,7 +480,12 @@ export function MapView({ places, center, initialZoom = 12, onCenterChange, onSe
 
   useEffect(() => {
     if (!flyTo || !mapRef.current) return;
-    mapRef.current.easeTo({ center: [flyTo.lng, flyTo.lat], zoom: 14, duration: 800 });
+    mapRef.current.easeTo({
+      center: [flyTo.lng, flyTo.lat],
+      zoom: 14,
+      duration: 800,
+      offset: [0, CENTER_PIN_SCREEN_OFFSET_Y],
+    });
   }, [flyTo]);
 
   return <div ref={containerRef} className="w-full h-full" />;

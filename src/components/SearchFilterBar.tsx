@@ -1,5 +1,4 @@
-import filterIcon from "../assets/icons/filter-icon.svg";
-import { SearchIcon } from "./primitives";
+import { FilterIcon, SearchIcon } from "./primitives";
 
 /*
  * Строка поиска + фильтр по макету Bar (790:16784): белый контейнер radius 32,
@@ -55,13 +54,7 @@ export function SearchFilterBar({ query, onOpenSearch, onClearQuery, hasActiveFi
         style={{ backgroundColor: hasActiveFilters ? "var(--mappy-brand-subtle)" : "rgba(3,7,18,0.04)" }}
         aria-label="Фильтры"
       >
-        <img src={filterIcon} alt="" className="w-6 h-6" />
-        {hasActiveFilters && (
-          <span
-            className="absolute top-1.5 right-2.5 w-2 h-2 rounded-full"
-            style={{ backgroundColor: "var(--mappy-pink)" }}
-          />
-        )}
+        <FilterIcon className="w-6 h-6" color={hasActiveFilters ? "var(--mappy-pink)" : "#4A5565"} />
       </button>
     </div>
   );

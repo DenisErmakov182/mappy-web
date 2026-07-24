@@ -2,6 +2,12 @@ import bigPin from "../assets/icons/big-pin.webp";
 import raisedPinShadow from "../assets/icons/center-pin-shadow-raised.webp";
 import restingPinShadow from "../assets/icons/center-pin-shadow-rest.webp";
 
+// Пин смещён на 32px ниже геометрического центра контейнера карты, чтобы
+// освободить место сверху под плашку адреса. MapView.tsx применяет тот же
+// сдвиг к камере (offset при jumpTo/easeTo) и к обратному геокодированию
+// (unproject точки под остриём) — значение должно совпадать в обоих местах.
+export const CENTER_PIN_SCREEN_OFFSET_Y = 32;
+
 /*
  * Главный пин в центре карты по макету 1489:15484 (71x88 + рассеянная тень).
  * При движении карты пин приподнимается, а точные тени из Figma сменяются
@@ -17,9 +23,9 @@ export function CenterPin({ isMoving, onClick }: { isMoving: boolean; onClick: (
       disabled={isMoving}
       aria-label="Добавить место здесь"
       className="absolute left-1/2 top-1/2 z-10 pointer-events-auto"
-      // Остриё большого пина (y = 16 + 88) совпадает с географическим
-      // центром карты. Поэтому сохранённый маркер появляется ровно в этой точке.
-      style={{ transform: "translate(-50%, -104px)", width: 95, height: 112 }}
+      // Остриё большого пина (y = 16 + 88) совпадает с географическим центром
+      // карты со сдвигом CENTER_PIN_SCREEN_OFFSET_Y вниз (см. константу выше).
+      style={{ transform: `translate(-50%, ${-104 + CENTER_PIN_SCREEN_OFFSET_Y}px)`, width: 95, height: 112 }}
     >
       <img
         src={restingPinShadow}
