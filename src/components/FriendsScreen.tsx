@@ -164,11 +164,11 @@ export function FriendsScreen({
       <div className="flex flex-col gap-2 px-4 pt-[var(--mappy-floating-top)]">
         <ProfileHeader user={user} onOpenAccount={() => setShowAccount(true)} />
 
-        <section className="rounded-[16px] bg-white p-4">
+        <section className="rounded-[28px] bg-white p-4">
           <SearchField ref={searchRef} value={query} onChange={setQuery} placeholder="Найти друга" />
 
           {hasSearch ? (
-            <div className="mt-4">
+            <div className="mt-6">
               {searching && <EmptyLine>Ищем…</EmptyLine>}
               {!searching && searchResults.length === 0 && <EmptyLine>Никого не нашли</EmptyLine>}
               {!searching && searchResults.map((person, index) => (
@@ -210,7 +210,7 @@ export function FriendsScreen({
             </div>
           ) : (
             <>
-              <div className="mb-3 mt-4 flex items-center justify-between px-1">
+              <div className="mb-6 mt-6 flex items-center justify-between px-1">
                 <span className="text-[15px]" style={{ color: "var(--mappy-text-secondary)" }}>
                   {friends.length} {friendCountLabel(friends.length)}
                 </span>
@@ -287,14 +287,14 @@ function RequestsView({
 
         <div className="mt-3">
           {active.length === 0 ? (
-            <div className="rounded-[16px] bg-white px-6 py-8 text-center">
+            <div className="rounded-[28px] bg-white px-6 py-8 text-center">
               <p className="text-[20px] font-semibold text-[var(--mappy-text-primary)]">Запросов нет</p>
               <p className="mt-2 text-[14px] text-[var(--mappy-text-secondary)]">
                 Вероятно, вы уже со всеми подружились!
               </p>
             </div>
           ) : (
-            <section className="rounded-[16px] bg-white p-4">
+            <section className="rounded-[28px] bg-white p-4">
               {active.map((person, index) => (
                 <PersonRow
                   key={person.id}
@@ -471,7 +471,7 @@ function FriendProfileView({
 
         <div className="mt-8 w-full">
           {person.relation === "none" && (
-            <NeutralActionButton
+            <BrandActionButton
               disabled={busy || !person.username}
               onClick={() => void act(async () => {
                 const sent = await sendFriendRequest(person.username ?? "");
@@ -479,23 +479,21 @@ function FriendProfileView({
               })}
             >
               {busy ? "Отправляем…" : "Подружиться"}
-            </NeutralActionButton>
+            </BrandActionButton>
           )}
 
           {person.relation === "outgoing" && (
             <div className="flex flex-col gap-2">
-              <NeutralActionButton disabled>Запрос отправлен!</NeutralActionButton>
+              <BrandActionButton disabled>Запрос отправлен!</BrandActionButton>
               {person.requestId && (
-                <button
-                  type="button"
+                <NeutralActionButton
                   disabled={busy}
                   onClick={() => void act(async () => {
                     await cancelFriendRequest(person.requestId!);
                   })}
-                  className="h-10 text-[14px] font-medium text-[#99a1af]"
                 >
                   Отменить запрос
-                </button>
+                </NeutralActionButton>
               )}
             </div>
           )}
@@ -647,7 +645,7 @@ const SearchField = forwardRef<HTMLInputElement, {
     placeholder: string;
   }>(function SearchField({ value, onChange, placeholder }, ref) {
   return (
-    <label className="flex h-12 items-center gap-2.5 rounded-[10px] bg-[var(--mappy-surface-secondary)] px-4">
+    <label className="flex h-12 items-center gap-2.5 rounded-[14px] bg-[var(--mappy-surface-secondary)] px-4">
       <SearchIcon
         className="h-5 w-5 shrink-0"
         color={value ? "var(--mappy-text-primary)" : "var(--mappy-text-tertiary)"}
@@ -682,7 +680,7 @@ function PersonRow({
       style={{ borderTop: border ? "1px solid var(--mappy-divider)" : "none" }}
     >
       <SmallAvatar person={person} />
-      <div className="min-w-0 flex-1">
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p className="truncate text-[16px] font-semibold text-[var(--mappy-text-primary)]">{displayName(person)}</p>
         {person.username && <p className="truncate text-[13px] text-[var(--mappy-text-secondary)]">@{person.username}</p>}
       </div>
@@ -706,9 +704,9 @@ function ProfileHeader({ user, onOpenAccount }: { user: ApiUser; onOpenAccount: 
     relation: "none" as const,
   };
   return (
-    <button type="button" onClick={onOpenAccount} className="relative mt-4 w-full rounded-[16px] bg-white px-6 pb-5 pt-6 text-left">
-      <div className="relative flex items-start justify-end">
-        <div className="absolute left-1/2 top-0 max-w-[70%] -translate-x-1/2">
+    <button type="button" onClick={onOpenAccount} className="relative mt-4 w-full rounded-[28px] bg-white px-6 py-4 text-left">
+      <div className="relative flex items-center justify-between">
+        <div className="max-w-[70%]">
           <p className="truncate text-[24px] font-semibold leading-7 text-[var(--mappy-text-primary)]">{displayName(person)}</p>
           {user.username && <p className="mt-2 text-[16px] text-[var(--mappy-text-secondary)]">@{user.username}</p>}
         </div>
@@ -753,6 +751,27 @@ function ScreenBackButton({ onClick }: { onClick: () => void }) {
       className="absolute left-4 top-[calc(env(safe-area-inset-top)+20px)] z-20 inline-flex items-center gap-1 text-[16px] font-medium text-[#99a1af]"
     >
       <BackIcon /> Назад
+    </button>
+  );
+}
+
+function BrandActionButton({
+  children,
+  onClick,
+  disabled,
+}: {
+  children: ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="flex h-14 w-full items-center justify-center rounded-[14px] bg-[#ff637e] text-[16px] font-medium text-white"
+    >
+      {children}
     </button>
   );
 }

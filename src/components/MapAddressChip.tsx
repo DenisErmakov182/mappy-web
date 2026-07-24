@@ -15,16 +15,16 @@ export function MapAddressChip({ address }: { address: string }) {
         className="pointer-events-none absolute"
         style={{
           inset: "-18px -26px",
-          borderRadius: 9999,
-          backgroundColor: "rgba(209, 213, 220, 0.27)",
-          backdropFilter: "blur(9px)",
-          WebkitBackdropFilter: "blur(9px)",
-          filter: "blur(5px)",
+          borderRadius: 32,
+          backgroundColor: "rgba(255, 255, 255, 0.27)",
+          backdropFilter: "blur(7.45px)",
+          WebkitBackdropFilter: "blur(7.45px)",
+          filter: "blur(3.15px)",
         }}
       />
-      <div className="relative flex items-center justify-center rounded-[32px] bg-white px-4 py-3">
+      <div className="relative flex max-w-[360px] items-center justify-center rounded-[32px] bg-white px-4 py-3">
         <span
-          className="whitespace-nowrap text-[16px] font-medium tracking-[-0.6px]"
+          className="text-center text-[16px] font-medium tracking-[-0.6px]"
           style={{ color: "var(--mappy-text-secondary)" }}
         >
           <SplitFlapAddress address={address} />
