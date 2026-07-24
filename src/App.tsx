@@ -436,7 +436,7 @@ function MapApp({
       {/* Адрес центрального пина — появляется, когда карта остановилась (макет 1893:39146) */}
       {tab === "map" && selectedPlaces.length === 0 && centerAddress && (
         <div
-          className={`pointer-events-none absolute left-1/2 z-20 -translate-x-1/2 px-4 transition-opacity duration-200 ${
+          className={`pointer-events-none absolute left-1/2 z-20 w-max -translate-x-1/2 px-4 transition-opacity duration-200 ${
             isMapMoving ? "opacity-0" : "opacity-100"
           }`}
           style={{ top: "calc(var(--mappy-floating-top) + var(--mappy-search-bar-height) + 24px)" }}
