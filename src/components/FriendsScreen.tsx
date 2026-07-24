@@ -23,7 +23,7 @@ import {
 import { CtaButton, SearchIcon } from "./primitives";
 import { PlaceRowCard } from "./PlaceRowCard";
 import friendsEmptyIllustration from "../assets/illustrations/friends-empty.webp";
-import friendPhotoPin from "../assets/icons/friend-photo-pin.webp";
+import friendPhotoPin from "../assets/icons/friend-photo-pin.png";
 import filterIcon from "../assets/icons/filter-icon.svg";
 import dotsHorizontalIcon from "../assets/icons/dots-horizontal.svg";
 import { AccountScreen } from "./AccountScreen";
