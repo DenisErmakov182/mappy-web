@@ -67,7 +67,7 @@ export function AccountScreen({
     <div className="account-screen" role="dialog" aria-modal="true" aria-label="Аккаунт">
       <button className="account-back-button" onClick={onClose} aria-label="Вернуться к друзьям">
         <AccountIcon name="chevron" />
-        <span>Выйти</span>
+        <span>Назад</span>
       </button>
 
       <div className="account-content">
@@ -122,9 +122,11 @@ export function AccountScreen({
 
       {confirmAction === "logout" && (
         <AccountConfirmationSheet
+          variant="logout"
           title="Выйти из аккаунта?"
+          description="Ваши данные сохранятся"
           primaryLabel="Не выходить"
-          secondaryLabel="Выйти"
+          secondaryLabel="Выйти из аккаунта"
           onClose={() => setConfirmAction(null)}
           onPrimary={() => setConfirmAction(null)}
           onSecondary={onLogout}
@@ -133,6 +135,7 @@ export function AccountScreen({
 
       {confirmAction === "delete" && (
         <AccountConfirmationSheet
+          variant="delete"
           title="Удалить аккаунт?"
           description="После удаления аккаунта все ваши данные будут стерты без возможности восстановления"
           primaryLabel="Не удалять"
@@ -165,6 +168,7 @@ function ReadonlyField({ value, fallback }: { value: string | null; fallback: st
 }
 
 function AccountConfirmationSheet({
+  variant,
   title,
   description,
   primaryLabel,
@@ -174,6 +178,7 @@ function AccountConfirmationSheet({
   onSecondary,
   secondaryDisabled = false,
 }: {
+  variant: "logout" | "delete";
   title: string;
   description?: string;
   primaryLabel: string;
@@ -186,7 +191,7 @@ function AccountConfirmationSheet({
   return (
     <div className="account-confirm-backdrop" onClick={onClose}>
       <div
-        className={`account-confirm-sheet ${description ? "account-confirm-sheet-delete" : "account-confirm-sheet-logout"}`}
+        className={`account-confirm-sheet account-confirm-sheet-${variant}`}
         onClick={(event) => event.stopPropagation()}
         role="alertdialog"
         aria-modal="true"

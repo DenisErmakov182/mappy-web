@@ -4,6 +4,7 @@ import { SearchFilterBar } from "./components/SearchFilterBar";
 import { FilterSheet } from "./components/FilterSheet";
 import { MapView } from "./components/MapView";
 import { CenterPin } from "./components/CenterPin";
+import { MapAddressChip } from "./components/MapAddressChip";
 import { AddPlaceSheet } from "./components/AddPlaceSheet";
 import { PlaceDetail } from "./components/PlaceDetail";
 import { PlaceCardCarousel } from "./components/PlaceCardCarousel";
@@ -26,6 +27,7 @@ import {
   fetchPlaces,
   fetchFriends,
   fetchFriendPlaces,
+  reverseGeocode,
   createPlace,
   updatePlace,
   deletePlace,
@@ -249,6 +251,7 @@ function MapApp({
   const [detailPlace, setDetailPlace] = useState<Place | null>(null);
   const [center, setCenter] = useState(initialCenter);
   const [isMapMoving, setIsMapMoving] = useState(false);
+  const [centerAddress, setCenterAddress] = useState("");
   const [editingPlace, setEditingPlace] = useState<Place | null>(null);
   const [flyTo, setFlyTo] = useState<{ lat: number; lng: number; ts: number } | null>(null);
   const [locating, setLocating] = useState(false);
@@ -315,6 +318,26 @@ function MapApp({
       { enableHighAccuracy: true, timeout: 10000 },
     );
   };
+
+  // Адрес под поиском для центрального пина (макет 1893:39146). Дебаунс сглаживает
+  // серию быстрых flick-жестов в один запрос геокодера вместо запроса на каждый moveend.
+  useEffect(() => {
+    if (tab !== "map" || selectedPlaces.length > 0) return;
+    let cancelled = false;
+    const timeout = setTimeout(() => {
+      reverseGeocode(center.lat, center.lng)
+        .then((addr) => {
+          if (!cancelled) setCenterAddress(addr);
+        })
+        .catch(() => {
+          // Декоративная подсказка — молча оставляем прежний адрес при сбое геокодера.
+        });
+    }, 500);
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+    };
+  }, [center.lat, center.lng, tab, selectedPlaces.length]);
 
   const visiblePlaces = useMemo(() => {
     return places.filter((place) => {
@@ -407,6 +430,18 @@ function MapApp({
             hasActiveFilters={!filtersAreEmpty(filters)}
             onFilterTap={() => setShowFilters(true)}
           />
+        </div>
+      )}
+
+      {/* Адрес центрального пина — появляется, когда карта остановилась (макет 1893:39146) */}
+      {tab === "map" && selectedPlaces.length === 0 && centerAddress && (
+        <div
+          className={`pointer-events-none absolute left-1/2 z-20 -translate-x-1/2 px-4 transition-opacity duration-200 ${
+            isMapMoving ? "opacity-0" : "opacity-100"
+          }`}
+          style={{ top: "calc(var(--mappy-floating-top) + var(--mappy-search-bar-height) + 24px)" }}
+        >
+          <MapAddressChip address={centerAddress} />
         </div>
       )}
 

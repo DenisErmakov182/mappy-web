@@ -20,11 +20,9 @@ import {
   type ApiFriendProfile,
   type ApiUser,
 } from "../lib/api";
-import { CtaButton } from "./primitives";
+import { CtaButton, SearchIcon } from "./primitives";
 import { PlaceRowCard } from "./PlaceRowCard";
 import friendsEmptyIllustration from "../assets/illustrations/friends-empty.webp";
-import pinMap from "../assets/illustrations/pin-map.webp";
-import searchIcon from "../assets/icons/search-icon.svg";
 import filterIcon from "../assets/icons/filter-icon.svg";
 import dotsHorizontalIcon from "../assets/icons/dots-horizontal.svg";
 import { AccountScreen } from "./AccountScreen";
@@ -208,29 +206,10 @@ export function FriendsScreen({
                   )}
                 </button>
               )}
-              <CtaButton onClick={() => searchRef.current?.focus()}>Найти друга</CtaButton>
+              <CtaButton onClick={() => searchRef.current?.focus()}>Добавить по нику</CtaButton>
             </div>
           ) : (
             <>
-              {friends[0] && (
-                <div className="mt-4 flex items-center justify-between rounded-[16px] bg-[#f3f4f6] p-4">
-                  <div>
-                    <p className="mb-1 text-[12px]" style={{ color: "var(--mappy-text-secondary)" }}>
-                      Главный исследователь недели
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[18px] font-semibold" style={{ color: "var(--mappy-text-primary)" }}>
-                        {friends[0].username || displayName(friends[0])}
-                      </span>
-                      <span className="rounded-full bg-[var(--mappy-brand-subtle)] px-2 py-1 text-[12px] font-medium text-[var(--mappy-pink)]">
-                        +2 новых места! ↗
-                      </span>
-                    </div>
-                  </div>
-                  <img src={pinMap} alt="" className="w-9" />
-                </div>
-              )}
-
               <div className="mb-3 mt-4 flex items-center justify-between px-1">
                 <span className="text-[15px]" style={{ color: "var(--mappy-text-secondary)" }}>
                   {friends.length} {friendCountLabel(friends.length)}
@@ -288,7 +267,9 @@ function RequestsView({
   onBack: () => void;
   onOpenProfile: (person: ApiFriendProfile) => void;
 }) {
-  const total = incoming.length + outgoing.length;
+  const [activeTab, setActiveTab] = useState<"outgoing" | "incoming">(incoming.length > 0 ? "incoming" : "outgoing");
+  const active = activeTab === "incoming" ? incoming : outgoing;
+
   return (
     <div className="relative h-full overflow-y-auto bg-[var(--mappy-surface-primary)] pb-32">
       <ScreenBackButton onClick={onBack} />
@@ -297,48 +278,84 @@ function RequestsView({
       </h1>
 
       <div className="px-4 pt-6">
-        {total === 0 ? (
-          <div className="rounded-[16px] bg-white px-6 py-8 text-center">
-            <p className="text-[20px] font-semibold text-[var(--mappy-text-primary)]">Запросов нет</p>
-            <p className="mt-2 text-[14px] text-[var(--mappy-text-secondary)]">
-              Вероятно, вы уже со всеми подружились!
-            </p>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {incoming.length > 0 && (
-              <RequestSection title={`${incoming.length} ${requestCountLabel(incoming.length)}`}>
-                {incoming.map((person, index) => (
-                  <PersonRow key={person.id} person={person} border={index > 0} onClick={() => onOpenProfile(person)} />
-                ))}
-              </RequestSection>
-            )}
-            {outgoing.length > 0 && (
-              <RequestSection title="Отправленные">
-                {outgoing.map((person, index) => (
-                  <PersonRow
-                    key={person.id}
-                    person={person}
-                    border={index > 0}
-                    suffix={<span className="text-[12px] text-[#99a1af]">Отправлен</span>}
-                    onClick={() => onOpenProfile(person)}
-                  />
-                ))}
-              </RequestSection>
-            )}
-          </div>
-        )}
+        <RequestsTabControl
+          outgoingCount={outgoing.length}
+          incomingCount={incoming.length}
+          active={activeTab}
+          onChange={setActiveTab}
+        />
+
+        <div className="mt-3">
+          {active.length === 0 ? (
+            <div className="rounded-[16px] bg-white px-6 py-8 text-center">
+              <p className="text-[20px] font-semibold text-[var(--mappy-text-primary)]">Запросов нет</p>
+              <p className="mt-2 text-[14px] text-[var(--mappy-text-secondary)]">
+                Вероятно, вы уже со всеми подружились!
+              </p>
+            </div>
+          ) : (
+            <section className="rounded-[16px] bg-white p-4">
+              {active.map((person, index) => (
+                <PersonRow
+                  key={person.id}
+                  person={person}
+                  border={index > 0}
+                  suffix={
+                    activeTab === "outgoing" ? <span className="text-[12px] text-[#99a1af]">Отправлен</span> : undefined
+                  }
+                  onClick={() => onOpenProfile(person)}
+                />
+              ))}
+            </section>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
-function RequestSection({ title, children }: { title: string; children: ReactNode }) {
+// Сегментный переключатель по макету VisitStatusControl (844:14064) — обычно
+// используется для статуса места, здесь переиспользован для вкладок запросов.
+function RequestsTabControl({
+  outgoingCount,
+  incomingCount,
+  active,
+  onChange,
+}: {
+  outgoingCount: number;
+  incomingCount: number;
+  active: "outgoing" | "incoming";
+  onChange: (tab: "outgoing" | "incoming") => void;
+}) {
   return (
-    <section className="rounded-[16px] bg-white p-4">
-      <h2 className="mb-3 px-1 text-[16px] font-medium text-[var(--mappy-text-secondary)]">{title}</h2>
-      {children}
-    </section>
+    <div className="flex h-11 w-full items-center gap-1 rounded-[28px] bg-[var(--mappy-surface-secondary)] p-1">
+      <RequestsTab label="Отправленные" count={outgoingCount} isActive={active === "outgoing"} onClick={() => onChange("outgoing")} />
+      <RequestsTab label="Полученные" count={incomingCount} isActive={active === "incoming"} onClick={() => onChange("incoming")} />
+    </div>
+  );
+}
+
+function RequestsTab({
+  label,
+  count,
+  isActive,
+  onClick,
+}: {
+  label: string;
+  count: number;
+  isActive: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex h-full flex-1 items-center justify-center gap-1 rounded-[28px] px-6 text-[14px] font-medium tracking-[-0.6px]"
+      style={{ backgroundColor: isActive ? "var(--mappy-surface-canvas)" : "transparent" }}
+    >
+      <span style={{ color: isActive ? "var(--mappy-text-primary)" : "var(--mappy-text-secondary)" }}>{label}</span>
+      <span style={{ color: "#99a1af" }}>{count}</span>
+    </button>
   );
 }
 
@@ -596,12 +613,15 @@ function FriendPlacesSearchBar({
   return (
     <div className="flex h-16 w-full items-center gap-1 rounded-[32px] bg-white p-2">
       <label className="flex h-12 min-w-0 flex-1 items-center gap-2.5 rounded-l-[32px] rounded-r-[10px] bg-[var(--mappy-surface-secondary)] px-4 py-3">
-        <img src={searchIcon} alt="" className="h-6 w-6 shrink-0" />
+        <SearchIcon
+          className="h-6 w-6 shrink-0"
+          color={value ? "var(--mappy-text-primary)" : "var(--mappy-text-tertiary)"}
+        />
         <input
           value={value}
           onChange={(event) => onChange(event.target.value)}
           placeholder="Поиск по адресу, названию"
-          className="min-w-0 flex-1 bg-transparent text-[16px] font-medium leading-[18px] tracking-[-0.6px] text-[var(--mappy-text-primary)] outline-none placeholder:text-[var(--mappy-text-secondary)]"
+          className="min-w-0 flex-1 bg-transparent text-[16px] font-medium leading-[18px] tracking-[-0.6px] text-[var(--mappy-text-primary)] outline-none placeholder:text-[var(--mappy-text-tertiary)]"
         />
       </label>
       <button
@@ -627,14 +647,17 @@ const SearchField = forwardRef<HTMLInputElement, {
     placeholder: string;
   }>(function SearchField({ value, onChange, placeholder }, ref) {
   return (
-    <label className="flex h-12 items-center gap-2.5 rounded-[10px] bg-[#e5e7eb] px-4">
-      <img src={searchIcon} alt="" className="h-5 w-5 shrink-0 opacity-70" />
+    <label className="flex h-12 items-center gap-2.5 rounded-[10px] bg-[var(--mappy-surface-secondary)] px-4">
+      <SearchIcon
+        className="h-5 w-5 shrink-0"
+        color={value ? "var(--mappy-text-primary)" : "var(--mappy-text-tertiary)"}
+      />
       <input
         ref={ref}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="min-w-0 flex-1 bg-transparent text-[16px] text-[var(--mappy-text-primary)] outline-none placeholder:text-[#6b7280]"
+        className="min-w-0 flex-1 bg-transparent text-[16px] text-[var(--mappy-text-primary)] outline-none placeholder:text-[var(--mappy-text-tertiary)]"
       />
     </label>
   );
@@ -683,19 +706,16 @@ function ProfileHeader({ user, onOpenAccount }: { user: ApiUser; onOpenAccount: 
     relation: "none" as const,
   };
   return (
-    <button type="button" onClick={onOpenAccount} className="relative w-full rounded-[16px] bg-white px-6 pb-5 pt-6 text-left">
-      <span className="absolute -top-2.5 left-6 rounded-full border border-[var(--mappy-pink)] bg-white px-2.5 py-1 text-[12px] font-medium text-[var(--mappy-pink)]">
-        Базовый тариф
-      </span>
-      <div className="flex items-start justify-between">
-        <div className="min-w-0 pr-3">
+    <button type="button" onClick={onOpenAccount} className="relative mt-4 w-full rounded-[16px] bg-white px-6 pb-5 pt-6 text-left">
+      <div className="relative flex items-start justify-end">
+        <div className="absolute left-1/2 top-0 max-w-[70%] -translate-x-1/2">
           <p className="truncate text-[24px] font-semibold leading-7 text-[var(--mappy-text-primary)]">{displayName(person)}</p>
-          {user.username && <p className="mt-1.5 text-[14px] text-[var(--mappy-text-secondary)]">@{user.username}</p>}
+          {user.username && <p className="mt-2 text-[16px] text-[var(--mappy-text-secondary)]">@{user.username}</p>}
         </div>
         <div className="relative shrink-0">
           <SmallAvatar person={person} size={74} />
-          <span className="absolute -right-1 -top-1 flex h-[30px] w-[30px] items-center justify-center rounded-full bg-white shadow">
-            <ArrowIcon />
+          <span className="absolute -right-1 -top-1 flex h-[30px] w-[30px] items-center justify-center rounded-full border-[3px] border-white bg-[#e5e7eb]">
+            <SettingsGearIcon />
           </span>
         </div>
       </div>
@@ -770,20 +790,18 @@ function friendCountLabel(count: number) {
   return "друзей";
 }
 
-function requestCountLabel(count: number) {
-  const mod10 = count % 10;
-  const mod100 = count % 100;
-  if (mod10 === 1 && mod100 !== 11) return "запрос";
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "запроса";
-  return "запросов";
-}
-
 function BackIcon() {
   return <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12.5 4.5L7 10l5.5 5.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 }
 
-function ArrowIcon() {
-  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="#4A5565" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+/* Значок настроек поверх аватара — по макету 1821:34749 (Correct Button / settings-02) */
+function SettingsGearIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4A5565" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z" />
+    </svg>
+  );
 }
 
 function CloseIcon() {

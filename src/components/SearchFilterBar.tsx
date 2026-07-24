@@ -1,5 +1,5 @@
-import searchIcon from "../assets/icons/search-icon.svg";
 import filterIcon from "../assets/icons/filter-icon.svg";
+import { SearchIcon } from "./primitives";
 
 /*
  * Строка поиска + фильтр по макету Bar (790:16784): белый контейнер radius 32,
@@ -22,10 +22,13 @@ export function SearchFilterBar({ query, onOpenSearch, onClearQuery, hasActiveFi
         className="flex items-center gap-2.5 flex-1 h-12 px-4 rounded-l-[32px] rounded-r-[10px] text-left"
         style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
       >
-        <img src={searchIcon} alt="" className="w-6 h-6 shrink-0" />
+        <SearchIcon
+          className="w-6 h-6 shrink-0"
+          color={query ? "var(--mappy-text-primary)" : "var(--mappy-text-tertiary)"}
+        />
         <span
           className="flex-1 text-[16px] font-medium truncate"
-          style={{ color: query ? "var(--mappy-text-primary)" : "var(--mappy-text-secondary)" }}
+          style={{ color: query ? "var(--mappy-text-primary)" : "var(--mappy-text-tertiary)" }}
         >
           {query || "Поиск по адресу, названию"}
         </span>

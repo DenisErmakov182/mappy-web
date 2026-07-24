@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { Place } from "../types";
-import searchIcon from "../assets/icons/search-icon.svg";
+import { SearchIcon } from "./primitives";
 
 /*
  * Открытый поиск по макету 1489:16146: белый экран, слева кнопка «назад»,
@@ -55,7 +55,10 @@ export function SearchOverlay({
             className="flex items-center gap-2.5 flex-1 h-12 px-4 rounded-l-[10px] rounded-r-[32px]"
             style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
           >
-            <img src={searchIcon} alt="" className="w-6 h-6 shrink-0" />
+            <SearchIcon
+              className="w-6 h-6 shrink-0"
+              color={query ? "var(--mappy-text-primary)" : "var(--mappy-text-tertiary)"}
+            />
             <input
               ref={inputRef}
               value={query}
