@@ -23,6 +23,7 @@ import {
 import { CtaButton, SearchIcon } from "./primitives";
 import { PlaceRowCard } from "./PlaceRowCard";
 import friendsEmptyIllustration from "../assets/illustrations/friends-empty.webp";
+import friendPhotoPin from "../assets/icons/friend-photo-pin.webp";
 import filterIcon from "../assets/icons/filter-icon.svg";
 import dotsHorizontalIcon from "../assets/icons/dots-horizontal.svg";
 import { AccountScreen } from "./AccountScreen";
@@ -464,7 +465,7 @@ function FriendProfileView({
 
       <div className="flex flex-col items-center px-4 pt-[calc(env(safe-area-inset-top)+41px)]">
         <ProfileAvatar person={person} />
-        <div className="mt-7 text-center">
+        <div className="mt-[11px] text-center">
           <h1 className="text-[28px] font-semibold leading-8 text-black">{displayName(person)}</h1>
           {person.username && <p className="mt-3 text-[16px] leading-5 text-[var(--mappy-text-secondary)]">@{person.username}</p>}
         </div>
@@ -721,8 +722,33 @@ function ProfileHeader({ user, onOpenAccount }: { user: ApiUser; onOpenAccount: 
   );
 }
 
+/* Фото друга «приколото» булавкой к карточке, по макету 1918:21329. */
 function ProfileAvatar({ person }: { person: ApiFriendProfile }) {
-  return <SmallAvatar person={person} size={148} />;
+  const name = displayName(person);
+  const initials = name.split(" ").map((word) => word[0]).slice(0, 2).join("").toUpperCase();
+  return (
+    <div className="relative flex items-center justify-center" style={{ width: 163, height: 163 }}>
+      <div style={{ transform: "rotate(-6.28deg)" }}>
+        <div
+          className="relative rounded-[20px]"
+          style={{ width: 148, height: 148, border: "4px solid #f9fafb", boxShadow: "8px 2px 30px #e9e9e9" }}
+        >
+          <span
+            className="flex h-full w-full items-center justify-center overflow-hidden rounded-[16px] font-semibold text-white"
+            style={{
+              fontSize: 41,
+              background: person.avatarUrl ? "#e5e7eb" : "linear-gradient(135deg, #99a1af, #4a5565)",
+            }}
+          >
+            {person.avatarUrl ? <img src={person.avatarUrl} alt="" className="h-full w-full object-cover" /> : initials}
+          </span>
+          <div className="absolute" style={{ left: 95, top: -24, width: 66, height: 71, transform: "rotate(6.28deg)" }}>
+            <img src={friendPhotoPin} alt="" className="h-full w-full" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function SmallAvatar({ person, size = 40 }: { person: Pick<ApiFriendProfile, "name" | "username" | "avatarUrl">; size?: number }) {
