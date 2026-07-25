@@ -202,7 +202,7 @@ export function SwipeablePlaceCard({
             className="relative h-[132px] w-[46.9%] max-w-[196px] shrink-0 overflow-hidden rounded-[20px]"
             style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
           >
-            {place.photoUrls[0] && (
+            {place.photoUrls?.[0] && (
               <img src={place.photoUrls[0]} alt="" className="h-full w-full object-cover" />
             )}
             {place.owner && (
