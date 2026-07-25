@@ -36,7 +36,7 @@ export function AddPlaceModal({ coordinate, onSave, onClose }: Props) {
       note: note.trim(),
       isPrivate: false,
       status,
-      photoUrls: [],
+      photos: [],
     });
     onClose();
   };

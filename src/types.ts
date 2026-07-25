@@ -41,6 +41,11 @@ export function ratingChipColors(rating: number): { bg: string; text: string } {
   return { bg: "#ffe2e2", text: "#fb2c36" };
 }
 
+export interface Photo {
+  url: string;
+  caption?: string | null;
+}
+
 export interface Place {
   id: string;
   createdAt?: string;
@@ -53,7 +58,7 @@ export interface Place {
   note: string;
   isPrivate: boolean;
   status: VisitStatus;
-  photoUrls: string[];
+  photos: Photo[];
   /** Владелец присутствует только у публичного места друга. Свои места owner не имеют. */
   owner?: Friend;
 }

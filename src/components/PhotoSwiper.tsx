@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import type { Photo } from "../types";
 
 /*
  * Заглавные фото места как карусель отдельных карточек. Каждый снимок — свой
@@ -15,13 +16,13 @@ import { useEffect, useRef, useState } from "react";
 const SEGMENT_ACTIVE = "#ff637e";
 const CARD = "aspect-square w-full shrink-0 snap-center snap-always overflow-hidden rounded-[28px] shadow-[8px_2px_30.4px_#e9e9e9]";
 
-export function PhotoSwiper({ photoUrls }: { photoUrls: string[] }) {
+export function PhotoSwiper({ photos }: { photos: Photo[] }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
 
   useEffect(() => {
     const container = scrollRef.current;
-    if (!container || photoUrls.length < 2) return;
+    if (!container || photos.length < 2) return;
 
     const update = () => {
       const cards = Array.from(container.querySelectorAll<HTMLElement>("[data-photo-card]"));
@@ -42,14 +43,14 @@ export function PhotoSwiper({ photoUrls }: { photoUrls: string[] }) {
     update();
     container.addEventListener("scroll", update, { passive: true });
     return () => container.removeEventListener("scroll", update);
-  }, [photoUrls.length]);
+  }, [photos.length]);
 
   // Полоса нужна только при нескольких фото: одно — листать нечего.
-  const showSegments = photoUrls.length >= 2;
+  const showSegments = photos.length >= 2;
 
   return (
     <div className="flex w-full shrink-0 flex-col items-center gap-4">
-      {photoUrls.length === 0 ? (
+      {photos.length === 0 ? (
         <div className={CARD} style={{ backgroundColor: "var(--mappy-surface-secondary)" }} />
       ) : (
         // Скролл-контейнер вырывается во всю ширину экрана (родитель — px-4) и
@@ -62,9 +63,17 @@ export function PhotoSwiper({ photoUrls }: { photoUrls: string[] }) {
           ref={scrollRef}
           className="-mx-4 -my-8 flex w-screen max-w-[calc(100%+32px)] snap-x snap-mandatory gap-8 overflow-x-auto scroll-smooth px-4 py-8 [&::-webkit-scrollbar]:hidden"
         >
-          {photoUrls.map((url, index) => (
-            <div key={`${url}-${index}`} data-photo-card className={CARD}>
-              <img src={url} alt="" className="h-full w-full object-cover" />
+          {photos.map((photo, index) => (
+            <div key={`${photo.url}-${index}`} data-photo-card className={`${CARD} relative`}>
+              <img src={photo.url} alt="" className="h-full w-full object-cover" />
+              {photo.caption && (
+                <div
+                  className="absolute inset-x-4 bottom-4 rounded-[16px] px-4 py-3 text-[14px] leading-5"
+                  style={{ backgroundColor: "rgba(255,255,255,0.92)", color: "#1e2939" }}
+                >
+                  {photo.caption}
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -72,7 +81,7 @@ export function PhotoSwiper({ photoUrls }: { photoUrls: string[] }) {
 
       {showSegments && (
         <div className="flex w-[89%] items-center gap-1">
-          {photoUrls.map((_, index) => (
+          {photos.map((_, index) => (
             <span
               key={index}
               className="h-2 min-w-px flex-1 rounded-full"

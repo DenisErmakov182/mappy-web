@@ -1,4 +1,4 @@
-import type { Place, PlaceCategory, VisitStatus } from "../types";
+import type { Photo, Place, PlaceCategory, VisitStatus } from "../types";
 import { downscaleImage } from "./image";
 import {
   READ_ONLY_STAGING_MESSAGE,
@@ -260,7 +260,7 @@ export interface PlaceInput {
   note: string;
   isPrivate: boolean;
   status: VisitStatus;
-  photoUrls: string[];
+  photos: Photo[];
 }
 
 export function fetchPlaces() {

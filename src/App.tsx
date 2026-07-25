@@ -107,7 +107,7 @@ function toPlaceInput(place: Place): PlaceInput {
     note: place.note,
     isPrivate: place.isPrivate,
     status: place.status,
-    photoUrls: place.photoUrls,
+    photos: place.photos,
   };
 }
 

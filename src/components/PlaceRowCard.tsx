@@ -38,8 +38,8 @@ export function PlaceRowCard({
         className="relative w-[196px] h-[132px] rounded-[20px] overflow-hidden shrink-0"
         style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
       >
-        {place.photoUrls[0] && (
-          <img src={place.photoUrls[0]} alt="" className="w-full h-full object-cover" />
+        {place.photos[0] && (
+          <img src={place.photos[0].url} alt="" className="w-full h-full object-cover" />
         )}
         {showOwnerAvatar && place.owner && (
           <>

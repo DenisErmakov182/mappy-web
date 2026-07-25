@@ -4,16 +4,19 @@ import { categoryLabel } from "../types";
 import { reverseGeocode, uploadPhoto } from "../lib/api";
 import { CategoryIcon } from "./CategoryIcon";
 import { CategoriesSheet } from "./CategoriesSheet";
-import { Sheet, CtaButton, StarIcon } from "./primitives";
+import { PhotoCaptionSheet } from "./PhotoCaptionSheet";
+import { Sheet, CloseButton, CtaButton, StarIcon } from "./primitives";
 import { SplitFlapAddress } from "./SplitFlapAddress";
 import stickerMuseum from "../assets/photos/sticker-museum.webp";
 import stickerCafe from "../assets/photos/sticker-cafe.webp";
 
-const MAX_PHOTOS = 10;
+const MAX_PHOTOS = 4;
+const NOTE_MAX = 250;
 
 interface PhotoSlot {
   url: string; // blob-превью для новых или уже загруженный URL для существующих
   file?: File; // задано только для ещё не загруженных на S3 фото
+  caption?: string;
 }
 
 function PlusIcon({ size = 18 }: { size?: number }) {
@@ -142,8 +145,9 @@ export function AddPlaceSheet({
   const [note, setNote] = useState(initialPlace?.note ?? "");
   const [isPrivate, setIsPrivate] = useState(initialPlace?.isPrivate ?? false);
   const [photos, setPhotos] = useState<PhotoSlot[]>(
-    (initialPlace?.photoUrls ?? []).map((url) => ({ url })),
+    (initialPlace?.photos ?? []).map((p) => ({ url: p.url, caption: p.caption ?? undefined })),
   );
+  const [captionSlotIndex, setCaptionSlotIndex] = useState<number | null>(null);
   const [showCategories, setShowCategories] = useState(false);
   const [addressLoading, setAddressLoading] = useState(false);
   const [addressError, setAddressError] = useState("");
@@ -204,14 +208,21 @@ export function AddPlaceSheet({
     setPhotos((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const setPhotoCaption = (index: number, caption: string) => {
+    setPhotos((prev) => prev.map((p, i) => (i === index ? { ...p, caption: caption || undefined } : p)));
+  };
+
   const handleSave = async () => {
     if (!title.trim() || saving) return;
     setSaving(true);
     setSaveError("");
     try {
       // Новые фото (с file) загружаем в S3, уже сохранённые URL оставляем как есть
-      const photoUrls = await Promise.all(
-        photos.map((p) => (p.file ? uploadPhoto(p.file) : Promise.resolve(p.url))),
+      const uploadedPhotos = await Promise.all(
+        photos.map(async (p) => ({
+          url: p.file ? await uploadPhoto(p.file) : p.url,
+          caption: p.caption,
+        })),
       );
       await onSave({
         id: initialPlace?.id ?? "",
@@ -224,7 +235,7 @@ export function AddPlaceSheet({
         note: note.trim(),
         isPrivate,
         status,
-        photoUrls,
+        photos: uploadedPhotos,
       });
       onClose();
     } catch (e) {
@@ -390,9 +401,6 @@ export function AddPlaceSheet({
                 <p className="font-medium tracking-[-0.6px]" style={{ color: "var(--mappy-text-primary)" }}>
                   Добавьте фото
                 </p>
-                <p className="font-normal" style={{ color: "var(--mappy-text-secondary)" }}>
-                  до 10 шт
-                </p>
               </div>
               <p
                 className="w-[260px] text-[14px] leading-5 tracking-[-0.32px]"
@@ -419,32 +427,37 @@ export function AddPlaceSheet({
                 className="px-1 text-[20px] leading-6 font-medium tracking-[-0.6px]"
                 style={{ color: "var(--mappy-text-primary)" }}
               >
-                Добавьте фото <span className="font-normal" style={{ color: "#99a1af" }}>до 10 штук</span>
+                Добавьте фото <span className="font-normal" style={{ color: "#99a1af" }}>до {MAX_PHOTOS} штук</span>
               </p>
               <button
                 type="button"
                 onClick={pickPhotos}
-                className="flex size-7 shrink-0 items-center justify-center rounded-full"
+                disabled={photos.length >= MAX_PHOTOS}
+                className="flex size-7 shrink-0 items-center justify-center rounded-full disabled:opacity-40"
                 style={{ backgroundColor: "var(--mappy-surface-secondary)", color: "var(--mappy-text-primary)" }}
                 aria-label="Добавить ещё фото"
               >
                 <PlusIcon size={20} />
               </button>
             </div>
-            <div className="grid grid-cols-5 gap-3">
+            <div className="grid grid-cols-4 gap-3">
               {Array.from({ length: MAX_PHOTOS }).map((_, i) =>
                 photos[i] ? (
-                  <div key={i} className="relative aspect-square">
-                    <img src={photos[i].url} alt="" className="w-full h-full object-cover rounded-[10px]" />
+                  <div key={i} className="flex flex-col gap-1.5">
+                    <div className="relative aspect-square">
+                      <img src={photos[i].url} alt="" className="w-full h-full object-cover rounded-[10px]" />
+                      <span className="absolute -top-1 -right-2">
+                        <CloseButton onClick={() => removePhoto(i)} size={32} />
+                      </span>
+                    </div>
                     <button
-                      onClick={() => removePhoto(i)}
-                      className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full"
-                      style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
-                      aria-label="Удалить фото"
+                      type="button"
+                      onClick={() => setCaptionSlotIndex(i)}
+                      aria-label={photos[i].caption ? `Подпись: ${photos[i].caption}` : "Добавить подпись"}
+                      className="flex h-[26px] w-full items-center justify-center overflow-hidden rounded-[10px] px-2 text-[14px] leading-[18px] tracking-[-0.6px]"
+                      style={{ backgroundColor: "var(--mappy-surface-primary)", color: "#99a1af" }}
                     >
-                      <svg width="9" height="9" viewBox="0 0 16 16" fill="none">
-                        <path d="M12 4L4 12M4 4L12 12" stroke="#1E2939" strokeWidth="2" strokeLinecap="round" />
-                      </svg>
+                      Подпись
                     </button>
                   </div>
                 ) : (
@@ -515,14 +528,23 @@ export function AddPlaceSheet({
           >
             Поделитесь впечатлениями
           </h3>
-          <textarea
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="Расскажите, как вам место?"
-            rows={6}
-            className="w-full p-4 rounded-[14px] text-[16px] outline-none resize-none placeholder:text-[#99a1af]"
-            style={inputStyle}
-          />
+          <div className="flex flex-col gap-2 rounded-[14px] p-4" style={inputStyle}>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value.slice(0, NOTE_MAX))}
+              placeholder="Расскажите, как вам место?"
+              rows={5}
+              maxLength={NOTE_MAX}
+              className="w-full bg-transparent text-[16px] outline-none resize-none placeholder:text-[#99a1af]"
+              style={{ color: inputStyle.color }}
+            />
+            <span
+              className="self-end text-[12px] leading-4 tracking-[-0.6px]"
+              style={{ color: "#99a1af" }}
+            >
+              {note.length}/{NOTE_MAX}
+            </span>
+          </div>
         </div>
 
         {saveError && (
@@ -540,6 +562,17 @@ export function AddPlaceSheet({
           selected={categories}
           onApply={setCategories}
           onClose={() => setShowCategories(false)}
+        />
+      )}
+
+      {captionSlotIndex !== null && (
+        <PhotoCaptionSheet
+          initialCaption={photos[captionSlotIndex]?.caption}
+          onSave={(caption) => {
+            setPhotoCaption(captionSlotIndex, caption);
+            setCaptionSlotIndex(null);
+          }}
+          onClose={() => setCaptionSlotIndex(null)}
         />
       )}
     </Sheet>
