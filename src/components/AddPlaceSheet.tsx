@@ -433,30 +433,42 @@ export function AddPlaceSheet({
             <div className="grid grid-cols-4 gap-3">
               {Array.from({ length: MAX_PHOTOS }).map((_, i) =>
                 photos[i] ? (
-                  <div key={i} className="flex flex-col gap-1.5">
+                  <div key={i} className="flex flex-col gap-2">
                     <div className="relative aspect-square">
                       <img
                         src={photos[i].url}
                         alt=""
-                        className="w-full h-full object-cover rounded-[14px]"
+                        className="w-full h-full object-cover rounded-[20px]"
                         style={{
                           // Вырез под крестик в углу — не картинка поверх фото, а сама
                           // фигура фото с "откушенным" кругом (макет 1928:38243).
+                          // Ячейка 88×88: вырез — круг r=21 с центром (77,11), кнопка 28×28
+                          // с тем же центром, поэтому просвет ровно 7px по всей окружности.
+                          // Размер эллипса задан явно (23.864% = 21/88), иначе проценты
+                          // считались бы от дальнего угла и радиус уезжал бы.
                           WebkitMaskImage:
-                            "radial-gradient(circle at 88.6% 13.6%, transparent 0, transparent 17%, black 17.5%, black 100%)",
+                            "radial-gradient(ellipse 23.864% 23.864% at 87.5% 12.5%, transparent 0, transparent 99%, black 100%)",
                           maskImage:
-                            "radial-gradient(circle at 88.6% 13.6%, transparent 0, transparent 17%, black 17.5%, black 100%)",
+                            "radial-gradient(ellipse 23.864% 23.864% at 87.5% 12.5%, transparent 0, transparent 99%, black 100%)",
                         }}
                       />
-                      <span className="absolute -top-[2px] -right-[4px]">
-                        <CloseButton onClick={() => removePhoto(i)} size={28} />
+                      <span className="absolute -top-[3px] -right-[3px]">
+                        {/* Крестик — того же тона, что плюсы в пустых слотах (макет 861:18208):
+                            обводка #99A1AF, 1.5px. 1.4 в 16-юнитовом viewBox даёт ровно 1.5px
+                            на экране при размере кнопки 28. */}
+                        <CloseButton
+                          onClick={() => removePhoto(i)}
+                          size={28}
+                          iconColor="var(--mappy-text-tertiary)"
+                          iconStrokeWidth={1.4}
+                        />
                       </span>
                     </div>
                     <button
                       type="button"
                       onClick={() => setCaptionSlotIndex(i)}
                       aria-label={photos[i].caption ? `Подпись: ${photos[i].caption}` : "Добавить подпись"}
-                      className="flex h-[26px] w-full items-center justify-center overflow-hidden rounded-[14px] px-2 text-[14px] font-medium leading-[18px] tracking-[-0.6px]"
+                      className="flex h-[34px] w-full items-center justify-center overflow-hidden rounded-[14px] px-2 text-[14px] font-medium leading-[18px] tracking-[-0.6px]"
                       style={{ backgroundColor: "var(--mappy-surface-secondary)", color: "var(--mappy-text-secondary)" }}
                     >
                       Подпись
