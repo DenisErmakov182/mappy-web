@@ -424,24 +424,12 @@ export function AddPlaceSheet({
         ) : (
           /* Заполненное состояние: заголовок + сетка 5 колонок со слотами (макет 1489:16383) */
           <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <p
-                className="px-1 text-[20px] leading-6 font-medium tracking-[-0.6px]"
-                style={{ color: "var(--mappy-text-primary)" }}
-              >
-                Добавьте фото
-              </p>
-              <button
-                type="button"
-                onClick={pickPhotos}
-                disabled={photos.length >= MAX_PHOTOS}
-                className="flex size-7 shrink-0 items-center justify-center rounded-full disabled:opacity-40"
-                style={{ backgroundColor: "var(--mappy-surface-secondary)", color: "var(--mappy-text-tertiary)" }}
-                aria-label="Добавить ещё фото"
-              >
-                <PlusIcon size={20} />
-              </button>
-            </div>
+            <p
+              className="px-1 text-[20px] leading-6 font-medium tracking-[-0.6px]"
+              style={{ color: "var(--mappy-text-primary)" }}
+            >
+              Добавьте фото
+            </p>
             <div className="grid grid-cols-4 gap-3">
               {Array.from({ length: MAX_PHOTOS }).map((_, i) =>
                 photos[i] ? (
