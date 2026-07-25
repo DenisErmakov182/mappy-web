@@ -331,16 +331,18 @@ export function AddPlaceSheet({
           ))}
         </div>
 
-        <div className="flex h-[68px] w-full items-center justify-center gap-2 overflow-hidden rounded-[16px] py-1">
-          {[1, 2, 3, 4, 5].map((star) => (
-            <RatingStarButton
-              key={star}
-              star={star}
-              filled={star <= rating}
-              onSelect={() => setRating(star)}
-            />
-          ))}
-        </div>
+        {status === "been" && (
+          <div className="flex h-[68px] w-full items-center justify-center gap-2 overflow-hidden rounded-[16px] py-1">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <RatingStarButton
+                key={star}
+                star={star}
+                filled={star <= rating}
+                onSelect={() => setRating(star)}
+              />
+            ))}
+          </div>
+        )}
 
         <div className="flex items-start justify-between">
           <div className="flex px-1">
@@ -427,7 +429,7 @@ export function AddPlaceSheet({
                 className="px-1 text-[20px] leading-6 font-medium tracking-[-0.6px]"
                 style={{ color: "var(--mappy-text-primary)" }}
               >
-                Добавьте фото <span className="font-normal" style={{ color: "#99a1af" }}>до {MAX_PHOTOS} штук</span>
+                Добавьте фото
               </p>
               <button
                 type="button"
@@ -446,8 +448,8 @@ export function AddPlaceSheet({
                   <div key={i} className="flex flex-col gap-1.5">
                     <div className="relative aspect-square">
                       <img src={photos[i].url} alt="" className="w-full h-full object-cover rounded-[10px]" />
-                      <span className="absolute -top-1 -right-2">
-                        <CloseButton onClick={() => removePhoto(i)} size={32} />
+                      <span className="absolute -top-[2px] -right-[4px]">
+                        <CloseButton onClick={() => removePhoto(i)} size={28} />
                       </span>
                     </div>
                     <button
@@ -526,20 +528,20 @@ export function AddPlaceSheet({
             className="px-1 text-[20px] leading-6 font-medium tracking-[-0.6px]"
             style={{ color: "var(--mappy-text-primary)" }}
           >
-            Поделитесь впечатлениями
+            {status === "been" ? "Поделитесь впечатлениями" : "Поделитесь планами"}
           </h3>
           <div className="flex flex-col gap-2 rounded-[14px] p-4" style={inputStyle}>
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value.slice(0, NOTE_MAX))}
-              placeholder="Расскажите, как вам место?"
+              placeholder={status === "been" ? "Расскажите, как вам место?" : "Почему хотите посетить это место?"}
               rows={5}
               maxLength={NOTE_MAX}
               className="w-full bg-transparent text-[16px] outline-none resize-none placeholder:text-[#99a1af]"
               style={{ color: inputStyle.color }}
             />
             <span
-              className="self-end text-[12px] leading-4 tracking-[-0.6px]"
+              className="self-end text-[12px] leading-4 font-medium"
               style={{ color: "#99a1af" }}
             >
               {note.length}/{NOTE_MAX}

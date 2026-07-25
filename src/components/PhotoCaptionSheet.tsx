@@ -43,7 +43,7 @@ export function PhotoCaptionSheet({
             style={{ color: "var(--mappy-text-primary)" }}
           />
           <span
-            className="self-end text-[12px] leading-4 tracking-[-0.6px]"
+            className="self-end text-[12px] leading-4 font-medium"
             style={{ color: "#99a1af" }}
           >
             {caption.length}/{CAPTION_MAX}
