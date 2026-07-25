@@ -107,7 +107,7 @@ export function PlaceDetail({
           </button>
         </div>
 
-        <PhotoSwiper photos={place.photos} />
+        <PhotoSwiper photos={place.photos ?? []} />
 
         <div className="mt-3 flex w-full flex-col gap-6">
           <div className="flex flex-col gap-2 px-1">
