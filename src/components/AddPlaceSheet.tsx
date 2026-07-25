@@ -435,7 +435,19 @@ export function AddPlaceSheet({
                 photos[i] ? (
                   <div key={i} className="flex flex-col gap-1.5">
                     <div className="relative aspect-square">
-                      <img src={photos[i].url} alt="" className="w-full h-full object-cover rounded-[10px]" />
+                      <img
+                        src={photos[i].url}
+                        alt=""
+                        className="w-full h-full object-cover rounded-[14px]"
+                        style={{
+                          // Вырез под крестик в углу — не картинка поверх фото, а сама
+                          // фигура фото с "откушенным" кругом (макет 1928:38243).
+                          WebkitMaskImage:
+                            "radial-gradient(circle at 88.6% 13.6%, transparent 0, transparent 17%, black 17.5%, black 100%)",
+                          maskImage:
+                            "radial-gradient(circle at 88.6% 13.6%, transparent 0, transparent 17%, black 17.5%, black 100%)",
+                        }}
+                      />
                       <span className="absolute -top-[2px] -right-[4px]">
                         <CloseButton onClick={() => removePhoto(i)} size={28} />
                       </span>
@@ -444,8 +456,8 @@ export function AddPlaceSheet({
                       type="button"
                       onClick={() => setCaptionSlotIndex(i)}
                       aria-label={photos[i].caption ? `Подпись: ${photos[i].caption}` : "Добавить подпись"}
-                      className="flex h-[26px] w-full items-center justify-center overflow-hidden rounded-[10px] px-2 text-[14px] leading-[18px] tracking-[-0.6px]"
-                      style={{ backgroundColor: "var(--mappy-surface-primary)", color: "#99a1af" }}
+                      className="flex h-[26px] w-full items-center justify-center overflow-hidden rounded-[14px] px-2 text-[14px] font-medium leading-[18px] tracking-[-0.6px]"
+                      style={{ backgroundColor: "var(--mappy-surface-secondary)", color: "var(--mappy-text-secondary)" }}
                     >
                       Подпись
                     </button>
