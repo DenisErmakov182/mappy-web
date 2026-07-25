@@ -118,9 +118,11 @@ export function PlaceDetail({
               {place.title}
             </h1>
             <div className="flex min-w-0 items-center gap-2">
-              <span className="[&>span]:h-[26px] [&>span]:rounded-[10px]">
-                <RatingChip rating={place.rating} />
-              </span>
+              {place.rating > 0 && (
+                <span className="[&>span]:h-[26px] [&>span]:rounded-[10px]">
+                  <RatingChip rating={place.rating} />
+                </span>
+              )}
               <span
                 className="min-w-0 truncate text-[20px] leading-6"
                 style={{ color: "var(--mappy-text-secondary)" }}

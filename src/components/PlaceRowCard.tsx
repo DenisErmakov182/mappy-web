@@ -111,6 +111,7 @@ export function PlaceRowCard({
 
 /* В карточке чип оценки прямоугольный (radius 10), в отличие от круглого на пине */
 function RatingChipSquare({ place }: { place: Place }) {
+  if (place.rating === 0) return null;
   return (
     <span className="[&>span]:rounded-[10px]">
       <RatingChip rating={place.rating} />

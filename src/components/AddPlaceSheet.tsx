@@ -436,7 +436,7 @@ export function AddPlaceSheet({
                 onClick={pickPhotos}
                 disabled={photos.length >= MAX_PHOTOS}
                 className="flex size-7 shrink-0 items-center justify-center rounded-full disabled:opacity-40"
-                style={{ backgroundColor: "var(--mappy-surface-secondary)", color: "var(--mappy-text-primary)" }}
+                style={{ backgroundColor: "var(--mappy-surface-secondary)", color: "var(--mappy-text-tertiary)" }}
                 aria-label="Добавить ещё фото"
               >
                 <PlusIcon size={20} />
@@ -471,7 +471,7 @@ export function AddPlaceSheet({
                     style={{
                       border: "1px dashed rgba(3, 7, 18, 0.08)",
                       backgroundColor: "var(--mappy-surface-primary)",
-                      color: "var(--mappy-text-primary)",
+                      color: "var(--mappy-text-tertiary)",
                     }}
                     aria-label="Добавить фото"
                   >
@@ -500,7 +500,7 @@ export function AddPlaceSheet({
               type="button"
               onClick={() => setShowCategories(true)}
               className="flex size-7 shrink-0 items-center justify-center rounded-full"
-              style={{ backgroundColor: "var(--mappy-surface-secondary)", color: "var(--mappy-text-primary)" }}
+              style={{ backgroundColor: "var(--mappy-surface-secondary)", color: "var(--mappy-text-tertiary)" }}
               aria-label="Добавить категории"
             >
               <PlusIcon size={20} />

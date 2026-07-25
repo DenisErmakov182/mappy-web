@@ -262,9 +262,11 @@ export function SwipeablePlaceCard({
             </div>
 
             <div className="flex items-center gap-1">
-              <span className="[&>span]:rounded-[10px]">
-                <RatingChip rating={place.rating} />
-              </span>
+              {place.rating > 0 && (
+                <span className="[&>span]:rounded-[10px]">
+                  <RatingChip rating={place.rating} />
+                </span>
+              )}
               {place.categories[0] && (
                 <span
                   className="inline-flex h-[28px] items-center justify-center rounded-[10px] px-2"
