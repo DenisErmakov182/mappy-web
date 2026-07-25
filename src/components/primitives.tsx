@@ -145,10 +145,14 @@ export function CloseButton({
   onClick,
   size = 26,
   backgroundColor = "var(--mappy-surface-secondary)",
+  iconColor = "#4A5565",
+  iconStrokeWidth = 1.7,
 }: {
   onClick: () => void;
   size?: number;
   backgroundColor?: string;
+  iconColor?: string;
+  iconStrokeWidth?: number;
 }) {
   return (
     <button
@@ -158,7 +162,12 @@ export function CloseButton({
       aria-label="Закрыть"
     >
       <svg width={size * 0.62} height={size * 0.62} viewBox="0 0 16 16" fill="none">
-        <path d="M12 4L4 12M4 4L12 12" stroke="#4A5565" strokeWidth="1.7" strokeLinecap="round" />
+        <path
+          d="M12 4L4 12M4 4L12 12"
+          stroke={iconColor}
+          strokeWidth={iconStrokeWidth}
+          strokeLinecap="round"
+        />
       </svg>
     </button>
   );

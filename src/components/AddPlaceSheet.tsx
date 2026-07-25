@@ -433,12 +433,12 @@ export function AddPlaceSheet({
             <div className="grid grid-cols-4 gap-3">
               {Array.from({ length: MAX_PHOTOS }).map((_, i) =>
                 photos[i] ? (
-                  <div key={i} className="flex flex-col gap-1.5">
+                  <div key={i} className="flex flex-col gap-2">
                     <div className="relative aspect-square">
                       <img
                         src={photos[i].url}
                         alt=""
-                        className="w-full h-full object-cover rounded-[14px]"
+                        className="w-full h-full object-cover rounded-[20px]"
                         style={{
                           // Вырез под крестик в углу — не картинка поверх фото, а сама
                           // фигура фото с "откушенным" кругом (макет 1928:38243).
@@ -453,14 +453,22 @@ export function AddPlaceSheet({
                         }}
                       />
                       <span className="absolute -top-[3px] -right-[3px]">
-                        <CloseButton onClick={() => removePhoto(i)} size={28} />
+                        {/* Крестик — того же тона, что плюсы в пустых слотах (макет 861:18208):
+                            обводка #99A1AF, 1.5px. 1.4 в 16-юнитовом viewBox даёт ровно 1.5px
+                            на экране при размере кнопки 28. */}
+                        <CloseButton
+                          onClick={() => removePhoto(i)}
+                          size={28}
+                          iconColor="var(--mappy-text-tertiary)"
+                          iconStrokeWidth={1.4}
+                        />
                       </span>
                     </div>
                     <button
                       type="button"
                       onClick={() => setCaptionSlotIndex(i)}
                       aria-label={photos[i].caption ? `Подпись: ${photos[i].caption}` : "Добавить подпись"}
-                      className="flex h-[26px] w-full items-center justify-center overflow-hidden rounded-[14px] px-2 text-[14px] font-medium leading-[18px] tracking-[-0.6px]"
+                      className="flex h-[34px] w-full items-center justify-center overflow-hidden rounded-[14px] px-2 text-[14px] font-medium leading-[18px] tracking-[-0.6px]"
                       style={{ backgroundColor: "var(--mappy-surface-secondary)", color: "var(--mappy-text-secondary)" }}
                     >
                       Подпись
