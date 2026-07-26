@@ -56,6 +56,16 @@ function isStandalonePwa() {
   return window.matchMedia("(display-mode: standalone)").matches || iosNavigator.standalone === true;
 }
 
+// Пригласительная ссылка на регистрацию (app.mymappy.ru/register), без
+// отдельного поддомена и без роутера — читаем путь один раз при заходе на
+// экран и сразу чистим адресную строку, чтобы за пределами этого рендера
+// приложение не знало о существовании такого пути.
+function initialAuthIntent(): "login" | "register" {
+  const isRegisterLink = window.location.pathname === "/register";
+  if (isRegisterLink) window.history.replaceState(null, "", "/");
+  return isRegisterLink ? "register" : "login";
+}
+
 type InstallGuideIconType = "glasses" | "book" | "star" | "home" | "markup" | "print";
 
 function InstallGuideIcon({ type }: { type: InstallGuideIconType }) {
@@ -224,7 +234,7 @@ export function AuthScreen({
   onAuthenticated: (token: string, user: ApiUser, isNew: boolean) => void;
 }) {
   const [step, setStep] = useState<"email" | "code" | "profile">("email");
-  const [intent, setIntent] = useState<"login" | "register">("login");
+  const [intent, setIntent] = useState<"login" | "register">(initialAuthIntent);
   const [installNoticeDismissed, setInstallNoticeDismissed] = useState(false);
   const [standalonePwa] = useState(isStandalonePwa);
   const [email, setEmail] = useState("");
