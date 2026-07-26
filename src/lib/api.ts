@@ -352,3 +352,30 @@ export function cancelFriendRequest(requestId: string) {
 export function removeFriend(id: string) {
   return request<{ ok: true }>(`/friends/${id}`, { method: "DELETE" });
 }
+
+export interface ApiNotification {
+  id: string;
+  type: "friend_request" | "release";
+  createdAt: string;
+  read: boolean;
+  /** Задано только у type === "friend_request". */
+  friendRequest?: { id: string | null; user: ApiFriend };
+  /** Задано только у type === "release". */
+  release?: { title: string; body: string; version: string | null };
+}
+
+export interface ApiNotifications {
+  items: ApiNotification[];
+  unreadCount: number;
+}
+
+// Лента и счётчик приходят одним ответом: бейдж и список нужны одновременно.
+export function fetchNotifications() {
+  return request<ApiNotifications>("/notifications");
+}
+export function markNotificationsRead() {
+  return request<{ ok: true }>("/notifications/read", { method: "POST" });
+}
+export function markNotificationRead(id: string) {
+  return request<{ ok: true }>(`/notifications/${id}/read`, { method: "POST" });
+}

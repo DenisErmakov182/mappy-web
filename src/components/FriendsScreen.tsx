@@ -13,13 +13,17 @@ import {
   fetchFriendPlaces,
   fetchFriendRequests,
   fetchFriends,
+  fetchNotifications,
+  markNotificationsRead,
   removeFriend,
   searchFriends,
   sendFriendRequest,
   type ApiFriend,
   type ApiFriendProfile,
+  type ApiNotification,
   type ApiUser,
 } from "../lib/api";
+import { NotificationsView } from "./NotificationsView";
 import { CtaButton, SearchIcon } from "./primitives";
 import { PlaceRowCard } from "./PlaceRowCard";
 import friendsEmptyIllustration from "../assets/illustrations/friends-empty.webp";
@@ -32,6 +36,7 @@ import { FilterSheet } from "./FilterSheet";
 type FriendsView =
   | { kind: "home" }
   | { kind: "requests" }
+  | { kind: "notifications" }
   | { kind: "profile"; person: ApiFriendProfile };
 
 function displayName(person: ApiFriend | ApiFriendProfile): string {
@@ -72,6 +77,9 @@ export function FriendsScreen({
   const [searching, setSearching] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [notifications, setNotifications] = useState<ApiNotification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notificationsLoading, setNotificationsLoading] = useState(true);
   const searchRef = useRef<HTMLInputElement>(null);
 
   const loadRelationships = async () => {
@@ -87,9 +95,44 @@ export function FriendsScreen({
     }
   };
 
+  // Пушей нет, поэтому ленту тянем сами. Не по таймеру: обновляем при открытии
+  // экрана и при возврате приложения на передний план — этого достаточно, а
+  // фоновый polling на телефоне стоил бы батареи.
+  const loadNotifications = async () => {
+    try {
+      const feed = await fetchNotifications();
+      setNotifications(feed.items);
+      setUnreadCount(feed.unreadCount);
+    } catch {
+      // Молча: уведомления не должны ронять экран друзей.
+    } finally {
+      setNotificationsLoading(false);
+    }
+  };
+
   useEffect(() => {
     void loadRelationships();
+    void loadNotifications();
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void loadNotifications();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
   }, []);
+
+  const openNotifications = async () => {
+    setError("");
+    setView({ kind: "notifications" });
+    if (unreadCount === 0) return;
+    setUnreadCount(0);
+    setNotifications((prev) => prev.map((item) => ({ ...item, read: true })));
+    try {
+      await markNotificationsRead();
+    } catch {
+      // Не критично: при следующей загрузке счётчик пересчитается с сервера.
+    }
+  };
 
   useEffect(() => {
     if (view.kind !== "home") return;
@@ -142,6 +185,26 @@ export function FriendsScreen({
     );
   }
 
+  if (view.kind === "notifications") {
+    return (
+      <NotificationsView
+        items={notifications}
+        loading={notificationsLoading}
+        onBack={returnHome}
+        onOpenFriendRequest={(friendRequest) =>
+          openProfile({
+            id: friendRequest.user.id,
+            name: friendRequest.user.name,
+            username: friendRequest.user.username,
+            avatarUrl: friendRequest.user.avatarUrl,
+            relation: "incoming",
+            requestId: friendRequest.id,
+          })
+        }
+      />
+    );
+  }
+
   if (view.kind === "profile") {
     return (
       <FriendProfileView
@@ -162,8 +225,28 @@ export function FriendsScreen({
 
   return (
     <div className="h-full overflow-y-auto pb-32" style={{ backgroundColor: "var(--mappy-surface-primary)" }}>
-      <div className="flex flex-col gap-2 px-4 pt-[var(--mappy-floating-top)]">
+      <div className="flex flex-col gap-4 px-4 pt-[var(--mappy-floating-top)]">
         <ProfileHeader user={user} onOpenAccount={() => setShowAccount(true)} />
+
+        {/* Отдельная карточка входа в ленту (макет 2026:57554) — одна и та же
+            что при пустом списке друзей, что при заполненном. */}
+        <button
+          type="button"
+          onClick={openNotifications}
+          className="flex h-14 w-full items-center justify-between rounded-[28px] bg-white px-4 text-left"
+        >
+          <span className="text-[16px] font-medium" style={{ color: "var(--mappy-text-primary)" }}>
+            Уведомления
+          </span>
+          {unreadCount > 0 && (
+            <span
+              className="flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-[16px] font-medium text-white"
+              style={{ backgroundColor: "#ff637e" }}
+            >
+              {unreadCount}
+            </span>
+          )}
+        </button>
 
         <section className="rounded-[28px] bg-white p-4">
           <SearchField ref={searchRef} value={query} onChange={setQuery} placeholder="Найти друга" />
@@ -269,24 +352,25 @@ function RequestsView({
   onOpenProfile: (person: ApiFriendProfile) => void;
 }) {
   const [activeTab, setActiveTab] = useState<"outgoing" | "incoming">(incoming.length > 0 ? "incoming" : "outgoing");
+  // Список запросов у FriendsScreen грузится асинхронно и часто ещё пуст в
+  // момент первого рендера этого экрана — тогда инициализатор useState выше
+  // выбирает "outgoing" по умолчанию и больше не пересчитывается. Держим
+  // выбор вкладки на актуальных данных, пока пользователь не переключил её сам.
+  const userPickedTab = useRef(false);
+  useEffect(() => {
+    if (userPickedTab.current) return;
+    if (incoming.length > 0) setActiveTab("incoming");
+  }, [incoming.length]);
   const active = activeTab === "incoming" ? incoming : outgoing;
 
   return (
-    <div className="relative h-full overflow-y-auto bg-[var(--mappy-surface-primary)] pb-32">
-      <ScreenBackButton onClick={onBack} />
-      <h1 className="pt-[calc(env(safe-area-inset-top)+50px)] text-center text-[24px] font-semibold leading-7 text-[var(--mappy-text-primary)]">
-        Запросы
-      </h1>
-
-      <div className="px-4 pt-6">
-        <RequestsTabControl
-          outgoingCount={outgoing.length}
-          incomingCount={incoming.length}
-          active={activeTab}
-          onChange={setActiveTab}
-        />
-
-        <div className="mt-3">
+    <div className="relative h-full bg-[var(--mappy-surface-primary)]">
+      {/* Список — под блюром и под шапкой при скролле, как в NotificationsView. */}
+      <div
+        className="absolute inset-0 overflow-y-auto pb-32"
+        style={{ paddingTop: "calc(env(safe-area-inset-top) + 152px)" }}
+      >
+        <div className="px-4">
           {active.length === 0 ? (
             <div className="rounded-[28px] bg-white px-6 py-8 text-center">
               <p className="text-[20px] font-semibold text-[var(--mappy-text-primary)]">Запросов нет</p>
@@ -295,20 +379,47 @@ function RequestsView({
               </p>
             </div>
           ) : (
-            <section className="rounded-[28px] bg-white p-4">
-              {active.map((person, index) => (
-                <PersonRow
-                  key={person.id}
-                  person={person}
-                  border={index > 0}
-                  suffix={
-                    activeTab === "outgoing" ? <span className="text-[12px] text-[#99a1af]">Отправлен</span> : undefined
-                  }
-                  onClick={() => onOpenProfile(person)}
-                />
+            <div className="flex flex-col gap-3">
+              {active.map((person) => (
+                <section key={person.id} className="rounded-[28px] bg-white p-4">
+                  <PersonRow person={person} padded={false} onClick={() => onOpenProfile(person)} />
+                </section>
               ))}
-            </section>
+            </div>
           )}
+        </div>
+      </div>
+
+      <div className="blur-edge-top" />
+
+      {/* Шапка слита в одну карточку (макет 2030:58431): назад + заголовок +
+          вкладки — единая белая пилюля поверх блюра, а не части, разбросанные
+          по скроллящемуся контенту. */}
+      <div
+        className="absolute left-4 right-4 z-20 rounded-[28px] bg-white shadow-[0_20px_40px_rgba(30,41,57,0.12)]"
+        style={{ top: "calc(env(safe-area-inset-top) + 16px)" }}
+      >
+        <div className="relative flex h-[60px] items-center justify-center">
+          <button
+            type="button"
+            onClick={onBack}
+            aria-label="Назад"
+            className="absolute left-4 inline-flex items-center text-[#99a1af]"
+          >
+            <BackIcon />
+          </button>
+          <h1 className="text-[24px] font-semibold leading-7 text-[var(--mappy-text-primary)]">Запросы</h1>
+        </div>
+        <div className="px-2 pb-2">
+          <RequestsTabControl
+            outgoingCount={outgoing.length}
+            incomingCount={incoming.length}
+            active={activeTab}
+            onChange={(tab) => {
+              userPickedTab.current = true;
+              setActiveTab(tab);
+            }}
+          />
         </div>
       </div>
     </div>
@@ -667,23 +778,28 @@ function PersonRow({
   border,
   suffix,
   onClick,
+  padded = true,
 }: {
   person: ApiFriendProfile;
   border?: boolean;
   suffix?: ReactNode;
   onClick: () => void;
+  /* false — когда строка уже сидит в своей карточке (макет 2030:58119, p-4
+     16px на карточке): свой py-3 поверх неё даёт лишние 12px и высоту 96px
+     вместо 72px. true (по умолчанию) — для строк внутри общей белой секции. */
+  padded?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center gap-3 py-3 text-left"
+      className={`flex w-full items-center gap-3 text-left ${padded ? "py-3" : ""}`}
       style={{ borderTop: border ? "1px solid var(--mappy-divider)" : "none" }}
     >
       <SmallAvatar person={person} />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <p className="truncate text-[16px] font-semibold text-[var(--mappy-text-primary)]">{displayName(person)}</p>
-        {person.username && <p className="truncate text-[13px] text-[var(--mappy-text-secondary)]">@{person.username}</p>}
+        <p className="truncate text-[16px] font-semibold leading-[18px] text-[var(--mappy-text-primary)]">{displayName(person)}</p>
+        {person.username && <p className="truncate text-[13px] leading-4 text-[var(--mappy-text-secondary)]">@{person.username}</p>}
       </div>
       {suffix}
     </button>
@@ -751,7 +867,7 @@ function ProfileAvatar({ person }: { person: ApiFriendProfile }) {
   );
 }
 
-function SmallAvatar({ person, size = 40 }: { person: Pick<ApiFriendProfile, "name" | "username" | "avatarUrl">; size?: number }) {
+export function SmallAvatar({ person, size = 40 }: { person: Pick<ApiFriendProfile, "name" | "username" | "avatarUrl">; size?: number }) {
   const name = displayName(person as ApiFriendProfile);
   const initials = name.split(" ").map((word) => word[0]).slice(0, 2).join("").toUpperCase();
   return (
@@ -769,7 +885,7 @@ function SmallAvatar({ person, size = 40 }: { person: Pick<ApiFriendProfile, "na
   );
 }
 
-function ScreenBackButton({ onClick }: { onClick: () => void }) {
+export function ScreenBackButton({ onClick }: { onClick: () => void }) {
   return (
     <button
       type="button"
@@ -835,7 +951,7 @@ function friendCountLabel(count: number) {
   return "друзей";
 }
 
-function BackIcon() {
+export function BackIcon() {
   return <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12.5 4.5L7 10l5.5 5.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 }
 

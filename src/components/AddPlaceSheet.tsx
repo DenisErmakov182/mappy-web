@@ -488,7 +488,7 @@ export function AddPlaceSheet({
                     aria-label="Добавить фото"
                   >
                     <span
-                      className="flex size-[26px] items-center justify-center rounded-full"
+                      className="flex size-[28px] items-center justify-center rounded-full"
                       style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
                     >
                       <PlusIcon size={16} />
