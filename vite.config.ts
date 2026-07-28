@@ -1,5 +1,7 @@
 import { defineConfig, type Plugin } from 'vite'
-import { execFileSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
+import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { resolve } from 'node:path'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -17,17 +19,33 @@ const legacyCssAliases = [
   'assets/index-BZl3ly6z.css',
 ]
 
+const revisionInputs = ['index.html', 'package.json', 'package-lock.json', 'vite.config.ts', 'public', 'src']
+
+function collectRevisionFiles(relativePath: string): string[] {
+  const absolutePath = resolve(process.cwd(), relativePath)
+  if (statSync(absolutePath).isFile()) return [relativePath]
+
+  return readdirSync(absolutePath, { withFileTypes: true })
+    .sort((left, right) => (left.name < right.name ? -1 : left.name > right.name ? 1 : 0))
+    .flatMap((entry) => collectRevisionFiles(`${relativePath}/${entry.name}`))
+}
+
+function sourceRevision() {
+  const hash = createHash('sha256')
+
+  for (const relativePath of revisionInputs.flatMap(collectRevisionFiles)) {
+    hash.update(relativePath)
+    hash.update('\0')
+    hash.update(readFileSync(resolve(process.cwd(), relativePath)))
+    hash.update('\0')
+  }
+
+  return `source-${hash.digest('hex')}`
+}
+
 function resolveBuildRevision() {
   const revisionFromEnvironment = process.env.MAPPY_BUILD_REVISION?.trim()
-  if (revisionFromEnvironment) return revisionFromEnvironment
-
-  try {
-    return execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim()
-  } catch {
-    throw new Error(
-      'Service worker build revision is required. Set MAPPY_BUILD_REVISION when Git metadata is unavailable.',
-    )
-  }
+  return revisionFromEnvironment || sourceRevision()
 }
 
 const buildRevision = resolveBuildRevision()
