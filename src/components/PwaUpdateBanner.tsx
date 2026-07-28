@@ -10,7 +10,7 @@ export function PwaUpdateBanner({ onUpdate }: { onUpdate: () => void }) {
       role="status"
     >
       <span className="shrink-0 whitespace-nowrap text-[16px] font-medium leading-[18px] tracking-[-0.6px] text-white">
-        Вышло обновление
+        Тестовое обновление
       </span>
       <button
         onClick={onUpdate}
