@@ -19,7 +19,6 @@ import { PwaUpdateBanner } from "./components/PwaUpdateBanner";
 import locateMeIcon from "./assets/icons/locate-me-3d.webp";
 import {
   hasPwaUpdate,
-  reloadForPwaUpdate,
   subscribeToPwaUpdate,
 } from "./lib/pwaUpdate";
 import {
@@ -522,10 +521,10 @@ function MapApp({
         </div>
       )}
 
-      {/* Единый баннер обновления из Figma 2079:7926 на всех вкладках. */}
+      {/* Единый баннер обновления из Figma 2097:821 на всех вкладках. */}
       {shouldShowPwaUpdateBanner && (
         <div className="absolute bottom-[calc(var(--mappy-floating-bottom)+96px)] left-4 right-4 z-30">
-          <PwaUpdateBanner onUpdate={reloadForPwaUpdate} />
+          <PwaUpdateBanner onDismiss={() => setPwaUpdateAvailable(false)} />
         </div>
       )}
 

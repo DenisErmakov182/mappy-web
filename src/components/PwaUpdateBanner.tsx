@@ -1,24 +1,21 @@
-/*
- * Figma ErrorCaption (2079:7926), reused as a global PWA update notice.
- * The parent decides when it is safe to show above the current screen.
- */
-export function PwaUpdateBanner({ onUpdate }: { onUpdate: () => void }) {
+import mainPin from "../assets/icons/main-pin.webp";
+import { CloseButton } from "./primitives";
+
+/* Figma 2097:821. The parent decides when it is safe to show this notice. */
+export function PwaUpdateBanner({ onDismiss }: { onDismiss: () => void }) {
   return (
     <div
-      className="flex h-16 w-full items-center justify-between rounded-[32px] pl-4 pr-3 py-3"
-      style={{ backgroundColor: "#ff637e" }}
+      className="flex min-h-[82px] w-full items-center justify-between gap-[10px] overflow-hidden rounded-[28px] bg-[#101828] py-4 pl-[60px] pr-4"
       role="status"
     >
-      <span className="shrink-0 whitespace-nowrap text-[16px] font-medium leading-[18px] tracking-[-0.6px] text-white">
-        Вышло обновление
-      </span>
-      <button
-        onClick={onUpdate}
-        className="shrink-0 overflow-hidden rounded-[32px] px-4 py-2 text-[16px] font-medium leading-[18px] tracking-[-0.6px] text-white"
-        style={{ backgroundColor: "rgba(3, 7, 18, 0.2)" }}
-      >
-        Обновить
-      </button>
+      <div className="flex min-w-0 items-center gap-[6px]">
+        <img src={mainPin} alt="" className="h-[50px] w-[41px] shrink-0 object-contain" />
+        <div className="min-w-0 whitespace-nowrap tracking-[-0.6px]">
+          <p className="text-[20px] font-medium leading-6 text-white">Обновление готово</p>
+          <p className="text-[16px] leading-5 text-[var(--mappy-text-tertiary)]">Закройте и откройте Mappy</p>
+        </div>
+      </div>
+      <CloseButton onClick={onDismiss} size={26} />
     </div>
   );
 }

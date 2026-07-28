@@ -21,15 +21,6 @@ export function subscribeToPwaUpdate(listener: (available: boolean) => void) {
 }
 
 /**
- * A manual reload is safe because Mappy's worker never handles fetch events.
- * It does not activate the waiting worker and deliberately never uses
- * skipWaiting.
- */
-export function reloadForPwaUpdate() {
-  window.location.reload();
-}
-
-/**
  * Registers the PWA without ever replacing or reloading the currently open
  * application. A downloaded worker remains in `waiting` and activates only
  * after every Mappy window has been closed. The next launch then starts on one
