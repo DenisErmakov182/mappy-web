@@ -15,7 +15,13 @@ import { AuthScreen } from "./components/AuthScreen";
 import { OnboardingScreen, hasSeenOnboarding } from "./components/OnboardingScreen";
 import { LocationPermissionScreen } from "./components/LocationPermissionScreen";
 import { CloseButton } from "./components/primitives";
+import { PwaUpdateBanner } from "./components/PwaUpdateBanner";
 import locateMeIcon from "./assets/icons/locate-me-3d.webp";
+import {
+  hasPwaUpdate,
+  reloadForPwaUpdate,
+  subscribeToPwaUpdate,
+} from "./lib/pwaUpdate";
 import {
   getToken,
   setToken as persistToken,
@@ -257,6 +263,9 @@ function MapApp({
   const [locating, setLocating] = useState(false);
   const [placesError, setPlacesError] = useState(false);
   const [loadingPlaces, setLoadingPlaces] = useState(false);
+  const [pwaUpdateAvailable, setPwaUpdateAvailable] = useState(hasPwaUpdate);
+
+  useEffect(() => subscribeToPwaUpdate(setPwaUpdateAvailable), []);
 
   const loadPlaces = () => {
     setLoadingPlaces(true);
@@ -373,6 +382,15 @@ function MapApp({
     }
     await navigator.clipboard?.writeText(text);
   };
+
+  const shouldShowPwaUpdateBanner =
+    pwaUpdateAvailable &&
+    !showSearch &&
+    !showFilters &&
+    !draftCoordinate &&
+    !detailPlace &&
+    !editingPlace &&
+    selectedPlaces.length === 0;
 
   return (
     <div className="app-shell bg-white">
@@ -501,6 +519,13 @@ function MapApp({
               setSelectedPlaces([]);
             }}
           />
+        </div>
+      )}
+
+      {/* Единый баннер обновления из Figma 2079:7926 на всех вкладках. */}
+      {shouldShowPwaUpdateBanner && (
+        <div className="absolute bottom-[calc(var(--mappy-floating-bottom)+96px)] left-4 right-4 z-30">
+          <PwaUpdateBanner onUpdate={reloadForPwaUpdate} />
         </div>
       )}
 

@@ -1,5 +1,34 @@
 import { registerSW } from "virtual:pwa-register";
 
+let updateAvailable = false;
+const listeners = new Set<(available: boolean) => void>();
+
+function announceUpdate() {
+  if (updateAvailable) return;
+  updateAvailable = true;
+  listeners.forEach((listener) => listener(true));
+}
+
+export function hasPwaUpdate() {
+  return updateAvailable;
+}
+
+export function subscribeToPwaUpdate(listener: (available: boolean) => void) {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+/**
+ * A manual reload is safe because Mappy's worker never handles fetch events.
+ * It does not activate the waiting worker and deliberately never uses
+ * skipWaiting.
+ */
+export function reloadForPwaUpdate() {
+  window.location.reload();
+}
+
 /**
  * Registers the PWA without ever replacing or reloading the currently open
  * application. A downloaded worker remains in `waiting` and activates only
@@ -14,6 +43,10 @@ export function registerPwaUpdateHandling() {
     // vite-plugin-pwa normally reloads after a waiting worker takes control.
     // Suppress that fallback as an additional guard against visible flashing.
     onNeedReload: () => undefined,
+    onNeedRefresh: announceUpdate,
+    onRegisteredSW: (_swScriptUrl, registration) => {
+      if (registration?.waiting) announceUpdate();
+    },
     onRegisterError: (error) => console.error("PWA registration failed", error),
   });
 }
