@@ -199,7 +199,7 @@ export function SwipeablePlaceCard({
           aria-label={`Открыть место ${place.title}`}
         >
           <div
-            className="relative h-[132px] w-[46.9%] max-w-[196px] shrink-0 overflow-hidden rounded-[20px]"
+            className="relative h-[132px] min-w-0 flex-1 overflow-hidden rounded-[20px]"
             style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
           >
             {place.photos?.[0] && (

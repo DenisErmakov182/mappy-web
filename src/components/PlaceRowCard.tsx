@@ -35,7 +35,7 @@ export function PlaceRowCard({
       className="flex h-[148px] items-start gap-2 p-2 bg-white rounded-[28px] w-full text-left shadow-[0_8px_24px_rgba(0,0,0,0.10)]"
     >
       <div
-        className="relative w-[196px] h-[132px] rounded-[20px] overflow-hidden shrink-0"
+        className="relative h-[132px] min-w-0 flex-1 overflow-hidden rounded-[20px]"
         style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
       >
         {place.photos?.[0] && (
