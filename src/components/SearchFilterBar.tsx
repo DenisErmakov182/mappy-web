@@ -1,4 +1,5 @@
-import { FilterIcon, SearchIcon } from "./primitives";
+import type { PwaUpdateStatus } from "../lib/pwaUpdate";
+import { FilterIcon, SearchIcon, UpdateIcon } from "./primitives";
 
 /*
  * Строка поиска + фильтр по макету Bar (790:16784): белый контейнер radius 32,
@@ -11,51 +12,88 @@ interface Props {
   onClearQuery: () => void;
   hasActiveFilters: boolean;
   onFilterTap: () => void;
+  pwaUpdateStatus: PwaUpdateStatus;
+  onCheckForUpdate: () => void;
 }
 
-export function SearchFilterBar({ query, onOpenSearch, onClearQuery, hasActiveFilters, onFilterTap }: Props) {
+export function SearchFilterBar({
+  query,
+  onOpenSearch,
+  onClearQuery,
+  hasActiveFilters,
+  onFilterTap,
+  pwaUpdateStatus,
+  onCheckForUpdate,
+}: Props) {
+  const isCheckingUpdate = pwaUpdateStatus === "checking";
+  const canCheckForUpdate = pwaUpdateStatus === "idle" || pwaUpdateStatus === "error";
+
   return (
     <div className="flex gap-1 p-2 bg-white rounded-[32px]">
-      <button
-        onClick={onOpenSearch}
-        className="flex items-center gap-2.5 flex-1 h-12 px-4 rounded-l-[32px] rounded-r-[10px] text-left"
-        style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
-      >
-        <SearchIcon
-          className="w-6 h-6 shrink-0"
-          color={query ? "var(--mappy-text-primary)" : "var(--mappy-text-tertiary)"}
-        />
-        <span
-          className="flex-1 text-[16px] font-medium truncate"
-          style={{ color: query ? "var(--mappy-text-primary)" : "var(--mappy-text-tertiary)" }}
+      {isCheckingUpdate ? (
+        <div
+          className="flex h-12 flex-1 items-center justify-center rounded-[24px]"
+          style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
+          aria-label="Проверяем обновления"
+          role="status"
         >
-          {query || "Поиск по адресу, названию"}
-        </span>
-        {query && (
-          <span
-            onClick={(e) => {
-              e.stopPropagation();
-              onClearQuery();
-            }}
-            className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
+          <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#4A5565]/20 border-t-[#4A5565]" />
+        </div>
+      ) : (
+        <>
+          <button
+            onClick={onOpenSearch}
+            className="flex items-center gap-2.5 flex-1 h-12 px-4 rounded-l-[32px] rounded-r-[10px] text-left"
             style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
-            aria-label="Очистить"
           >
-            <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
-              <path d="M12 4L4 12M4 4L12 12" stroke="#4A5565" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          </span>
-        )}
-      </button>
+            <SearchIcon
+              className="w-6 h-6 shrink-0"
+              color={query ? "var(--mappy-text-primary)" : "var(--mappy-text-tertiary)"}
+            />
+            <span
+              className="flex-1 text-[16px] font-medium truncate"
+              style={{ color: query ? "var(--mappy-text-primary)" : "var(--mappy-text-tertiary)" }}
+            >
+              {query || "Поиск по адресу, названию"}
+            </span>
+            {query && (
+              <span
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClearQuery();
+                }}
+                className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
+                style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
+                aria-label="Очистить"
+              >
+                <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
+                  <path d="M12 4L4 12M4 4L12 12" stroke="#4A5565" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </span>
+            )}
+          </button>
 
-      <button
-        onClick={onFilterTap}
-        className="relative h-12 px-4 rounded-r-[32px] rounded-l-[10px] flex items-center justify-center"
-        style={{ backgroundColor: hasActiveFilters ? "var(--mappy-brand-subtle)" : "rgba(3,7,18,0.04)" }}
-        aria-label="Фильтры"
-      >
-        <FilterIcon className="w-6 h-6" color={hasActiveFilters ? "var(--mappy-pink)" : "#4A5565"} />
-      </button>
+          {canCheckForUpdate && (
+            <button
+              onClick={onCheckForUpdate}
+              className="h-12 w-12 shrink-0 rounded-[10px] flex items-center justify-center"
+              style={{ backgroundColor: "rgba(3,7,18,0.04)" }}
+              aria-label="Проверить обновление"
+            >
+              <UpdateIcon className="w-6 h-6" color="#4A5565" />
+            </button>
+          )}
+
+          <button
+            onClick={onFilterTap}
+            className="relative h-12 px-4 rounded-r-[32px] rounded-l-[10px] flex items-center justify-center"
+            style={{ backgroundColor: hasActiveFilters ? "var(--mappy-brand-subtle)" : "rgba(3,7,18,0.04)" }}
+            aria-label="Фильтры"
+          >
+            <FilterIcon className="w-6 h-6" color={hasActiveFilters ? "var(--mappy-pink)" : "#4A5565"} />
+          </button>
+        </>
+      )}
     </div>
   );
 }

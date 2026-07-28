@@ -84,6 +84,20 @@ export function SearchIcon({ className, color }: { className?: string; color?: s
   );
 }
 
+export function UpdateIcon({ className, color }: { className?: string; color?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} style={{ color }} aria-hidden="true">
+      <path
+        d="M20 11A8 8 0 1 0 21 15.5M20 4V11H13"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 /*
  * Нижний лист: полоска-граббер тянется пальцем/мышью — вниз закрывает лист,
  * вверх раскрывает на максимум.

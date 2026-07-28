@@ -15,6 +15,12 @@ import { AuthScreen } from "./components/AuthScreen";
 import { OnboardingScreen, hasSeenOnboarding } from "./components/OnboardingScreen";
 import { LocationPermissionScreen } from "./components/LocationPermissionScreen";
 import { CloseButton } from "./components/primitives";
+import {
+  checkForPwaUpdate,
+  getPwaUpdateStatus,
+  reloadForPwaUpdate,
+  subscribeToPwaUpdateStatus,
+} from "./lib/pwaUpdate";
 import locateMeIcon from "./assets/icons/locate-me-3d.webp";
 import {
   getToken,
@@ -257,6 +263,9 @@ function MapApp({
   const [locating, setLocating] = useState(false);
   const [placesError, setPlacesError] = useState(false);
   const [loadingPlaces, setLoadingPlaces] = useState(false);
+  const [pwaUpdateStatus, setPwaUpdateStatus] = useState(getPwaUpdateStatus);
+
+  useEffect(() => subscribeToPwaUpdateStatus(setPwaUpdateStatus), []);
 
   const loadPlaces = () => {
     setLoadingPlaces(true);
@@ -429,7 +438,26 @@ function MapApp({
             onClearQuery={() => setQuery("")}
             hasActiveFilters={!filtersAreEmpty(filters)}
             onFilterTap={() => setShowFilters(true)}
+            pwaUpdateStatus={pwaUpdateStatus}
+            onCheckForUpdate={() => void checkForPwaUpdate()}
           />
+          {pwaUpdateStatus === "available" && (
+            <div
+              className="mt-2 flex items-center justify-between gap-3 rounded-[20px] bg-white px-4 py-3 shadow-[0_8px_24px_rgba(3,7,18,0.12)]"
+              role="status"
+            >
+              <span className="text-[15px] font-medium" style={{ color: "var(--mappy-text-primary)" }}>
+                Вышло обновление
+              </span>
+              <button
+                onClick={reloadForPwaUpdate}
+                className="shrink-0 rounded-full px-3 py-1.5 text-[14px] font-medium"
+                style={{ backgroundColor: "var(--mappy-brand-subtle)", color: "var(--mappy-pink)" }}
+              >
+                Обновить приложение
+              </button>
+            </div>
+          )}
         </div>
       )}
 
