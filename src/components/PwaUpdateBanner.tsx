@@ -17,7 +17,7 @@ export function PwaUpdateBanner({ onUpdate }: { onUpdate: () => void }) {
         className="shrink-0 overflow-hidden rounded-[32px] px-4 py-2 text-[16px] font-medium leading-[18px] tracking-[-0.6px] text-white"
         style={{ backgroundColor: "rgba(3, 7, 18, 0.2)" }}
       >
-        Обновить приложение
+        Обновить
       </button>
     </div>
   );
