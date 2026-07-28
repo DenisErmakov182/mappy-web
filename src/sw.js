@@ -7,6 +7,12 @@
  * keeps its current runtime. This worker activates naturally only after all
  * Mappy windows close, then removes caches left by the former Workbox worker.
  */
+self.addEventListener("install", (event) => {
+  // The literal revision makes the worker change exactly when the source
+  // revision changes. It deliberately does not skip waiting or cache UI.
+  event.waitUntil(Promise.resolve(__MAPPY_BUILD_REVISION__));
+});
+
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) =>

@@ -1,4 +1,5 @@
 import { defineConfig, type Plugin } from 'vite'
+import { execFileSync } from 'node:child_process'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -15,6 +16,21 @@ const legacyCssAliases = [
   'assets/index-2PvzGSot.css',
   'assets/index-BZl3ly6z.css',
 ]
+
+function resolveBuildRevision() {
+  const revisionFromEnvironment = process.env.MAPPY_BUILD_REVISION?.trim()
+  if (revisionFromEnvironment) return revisionFromEnvironment
+
+  try {
+    return execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim()
+  } catch {
+    throw new Error(
+      'Service worker build revision is required. Set MAPPY_BUILD_REVISION when Git metadata is unavailable.',
+    )
+  }
+}
+
+const buildRevision = resolveBuildRevision()
 
 /**
  * Timeweb can keep an older index.html on one CDN edge after App Platform has
@@ -50,6 +66,9 @@ function legacyShellAliases(): Plugin {
 }
 
 export default defineConfig({
+  define: {
+    __MAPPY_BUILD_REVISION__: JSON.stringify(buildRevision),
+  },
   server: {
     host: true,
   },
