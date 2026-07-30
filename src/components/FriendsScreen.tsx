@@ -24,6 +24,8 @@ import {
   type ApiUser,
 } from "../lib/api";
 import { NotificationsView } from "./NotificationsView";
+import { FriendAvatar } from "./FriendAvatar";
+import { avatarGradient, avatarInitials } from "../lib/avatarGradient";
 import { CtaButton, SearchIcon } from "./primitives";
 import { PlaceRowCard } from "./PlaceRowCard";
 import friendsEmptyIllustration from "../assets/illustrations/friends-empty.webp";
@@ -840,8 +842,7 @@ function ProfileHeader({ user, onOpenAccount }: { user: ApiUser; onOpenAccount: 
 
 /* Фото друга «приколото» булавкой к карточке, по макету 1918:21329. */
 function ProfileAvatar({ person }: { person: ApiFriendProfile }) {
-  const name = displayName(person);
-  const initials = name.split(" ").map((word) => word[0]).slice(0, 2).join("").toUpperCase();
+  const initials = avatarInitials(displayName(person));
   return (
     <div className="relative flex items-center justify-center" style={{ width: 163, height: 163 }}>
       <div style={{ transform: "rotate(-6.28deg)" }}>
@@ -853,7 +854,7 @@ function ProfileAvatar({ person }: { person: ApiFriendProfile }) {
             className="flex h-full w-full items-center justify-center overflow-hidden rounded-[16px] font-semibold text-white"
             style={{
               fontSize: 41,
-              background: person.avatarUrl ? "#e5e7eb" : "linear-gradient(135deg, #99a1af, #4a5565)",
+              background: person.avatarUrl ? "#e5e7eb" : avatarGradient(person.id),
             }}
           >
             {person.avatarUrl ? <img src={person.avatarUrl} alt="" className="h-full w-full object-cover" /> : initials}
@@ -867,22 +868,8 @@ function ProfileAvatar({ person }: { person: ApiFriendProfile }) {
   );
 }
 
-export function SmallAvatar({ person, size = 40 }: { person: Pick<ApiFriendProfile, "name" | "username" | "avatarUrl">; size?: number }) {
-  const name = displayName(person as ApiFriendProfile);
-  const initials = name.split(" ").map((word) => word[0]).slice(0, 2).join("").toUpperCase();
-  return (
-    <span
-      className="flex shrink-0 items-center justify-center overflow-hidden rounded-full font-semibold text-white"
-      style={{
-        width: size,
-        height: size,
-        fontSize: Math.max(14, Math.round(size * 0.28)),
-        background: person.avatarUrl ? "#e5e7eb" : "linear-gradient(135deg, #99a1af, #4a5565)",
-      }}
-    >
-      {person.avatarUrl ? <img src={person.avatarUrl} alt="" className="h-full w-full rounded-full object-cover" /> : initials}
-    </span>
-  );
+export function SmallAvatar({ person, size = 40 }: { person: Pick<ApiFriendProfile, "id" | "name" | "username" | "avatarUrl">; size?: number }) {
+  return <FriendAvatar person={person} size={size} />;
 }
 
 export function ScreenBackButton({ onClick }: { onClick: () => void }) {

@@ -1,7 +1,7 @@
 import type { Place } from "../types";
 import { CategoryIcon } from "./CategoryIcon";
 import { RatingChip } from "./primitives";
-import friendAvatarBlur from "../assets/icons/friend-avatar-blur.svg";
+import { FriendAvatarOnPhoto } from "./FriendAvatar";
 
 function formatPlaceDate(createdAt?: string): string | null {
   if (!createdAt) return null;
@@ -42,26 +42,7 @@ export function PlaceRowCard({
           <img src={place.photos[0].url} alt="" className="w-full h-full object-cover" />
         )}
         {showOwnerAvatar && place.owner && (
-          <>
-            <span
-              aria-hidden="true"
-              className="pointer-events-none absolute -left-[32px] -top-[32px] h-[104.389px] w-[104.389px]"
-            >
-              <img
-                src={friendAvatarBlur}
-                alt=""
-                className="absolute -inset-[29.99%] h-[159.98%] w-[159.98%] max-w-none"
-              />
-            </span>
-            <span
-              className="absolute left-[5px] top-[5px] z-10 block h-10 w-10 overflow-hidden rounded-full border-2 border-[#f3f4f6] bg-[#f9fafb]"
-              title={place.owner.name}
-            >
-              {place.owner.avatarUrl && (
-                <img src={place.owner.avatarUrl} alt={place.owner.name} className="h-full w-full object-cover" />
-              )}
-            </span>
-          </>
+          <FriendAvatarOnPhoto person={place.owner} />
         )}
       </div>
 
