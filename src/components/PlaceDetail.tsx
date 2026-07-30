@@ -111,9 +111,21 @@ export function PlaceDetail({
 
         <div className="mt-3 flex w-full flex-col gap-6">
           <div className="flex flex-col gap-2 px-1">
+            {/*
+              Заголовок занимает до трёх строк, по узлу Figma 2113:2653: там
+              высота 95px при line-height 32px. Держим `max-height` вместо
+              фиксированной высоты, чтобы короткое название не оставляло под
+              собой пустоту. Перенос по любому месту нужен для длинных слов —
+              иначе одно слово шире колонки не переносится и вылезает.
+            */}
             <h1
-              className="truncate text-[28px] font-semibold leading-8 tracking-[-0.6px]"
-              style={{ color: "var(--mappy-text-primary)" }}
+              className="block max-h-[96px] overflow-hidden text-ellipsis text-[28px] font-semibold leading-8 tracking-[-0.6px] [overflow-wrap:anywhere] [word-break:break-word]"
+              style={{
+                color: "var(--mappy-text-primary)",
+                display: "-webkit-box",
+                WebkitBoxOrient: "vertical",
+                WebkitLineClamp: 3,
+              }}
             >
               {place.title}
             </h1>
