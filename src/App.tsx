@@ -544,6 +544,7 @@ function MapApp({
         <SearchOverlay
           places={places}
           initialQuery={query}
+          origin={center}
           onSubmit={setQuery}
           onSelectPlace={(place) => {
             setCenter({ lat: place.latitude, lng: place.longitude });

@@ -7,6 +7,25 @@ const MIN_ADDRESS_QUERY_LENGTH = 3;
 const ADDRESS_DEBOUNCE_MS = 250;
 
 /*
+ * Сортировка подсказок по расстоянию до текущего центра карты, а не по
+ * relevance-порядку DaData (тот отдаёт совпадения по всей стране вперемешку,
+ * см. «Некрасова» — Петербург, Омск, Казань подряд). Не через параметр
+ * DaData вроде locations_boost: его точное поведение не проверить без
+ * рабочего токена под рукой, а искажённая сортировка на проде хуже, чем
+ * простой и понятный клиентский код.
+ *
+ * Не настоящее геодезическое расстояние (без синуса/косинуса Хаверсина) —
+ * для одной лишь сортировки по возрастанию хватает и приближения: долгота
+ * растянута по широте (градус долготы у́же градус широты ближе к полюсам),
+ * остальное для ранжирования избыточно.
+ */
+function distanceScore(point: { lat: number; lng: number }, origin: { lat: number; lng: number }): number {
+  const dLat = point.lat - origin.lat;
+  const dLng = (point.lng - origin.lng) * Math.cos((origin.lat * Math.PI) / 180);
+  return dLat * dLat + dLng * dLng;
+}
+
+/*
  * Открытый поиск по макету 1489:16146: белый экран, слева кнопка «назад»,
  * строка с крестиком очистки, ниже — результаты по названию/адресу.
  *
@@ -17,6 +36,7 @@ const ADDRESS_DEBOUNCE_MS = 250;
 export function SearchOverlay({
   places,
   initialQuery,
+  origin,
   onSubmit,
   onSelectPlace,
   onSelectAddress,
@@ -24,6 +44,7 @@ export function SearchOverlay({
 }: {
   places: Place[];
   initialQuery: string;
+  origin: { lat: number; lng: number };
   onSubmit: (query: string) => void;
   onSelectPlace: (place: Place) => void;
   onSelectAddress: (suggestion: AddressSuggestion) => void;
@@ -56,7 +77,11 @@ export function SearchOverlay({
     const timer = window.setTimeout(() => {
       suggestAddresses(value)
         .then((suggestions) => {
-          if (active) setAddressResults(suggestions);
+          if (!active) return;
+          const sorted = [...suggestions].sort(
+            (a, b) => distanceScore(a, origin) - distanceScore(b, origin),
+          );
+          setAddressResults(sorted);
         })
         .catch(() => {
           if (active) setAddressResults([]);
@@ -67,7 +92,7 @@ export function SearchOverlay({
       active = false;
       window.clearTimeout(timer);
     };
-  }, [query]);
+  }, [query, origin]);
 
   return (
     <div className="fixed inset-0 z-50 bg-white flex flex-col">
