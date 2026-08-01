@@ -1,25 +1,36 @@
 import { useEffect, useRef, useState } from "react";
 import type { Place } from "../types";
+import { suggestAddresses, type AddressSuggestion } from "../lib/api";
 import { SearchIcon } from "./primitives";
+
+const MIN_ADDRESS_QUERY_LENGTH = 3;
+const ADDRESS_DEBOUNCE_MS = 250;
 
 /*
  * Открытый поиск по макету 1489:16146: белый экран, слева кнопка «назад»,
  * строка с крестиком очистки, ниже — результаты по названию/адресу.
+ *
+ * Кроме своих сохранённых мест ниже показываются реальные адреса из
+ * геокодера DaData (те, что ещё не занесены в приложение) — выбор такого
+ * адреса открывает форму добавления места сразу в этой точке.
  */
 export function SearchOverlay({
   places,
   initialQuery,
   onSubmit,
   onSelectPlace,
+  onSelectAddress,
   onClose,
 }: {
   places: Place[];
   initialQuery: string;
   onSubmit: (query: string) => void;
   onSelectPlace: (place: Place) => void;
+  onSelectAddress: (suggestion: AddressSuggestion) => void;
   onClose: () => void;
 }) {
   const [query, setQuery] = useState(initialQuery);
+  const [addressResults, setAddressResults] = useState<AddressSuggestion[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -33,6 +44,30 @@ export function SearchOverlay({
           p.address.toLowerCase().includes(query.toLowerCase()),
       )
     : [];
+
+  useEffect(() => {
+    const value = query.trim();
+    if (value.length < MIN_ADDRESS_QUERY_LENGTH) {
+      setAddressResults([]);
+      return;
+    }
+
+    let active = true;
+    const timer = window.setTimeout(() => {
+      suggestAddresses(value)
+        .then((suggestions) => {
+          if (active) setAddressResults(suggestions);
+        })
+        .catch(() => {
+          if (active) setAddressResults([]);
+        });
+    }, ADDRESS_DEBOUNCE_MS);
+
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [query]);
 
   return (
     <div className="fixed inset-0 z-50 bg-white flex flex-col">
@@ -111,6 +146,34 @@ export function SearchOverlay({
             </p>
           </button>
         ))}
+
+        {addressResults.length > 0 && (
+          <>
+            {results.length > 0 && (
+              <p
+                className="pt-2 pb-1 text-[13px] font-medium"
+                style={{ color: "var(--mappy-text-tertiary)" }}
+              >
+                Адреса
+              </p>
+            )}
+            {addressResults.map((suggestion) => (
+              <button
+                key={`${suggestion.lat},${suggestion.lng}`}
+                onClick={() => {
+                  onSelectAddress(suggestion);
+                  onClose();
+                }}
+                className="w-full text-left py-3 border-b"
+                style={{ borderColor: "var(--mappy-divider)" }}
+              >
+                <p className="text-[16px] font-medium" style={{ color: "var(--mappy-text-primary)" }}>
+                  {suggestion.label}
+                </p>
+              </button>
+            ))}
+          </>
+        )}
       </div>
     </div>
   );

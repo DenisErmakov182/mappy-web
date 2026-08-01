@@ -281,6 +281,19 @@ export function reverseGeocode(lat: number, lng: number) {
   return request<{ address: string }>(`/geocode/reverse?${params}`).then((result) => result.address);
 }
 
+export interface AddressSuggestion {
+  label: string;
+  lat: number;
+  lng: number;
+}
+
+export function suggestAddresses(query: string) {
+  const params = new URLSearchParams({ q: query });
+  return request<{ suggestions: AddressSuggestion[] }>(`/geocode/suggest?${params}`).then(
+    (result) => result.suggestions,
+  );
+}
+
 async function getPhotoUploadUrl(contentType: string) {
   return request<{ uploadUrl: string; publicUrl: string }>("/places/photo-upload-url", {
     method: "POST",

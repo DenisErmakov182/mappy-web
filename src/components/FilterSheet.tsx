@@ -5,7 +5,6 @@ import {
   cloneFilters,
   emptyFilters,
   placeMatchesFilters,
-  ratingChipColors,
   type Place,
   type PlaceCategory,
   type PlaceFilters,
@@ -16,9 +15,17 @@ import { CategoryIcon } from "./CategoryIcon";
 import { Sheet, CloseButton, CtaButton } from "./primitives";
 
 /*
- * Фильтр по макету 1489:17780: «Сбросить» слева, крестик справа; категории с иконками,
- * цветные чипы оценок 5★..2★, отдельные чипы «Был»/«Планирую», внизу CTA «Показать N мест».
+ * Фильтр по макетам 1865:21940 (ничего не выбрано) и 1964:26283 (выбрано несколько):
+ * «Сбросить» слева, крестик справа; категории, оценка и посещения — один и тот же
+ * бинарный Chip без промежуточных состояний: не выбрано — светлый фон и серый текст,
+ * выбрано — тёмный фон и белый текст. Внизу CTA «Показать N мест».
  */
+function chipStyle(isSelected: boolean) {
+  return {
+    backgroundColor: isSelected ? "#101828" : "var(--mappy-surface-primary)",
+    color: isSelected ? "#fff" : "var(--mappy-text-secondary)",
+  };
+}
 export function FilterSheet({
   filters,
   places,
@@ -55,11 +62,18 @@ export function FilterSheet({
       return next;
     });
 
+  // «Был»/«Планирую» — селектор, а не мультиселект: выбор одного снимает
+  // другой. Повторный клик по уже выбранному снимает выбор совсем (оба
+  // статуса снова показываются), а не переключает на пустой список.
   const toggleStatus = (status: VisitStatus) =>
     setDraft((prev) => {
       const next = cloneFilters(prev);
-      if (next.statuses.has(status)) next.statuses.delete(status);
-      else next.statuses.add(status);
+      if (next.statuses.has(status)) {
+        next.statuses.delete(status);
+      } else {
+        next.statuses.clear();
+        next.statuses.add(status);
+      }
       return next;
     });
 
@@ -90,10 +104,7 @@ export function FilterSheet({
                   key={category}
                   onClick={() => toggleCategory(category)}
                   className="flex items-center gap-1 pl-2 pr-3 py-3 rounded-[14px] text-[16px] font-medium"
-                  style={{
-                    backgroundColor: isSelected ? "var(--mappy-brand-subtle)" : "var(--mappy-surface-primary)",
-                    color: isSelected ? "var(--mappy-pink)" : "var(--mappy-text-primary)",
-                  }}
+                  style={chipStyle(isSelected)}
                 >
                   <CategoryIcon category={category} />
                   {categoryLabel[category]}
@@ -107,22 +118,15 @@ export function FilterSheet({
           <h3 className="text-[16px] font-semibold mb-2" style={{ color: "var(--mappy-text-primary)" }}>
             Оценка
           </h3>
-          <div className="flex gap-1">
-            {[5, 4, 3, 2].map((rating) => {
-              const { bg, text } = ratingChipColors(rating);
+          <div className="flex flex-wrap gap-1">
+            {[5, 4, 3, 2, 1].map((rating) => {
               const isSelected = draft.ratings.has(rating);
               return (
                 <button
                   key={rating}
                   onClick={() => toggleRating(rating)}
                   className="flex items-center gap-0.5 h-[40px] px-2 rounded-[10px] text-[16px] font-medium"
-                  style={{
-                    backgroundColor: bg,
-                    color: text,
-                    outline: isSelected ? `2px solid ${text}` : "none",
-                    outlineOffset: -2,
-                    opacity: draft.ratings.size === 0 || isSelected ? 1 : 0.45,
-                  }}
+                  style={chipStyle(isSelected)}
                 >
                   {rating} <span className="text-[13px]">★</span>
                 </button>
@@ -143,10 +147,7 @@ export function FilterSheet({
                   key={status}
                   onClick={() => toggleStatus(status)}
                   className="h-[42px] px-3 rounded-[14px] text-[16px] font-medium"
-                  style={{
-                    backgroundColor: isSelected ? "var(--mappy-brand-subtle)" : "var(--mappy-surface-primary)",
-                    color: isSelected ? "var(--mappy-pink)" : "var(--mappy-text-primary)",
-                  }}
+                  style={chipStyle(isSelected)}
                 >
                   {visitStatusLabel[status]}
                 </button>

@@ -550,6 +550,14 @@ function MapApp({
             setSelectedPlaces([place]);
             setTab("map");
           }}
+          onSelectAddress={(suggestion) => {
+            // Не место, а точка на карте, которую ещё не занесли — сразу открываем
+            // форму добавления, а не просто перелетаем туда: искали именно затем,
+            // чтобы добавить, а не чтобы посмотреть.
+            setCenter({ lat: suggestion.lat, lng: suggestion.lng });
+            setTab("map");
+            setDraftCoordinate({ lat: suggestion.lat, lng: suggestion.lng });
+          }}
           onClose={() => setShowSearch(false)}
         />
       )}
