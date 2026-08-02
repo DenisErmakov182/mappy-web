@@ -91,16 +91,23 @@ function buildPinElement(place: Place, onSelect: () => void): HTMLElement {
   shadow.style.cssText = `position:absolute;left:0;top:${25 + topOffset}px;z-index:0;width:67px;height:62.67px;object-fit:contain;pointer-events:none;`;
   el.appendChild(shadow);
 
-  const { bg, text } = ratingChipColors(place.rating);
-  const rating = document.createElement("span");
-  rating.textContent = String(place.rating);
-  rating.style.cssText = `position:absolute;left:0;top:${7 + topOffset}px;z-index:2;height:26px;min-width:26px;padding:0 8px;border-radius:999px;background:${bg};color:${text};font-size:15px;font-weight:500;display:flex;align-items:center;justify-content:center;`;
-  el.appendChild(rating);
+  // Нет оценки — нет бейджа. rating === 0 в схеме означает «не оценено», а не
+  // «ноль звёзд», рисовать его нельзя нигде, включая пин на карте.
+  if (place.rating > 0) {
+    const { bg, text } = ratingChipColors(place.rating);
+    const rating = document.createElement("span");
+    rating.textContent = String(place.rating);
+    rating.style.cssText = `position:absolute;left:0;top:${7 + topOffset}px;z-index:2;height:26px;min-width:26px;padding:0 8px;border-radius:999px;background:${bg};color:${text};font-size:15px;font-weight:500;display:flex;align-items:center;justify-content:center;`;
+    el.appendChild(rating);
+  }
 
   const mainCategory = place.categories[0];
   if (mainCategory) {
+    // Без бейджа оценки категории некуда «прислоняться» — сдвигаем на его
+    // место, а не оставляем пустой отступ слева.
     const tag = document.createElement("span");
-    tag.style.cssText = `position:absolute;left:28px;top:${14 + topOffset}px;z-index:2;height:28px;padding:4px 8px;border-radius:999px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;`;
+    const tagLeft = place.rating > 0 ? 28 : 0;
+    tag.style.cssText = `position:absolute;left:${tagLeft}px;top:${14 + topOffset}px;z-index:2;height:28px;padding:4px 8px;border-radius:999px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;`;
     const icon = document.createElement("img");
     icon.src = categoryIcons[mainCategory];
     icon.style.cssText = "width:24px;height:20px;object-fit:contain;";
