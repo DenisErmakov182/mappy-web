@@ -114,7 +114,16 @@ function readShareToken(): string | null {
   const path = window.location.pathname;
   if (!path.startsWith(SHARE_PATH_PREFIX)) return null;
   const token = path.slice(SHARE_PATH_PREFIX.length).replace(/\/+$/, "");
-  return token ? decodeURIComponent(token) : null;
+  if (!token) return null;
+  try {
+    return decodeURIComponent(token);
+  } catch {
+    // Битая процентная кодировка («/s/%E0%A4%A») роняет decodeURIComponent.
+    // Это адрес снаружи, прислать его может кто угодно, и падение здесь
+    // случилось бы прямо в рендере — вместо места человек увидел бы экран
+    // восстановления. Отдаём как есть: сервер всё равно ответит 404.
+    return token;
+  }
 }
 
 function toPlaceInput(place: Place): PlaceInput {
