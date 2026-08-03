@@ -81,7 +81,15 @@ export function PlaceDetail({
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto overflow-x-hidden bg-white">
       <div className="flex min-h-full flex-col gap-3 px-4 pb-[calc(env(safe-area-inset-bottom)+34px)] pt-[calc(env(safe-area-inset-top)+11px)]">
-        <div className="flex h-7 shrink-0 items-center justify-between">
+        {/*
+          `relative z-10` — не украшение. Свайпер фото ниже вытягивает свой
+          скролл-контейнер вверх отрицательным `-my-8`, оставляя место мягкой
+          тени, и эти 32px пустого padding'а ложатся поверх строки с кнопками:
+          до правки у «Закрыть» и «…» нажимались только верхние ~8px. Поднимаем
+          строку в порядке отрисовки — попадания снова достаются кнопкам,
+          а запас под тень у свайпера остаётся нетронутым.
+        */}
+        <div className="relative z-10 flex h-7 shrink-0 items-center justify-between">
           <CloseButton onClick={onClose} size={28} backgroundColor="rgba(255,255,255,0.6)" />
           <button
             type="button"
