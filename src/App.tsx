@@ -12,6 +12,7 @@ import { NotesList } from "./components/NotesList";
 import { FriendsScreen } from "./components/FriendsScreen";
 import { SearchOverlay } from "./components/SearchOverlay";
 import { AuthScreen } from "./components/AuthScreen";
+import { SharedPlaceScreen } from "./components/SharedPlaceScreen";
 import { OnboardingScreen, hasSeenOnboarding } from "./components/OnboardingScreen";
 import { LocationPermissionScreen } from "./components/LocationPermissionScreen";
 import { CloseButton } from "./components/primitives";
@@ -37,6 +38,7 @@ import {
   updatePlace,
   deletePlace,
   deleteAccount,
+  createPlaceShare,
   type ApiUser,
   type ApiFriend,
   type PlaceInput,
@@ -50,6 +52,7 @@ import {
   type Friend,
 } from "./types";
 
+const SHARE_PATH_PREFIX = "/s/";
 const LAST_LOCATION_KEY = "mappy_last_location";
 const LOCATION_PROMPT_COMPLETED_KEY = "mappy_location_prompt_completed";
 const MAP_WITHOUT_LOCATION = { center: { lat: 61.524, lng: 105.3188 }, zoom: 3 };
@@ -101,6 +104,19 @@ function resetLocationPrompt() {
   }
 }
 
+/*
+ * Роутера в проекте нет — путь публичной ссылки читаем сам, один раз при
+ * запуске. Пустой хвост («/s» или «/s/») ссылкой не считаем, а любой другой
+ * отдаём странице: разбираться, живой это токен или мусор, всё равно серверу,
+ * и человеку из мессенджера полезнее «ссылка не работает», чем экран входа.
+ */
+function readShareToken(): string | null {
+  const path = window.location.pathname;
+  if (!path.startsWith(SHARE_PATH_PREFIX)) return null;
+  const token = path.slice(SHARE_PATH_PREFIX.length).replace(/\/+$/, "");
+  return token ? decodeURIComponent(token) : null;
+}
+
 function toPlaceInput(place: Place): PlaceInput {
   return {
     title: place.title,
@@ -132,6 +148,7 @@ export default function App() {
     return storedToken ? getSessionUser(storedToken) : null;
   });
   const [showOnboarding, setShowOnboarding] = useState(() => !hasSeenOnboarding());
+  const [shareToken, setShareToken] = useState<string | null>(readShareToken);
   const [mapLaunch, setMapLaunch] = useState<MapLaunchState | null>(() => {
     const stored = getStoredLocation();
     if (stored) return { center: stored, zoom: 12 };
@@ -164,24 +181,45 @@ export default function App() {
       });
   }, [token]);
 
-  if (!token || !user) {
+  const handleAuthenticated = (newToken: string, newUser: ApiUser, isNew: boolean) => {
+    persistToken(newToken);
+    persistUser(newUser);
+    setToken(newToken);
+    setUser(newUser);
+    if (isNew) {
+      // Новый аккаунт должен сам дать согласие на геолокацию, даже если
+      // на этом устройстве раньше уже использовался другой аккаунт.
+      resetLocationPrompt();
+      setMapLaunch(null);
+      setShowOnboarding(true);
+    }
+  };
+
+  // Публичная ссылка на место открывается ДО проверки входа: получатель видит
+  // место сразу, а регистрация начинается только по кнопке внизу страницы.
+  const leaveSharePage = () => {
+    // Адрес чистим только когда с публичной страницы уходят: пока она открыта,
+    // перезагрузка должна показывать то же место.
+    window.history.replaceState(null, "", "/");
+    setShareToken(null);
+  };
+
+  if (shareToken) {
     return (
-      <AuthScreen
+      <SharedPlaceScreen
+        token={shareToken}
+        signedIn={Boolean(token && user)}
         onAuthenticated={(newToken, newUser, isNew) => {
-          persistToken(newToken);
-          persistUser(newUser);
-          setToken(newToken);
-          setUser(newUser);
-          if (isNew) {
-            // Новый аккаунт должен сам дать согласие на геолокацию, даже если
-            // на этом устройстве раньше уже использовался другой аккаунт.
-            resetLocationPrompt();
-            setMapLaunch(null);
-            setShowOnboarding(true);
-          }
+          handleAuthenticated(newToken, newUser, isNew);
+          leaveSharePage();
         }}
+        onOpenApp={leaveSharePage}
       />
     );
+  }
+
+  if (!token || !user) {
+    return <AuthScreen onAuthenticated={handleAuthenticated} />;
   }
 
   if (showOnboarding) {
@@ -264,8 +302,17 @@ function MapApp({
   const [loadingPlaces, setLoadingPlaces] = useState(false);
   const [pwaUpdateAvailable, setPwaUpdateAvailable] = useState(hasPwaUpdate);
   const [friendsResetSignal, setFriendsResetSignal] = useState(0);
+  const [shareNotice, setShareNotice] = useState("");
 
   useEffect(() => subscribeToPwaUpdate(setPwaUpdateAvailable), []);
+
+  // Результат «Поделиться» иначе никак не виден: системный лист открывается сам,
+  // а копирование в буфер и отказ сервера молча ничего не меняют на экране.
+  useEffect(() => {
+    if (!shareNotice) return;
+    const timeout = setTimeout(() => setShareNotice(""), 4000);
+    return () => clearTimeout(timeout);
+  }, [shareNotice]);
 
   const loadPlaces = () => {
     setLoadingPlaces(true);
@@ -369,18 +416,72 @@ function MapApp({
     return [...visiblePlaces, ...visibleFriendPlaces];
   }, [visiblePlaces, friendPlaces, focusedFriendId, filters, query]);
 
-  const sharePlace = async (place: Place) => {
-    const text = `${place.title}\n${place.address}`;
+  const copyToClipboard = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareNotice("Ссылка скопирована");
+    } catch {
+      // Буфер обмена недоступен — показываем сам адрес, чтобы ссылку можно было
+      // скопировать вручную, а не остаться без результата вообще.
+      setShareNotice(url);
+    }
+  };
+
+  const shareText = async (text: string, title: string) => {
     if (navigator.share) {
       try {
-        await navigator.share({ title: place.title, text });
+        await navigator.share({ title, text });
+        return;
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") return;
-        await navigator.clipboard?.writeText(text);
       }
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      setShareNotice("Скопировано");
+    } catch {
+      setShareNotice("Не удалось поделиться");
+    }
+  };
+
+  /*
+   * «Поделиться» отдаёт настоящую ссылку на место — публичную страницу
+   * `/s/:token`, которая открывается без входа. Ссылку выдаёт сервер и
+   * переиспользует уже существующую живую, поэтому повторные нажатия не плодят
+   * новые адреса.
+   *
+   * Место друга расшарить нельзя: ссылку вправе выдать только владелец
+   * (`POST /places/:id/share` проверяет user_id и отвечает 404 на чужое).
+   * Для чужой карточки остаётся прежнее поведение — текст с названием и адресом.
+   */
+  const sharePlace = async (place: Place) => {
+    if (place.owner) {
+      await shareText(`${place.title}\n${place.address}`, place.title);
       return;
     }
-    await navigator.clipboard?.writeText(text);
+
+    let url: string;
+    try {
+      const { token } = await createPlaceShare(place.id);
+      // Домен берём текущий, а не зашитый: на стенде ссылка должна вести на
+      // стенд, в проде — на app.mymappy.ru.
+      url = `${window.location.origin}${SHARE_PATH_PREFIX}${token}`;
+    } catch (error) {
+      setShareNotice(error instanceof Error ? error.message : "Не удалось создать ссылку");
+      return;
+    }
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: place.title, url });
+        return;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        // Системный лист мог не открыться (например, жест уже «остыл», пока
+        // сервер выдавал ссылку) — тогда остаётся буфер обмена.
+      }
+    }
+    await copyToClipboard(url);
   };
 
   const shouldShowPwaUpdateBanner =
@@ -527,6 +628,19 @@ function MapApp({
       {shouldShowPwaUpdateBanner && (
         <div className="absolute bottom-[calc(var(--mappy-floating-bottom)+96px)] left-4 right-4 z-30">
           <PwaUpdateBanner onDismiss={() => setPwaUpdateAvailable(false)} />
+        </div>
+      )}
+
+      {/* Итог «Поделиться» — поверх карточки места, она сама fixed z-50 */}
+      {shareNotice && (
+        <div className="fixed bottom-[calc(var(--mappy-floating-bottom)+96px)] left-4 right-4 z-[60]">
+          <button
+            type="button"
+            onClick={() => setShareNotice("")}
+            className="w-full rounded-2xl bg-[#1e2939] px-4 py-3 text-left text-sm [overflow-wrap:anywhere] text-white"
+          >
+            {shareNotice}
+          </button>
         </div>
       )}
 

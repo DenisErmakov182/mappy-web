@@ -276,6 +276,50 @@ export function deletePlace(id: string) {
   return request<{ ok: true }>(`/places/${id}`, { method: "DELETE" });
 }
 
+/**
+ * Публичная ссылка на своё место. Повторный вызов не плодит ссылки: сервер
+ * переиспользует уже выданную живую (`POST /places/:id/share`). Чужое место
+ * расшарить нельзя — там 404, ссылку выдаёт только владелец.
+ */
+export function createPlaceShare(placeId: string) {
+  return request<{ token: string; expiresAt: string }>(`/places/${placeId}/share`, {
+    method: "POST",
+  });
+}
+
+/**
+ * Место, открытое по публичной ссылке. Полей меньше, чем у `Place`, и это не
+ * упрощение клиента: сервер отдаёт только белый список. Личной заметки,
+ * приватности, статуса «был/планирую», внутреннего id и чего-либо о владельце
+ * здесь нет и быть не должно.
+ */
+export interface SharedPlace {
+  title: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  rating: number;
+  categories: PlaceCategory[];
+  photos: Photo[];
+  createdAt: string;
+}
+
+/** Просмотр места по ссылке. Единственный запрос приложения, которому не нужен вход. */
+export function fetchSharedPlace(token: string) {
+  return request<{ place: SharedPlace }>(`/share/${encodeURIComponent(token)}`).then(
+    (result) => result.place,
+  );
+}
+
+/**
+ * Сохранить расшаренное место себе. Тело не отправляем намеренно: копию
+ * собирает сервер из своей строки, клиент не может подменить содержимое.
+ * Владельцу своей же ссылки вернётся его существующее место, а не дубликат.
+ */
+export function saveSharedPlace(token: string) {
+  return request<Place>(`/share/${encodeURIComponent(token)}/save`, { method: "POST" });
+}
+
 export function reverseGeocode(lat: number, lng: number) {
   const params = new URLSearchParams({ lat: String(lat), lng: String(lng) });
   return request<{ address: string }>(`/geocode/reverse?${params}`).then((result) => result.address);

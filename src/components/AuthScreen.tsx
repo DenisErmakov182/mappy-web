@@ -230,11 +230,21 @@ function RegistrationInstallNotice({ onClose }: { onClose: () => void }) {
 
 export function AuthScreen({
   onAuthenticated,
+  initialIntent,
+  showInstallGuide = true,
 }: {
   onAuthenticated: (token: string, user: ApiUser, isNew: boolean) => void;
+  /** Задан там, где намерение известно заранее — например на публичной странице
+   *  места, куда человек пришёл по ссылке и заводит аккаунт, а не входит. */
+  initialIntent?: "login" | "register";
+  /** Подсказка про установку PWA уместна не везде: перед сохранением места по
+   *  ссылке она лишнее трение (решение п.14 бэклога «Дизайн — шеринг…»). */
+  showInstallGuide?: boolean;
 }) {
   const [step, setStep] = useState<"email" | "code" | "profile">("email");
-  const [intent, setIntent] = useState<"login" | "register">(initialAuthIntent);
+  const [intent, setIntent] = useState<"login" | "register">(
+    () => initialIntent ?? initialAuthIntent(),
+  );
   const [installNoticeDismissed, setInstallNoticeDismissed] = useState(false);
   const [standalonePwa] = useState(isStandalonePwa);
   const [email, setEmail] = useState("");
@@ -628,7 +638,7 @@ export function AuthScreen({
         </>
       )}
 
-      {step === "email" && intent === "register" && !standalonePwa && !installNoticeDismissed && (
+      {step === "email" && intent === "register" && showInstallGuide && !standalonePwa && !installNoticeDismissed && (
         <RegistrationInstallNotice onClose={() => setInstallNoticeDismissed(true)} />
       )}
     </div>
