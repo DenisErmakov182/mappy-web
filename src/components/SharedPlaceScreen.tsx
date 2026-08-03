@@ -126,6 +126,27 @@ export function SharedPlaceScreen({
 
   const createdAt = formatPlaceDate(place.createdAt);
 
+  // Одна и та же кнопка внизу страницы и внизу карты: с карты уходить ради
+  // сохранения места не нужно.
+  const saveCta = (
+    <>
+      {saveError && (
+        <p className="px-1 text-center text-[14px] font-medium" style={{ color: "#fb2c36" }}>
+          {saveError}
+        </p>
+      )}
+      <CtaButton
+        onClick={() => {
+          if (isSignedIn) void saveToAccount(session);
+          else setShowAuth(true);
+        }}
+        disabled={saving}
+      >
+        {saving ? "Сохраняем…" : isSignedIn ? "Сохранить себе" : "Зарегистрироваться"}
+      </CtaButton>
+    </>
+  );
+
   return (
     <div className="fixed inset-0 overflow-y-auto overflow-x-hidden bg-white">
       <div className="flex min-h-full flex-col gap-3 px-4 pb-[calc(env(safe-area-inset-bottom)+132px)] pt-[calc(env(safe-area-inset-top)+16px)]">
@@ -201,23 +222,12 @@ export function SharedPlaceScreen({
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 flex flex-col gap-2 bg-white px-4 pb-[calc(env(safe-area-inset-bottom)+16px)] pt-4">
-        {saveError && (
-          <p className="px-1 text-center text-[14px] font-medium" style={{ color: "#fb2c36" }}>
-            {saveError}
-          </p>
-        )}
-        <CtaButton
-          onClick={() => {
-            if (isSignedIn) void saveToAccount(session);
-            else setShowAuth(true);
-          }}
-          disabled={saving}
-        >
-          {saving ? "Сохраняем…" : isSignedIn ? "Сохранить себе" : "Зарегистрироваться"}
-        </CtaButton>
+        {saveCta}
       </div>
 
-      {showMap && <SinglePlaceMap place={place} onClose={() => setShowMap(false)} />}
+      {showMap && (
+        <SinglePlaceMap place={place} onClose={() => setShowMap(false)} footer={saveCta} />
+      )}
 
       {showAuth && (
         <div className="fixed inset-0 z-50">

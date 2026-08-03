@@ -1,7 +1,8 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { CloseButton } from "./primitives";
+import { MapAddressChip } from "./MapAddressChip";
 import { buildPinElement, type PinPlace } from "./placePin";
 
 /*
@@ -20,9 +21,13 @@ const SINGLE_PLACE_ZOOM = 15;
 export function SinglePlaceMap({
   place,
   onClose,
+  footer,
 }: {
-  place: PinPlace & { latitude: number; longitude: number };
+  place: PinPlace & { latitude: number; longitude: number; address: string };
   onClose: () => void;
+  /** Та же кнопка сохранения, что и на странице места: карта — не тупик, с неё
+   *  тоже можно завести аккаунт и забрать место себе. */
+  footer?: ReactNode;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const placeRef = useRef(place);
@@ -61,9 +66,29 @@ export function SinglePlaceMap({
   return (
     <div className="fixed inset-0 z-50 bg-white">
       <div ref={containerRef} className="h-full w-full" />
-      <div className="absolute left-4 top-[calc(env(safe-area-inset-top)+11px)] z-10">
-        <CloseButton onClick={onClose} size={36} backgroundColor="#fff" />
+
+      {/*
+        Адрес плашкой сверху, а не пузырьком над пином — по той же причине, что
+        и на основной карте (макет 1893:39146): плотная застройка перекрывает
+        пузырёк соседними подписями. Плашка идёт под строкой с крестиком:
+        по центру на одной высоте с ним она бы наехала на крестик при длинном
+        адресе на узком экране.
+      */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex flex-col items-center gap-3 px-4 pt-[calc(env(safe-area-inset-top)+11px)]">
+        <div className="pointer-events-auto flex w-full justify-start">
+          <CloseButton onClick={onClose} size={36} backgroundColor="#fff" />
+        </div>
+        <MapAddressChip address={place.address} />
       </div>
+
+      {footer && (
+        <>
+          <div className="blur-edge-bottom" />
+          <div className="absolute inset-x-0 bottom-0 z-20 flex flex-col gap-2 px-4 pb-[calc(env(safe-area-inset-bottom)+16px)]">
+            {footer}
+          </div>
+        </>
+      )}
     </div>
   );
 }
