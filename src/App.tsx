@@ -263,6 +263,7 @@ function MapApp({
   const [placesError, setPlacesError] = useState(false);
   const [loadingPlaces, setLoadingPlaces] = useState(false);
   const [pwaUpdateAvailable, setPwaUpdateAvailable] = useState(hasPwaUpdate);
+  const [friendsResetSignal, setFriendsResetSignal] = useState(0);
 
   useEffect(() => subscribeToPwaUpdate(setPwaUpdateAvailable), []);
 
@@ -429,6 +430,7 @@ function MapApp({
             onDeleteAccount={onDeleteAccount}
             onOpenPlace={setDetailPlace}
             onFriendsChanged={() => void refreshFriendPlaces()}
+            resetSignal={friendsResetSignal}
           />
         )}
       </div>
@@ -533,6 +535,13 @@ function MapApp({
         <TabBar
           selection={tab}
           onSelect={(t) => {
+            // Тап по уже активной вкладке возвращает её в корень — привычное
+            // мобильное поведение. Для «Друзей» это ещё и единственный выход с
+            // профиля друга, когда список его мест прокручен: «Назад» уезжает
+            // вверх вместе с шапкой, а липкая строка поиска его не содержит.
+            if (t === tab && t === "friends") {
+              setFriendsResetSignal((value) => value + 1);
+            }
             setTab(t);
             setSelectedPlaces([]);
           }}

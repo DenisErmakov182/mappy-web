@@ -22,17 +22,26 @@ export function PlaceRowCard({
   place,
   onClick,
   showOwnerAvatar = true,
+  elevated = true,
 }: {
   place: Place;
   onClick?: () => void;
   showOwnerAvatar?: boolean;
+  /*
+   * Тень нужна карточке, которая висит над картой — там она отделяет её от тайлов.
+   * В плотном списке мест друга та же тень читается грязно, поэтому там выключена.
+   * Свой формат тени для списка ещё не выбран, вернёмся к этому отдельно.
+   */
+  elevated?: boolean;
 }) {
   const createdAt = formatPlaceDate(place.createdAt);
 
   return (
     <button
       onClick={onClick}
-      className="flex h-[148px] items-start gap-2 p-2 bg-white rounded-[28px] w-full text-left shadow-[0_8px_24px_rgba(0,0,0,0.10)]"
+      className={`flex h-[148px] items-start gap-2 p-2 bg-white rounded-[28px] w-full text-left ${
+        elevated ? "shadow-[0_8px_24px_rgba(0,0,0,0.10)]" : ""
+      }`}
     >
       <div
         className="relative h-[132px] min-w-0 flex-1 overflow-hidden rounded-[20px]"

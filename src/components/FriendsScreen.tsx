@@ -61,6 +61,7 @@ export function FriendsScreen({
   onUserUpdated,
   onOpenPlace,
   onFriendsChanged,
+  resetSignal = 0,
 }: {
   user: ApiUser;
   onLogout: () => void;
@@ -68,6 +69,8 @@ export function FriendsScreen({
   onUserUpdated: (user: ApiUser) => void;
   onOpenPlace: (place: Place) => void;
   onFriendsChanged?: () => void;
+  /** Растёт при тапе по уже активной вкладке «Друзья» — сигнал вернуться в корень. */
+  resetSignal?: number;
 }) {
   const [view, setView] = useState<FriendsView>({ kind: "home" });
   const [friends, setFriends] = useState<ApiFriendProfile[]>([]);
@@ -165,6 +168,19 @@ export function FriendsScreen({
       window.clearTimeout(timer);
     };
   }, [query, view.kind]);
+
+  // Повторный тап по уже активной вкладке «Друзья» возвращает экран в корень.
+  // Это единственный выход с профиля друга, когда список его мест прокручен:
+  // «Назад» и меню «…» уезжают вверх вместе с шапкой профиля, а липкая строка
+  // поиска их не содержит (макет 2147:8263). Нулевой сигнал — первый рендер,
+  // на нём сбрасывать нечего.
+  useEffect(() => {
+    if (resetSignal === 0) return;
+    setError("");
+    setView({ kind: "home" });
+    setShowAccount(false);
+    setQuery("");
+  }, [resetSignal]);
 
   const openProfile = (person: ApiFriendProfile) => {
     setError("");
@@ -493,6 +509,9 @@ function FriendProfileView({
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [filters, setFilters] = useState<PlaceFilters>(emptyFilters());
   const [showFilters, setShowFilters] = useState(false);
+  // Прокручен ли список мест друга. Включает тень под строкой поиска и блюр,
+  // под которым уезжает шапка профиля (макеты 2147:8095 → 2147:8263).
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     setPerson(initialPerson);
@@ -548,8 +567,28 @@ function FriendProfileView({
   const friend = toFriend(person);
 
   return (
-    <div className="relative h-full overflow-y-auto bg-[var(--mappy-surface-primary)] pb-32">
+    <div
+      className="relative h-full overflow-y-auto bg-[var(--mappy-surface-primary)] pb-32"
+      onScroll={(event) => setScrolled(event.currentTarget.scrollTop > 8)}
+    >
       <ScreenBackButton onClick={onBack} />
+
+      {/*
+        Блюр верхнего края, под который уходят карточки мест. Держится наверху
+        через sticky, а не absolute: absolute внутри скролл-контейнера уехал бы
+        вместе с содержимым. Обёртка нулевой высоты, поэтому в потоке места не
+        занимает и не сдвигает шапку профиля, а сам блюр позиционируется от неё.
+        Высота 138px — из макета 2147:8263 (там же полоса поиска на 74px), это
+        чуть больше общего `.blur-edge-top`, чтобы полоса не выступала из-под края.
+      */}
+      {person.relation === "friend" && (
+        <div className="sticky top-0 z-10 h-0">
+          <div
+            className={`blur-edge-top transition-opacity duration-200 ${scrolled ? "opacity-100" : "opacity-0"}`}
+            style={{ height: 138 }}
+          />
+        </div>
+      )}
 
       {person.relation === "friend" && (
         <div className="absolute right-4 top-[calc(env(safe-area-inset-top)+20px)] z-20">
@@ -633,12 +672,21 @@ function FriendProfileView({
 
           {person.relation === "friend" && (
             <div className="flex flex-col gap-4">
-              <FriendPlacesSearchBar
-                value={query}
-                onChange={setQuery}
-                hasActiveFilters={!filtersAreEmpty(filters)}
-                onFilterTap={() => setShowFilters(true)}
-              />
+              {/*
+                Поиск прилипает к 74px от верха экрана (макет 2147:8263), пока
+                шапка профиля уезжает вверх. Отсчёт от `--mappy-floating-top`, а
+                не жёсткие 74px: на устройстве с вырезом это даёт ровно макетные
+                74px, а без выреза строка не улетает под системную панель.
+              */}
+              <div className="sticky z-20" style={{ top: "calc(var(--mappy-floating-top) + 15px)" }}>
+                <FriendPlacesSearchBar
+                  value={query}
+                  onChange={setQuery}
+                  hasActiveFilters={!filtersAreEmpty(filters)}
+                  onFilterTap={() => setShowFilters(true)}
+                  elevated={scrolled}
+                />
+              </div>
               <div className="flex flex-col gap-3">
                 {visiblePlaces.map((place) => {
                   const ownedPlace = { ...place, owner: friend };
@@ -647,6 +695,7 @@ function FriendProfileView({
                       key={place.id}
                       place={ownedPlace}
                       showOwnerAvatar={false}
+                      elevated={false}
                       onClick={() => onOpenPlace(ownedPlace)}
                     />
                   );
@@ -716,14 +765,21 @@ function FriendPlacesSearchBar({
   onChange,
   hasActiveFilters,
   onFilterTap,
+  elevated = false,
 }: {
   value: string;
   onChange: (value: string) => void;
   hasActiveFilters: boolean;
   onFilterTap: () => void;
+  /** Строка прилипла к верху и висит над списком — тогда под ней нужна тень. */
+  elevated?: boolean;
 }) {
   return (
-    <div className="flex h-16 w-full items-center gap-1 rounded-[32px] bg-white p-2">
+    <div
+      className={`flex h-16 w-full items-center gap-1 rounded-[32px] bg-white p-2 transition-shadow duration-200 ${
+        elevated ? "shadow-[0_8px_24px_rgba(30,41,57,0.10)]" : ""
+      }`}
+    >
       <label className="flex h-12 min-w-0 flex-1 items-center gap-2.5 rounded-l-[32px] rounded-r-[10px] bg-[var(--mappy-surface-secondary)] px-4 py-3">
         <SearchIcon
           className="h-6 w-6 shrink-0"
