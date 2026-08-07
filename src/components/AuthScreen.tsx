@@ -1,6 +1,26 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
-import { requestCode, verifyCode, completeProfile, rateLimitRetryAfter, type ApiUser } from "../lib/api";
+import {
+  requestCode,
+  verifyCode,
+  completeProfile,
+  rateLimitRetryAfter,
+  isConsentRequiredError,
+  type ApiUser,
+} from "../lib/api";
 import { CloseButton, CtaButton } from "./primitives";
+import { PRIVACY_VERSION, TERMS_VERSION, type LegalDocumentId } from "../legal/documents";
+
+// Уходит на сервер вместе с согласием и хранится там: по этим числам потом
+// отвечают на вопрос «какую именно редакцию человек принял».
+const CONSENT_VERSIONS = {
+  terms: TERMS_VERSION,
+  privacy: PRIVACY_VERSION,
+  ageConfirmed: true,
+} as const;
+
+// Длина кода входа. Держим одним числом: раньше четвёрка была рассыпана по
+// пяти местам, и любое расхождение между ними ломало ввод молча.
+const CODE_LENGTH = 6;
 
 const RESEND_COOLDOWN_SEC = 25;
 
@@ -48,6 +68,83 @@ function FieldError({ text }: { text: string }) {
     <p className="text-[14px] font-medium pl-1" style={{ color: COLOR_DANGER, letterSpacing: TRACKING }}>
       {text}
     </p>
+  );
+}
+
+/*
+ * Строка с галочкой. Одна и та же на экране регистрации и на шаге «Создаём
+ * аккаунт», поэтому вынесена — иначе одинаковый блок жил бы в двух местах и
+ * разъехался бы при первой же правке.
+ *
+ * Вёрстка временная: собрана из существующего на экране чекбокса, макета на неё
+ * ещё нет. Строки идут столбиком по левому краю, а не по центру, как было у
+ * единственной строки: у двух центрированных строк квадратики не совпадают по
+ * вертикали. Итоговый вид — за макетом.
+ */
+function CheckRow({
+  checked,
+  onToggle,
+  label,
+  children,
+}: {
+  checked: boolean;
+  onToggle: () => void;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex gap-2 items-start w-full">
+      {/*
+        Квадратик остаётся 14×14 как в макете, а нажимается область 42×42:
+        псевдоэлемент растянут `-inset-3.5` поверх. Через padding сделать
+        нельзя — он сдвинул бы саму галочку, а она выровнена по первой строке
+        текста. 14 пикселей — заметно меньше минимальных 44 у Apple, и мимо
+        такой цели промахиваются; при этом обе галочки блокируют кнопку, так что
+        промах читается как «кнопка почему-то не работает».
+      */}
+      <button
+        onClick={onToggle}
+        className="relative w-3.5 h-3.5 mt-0.5 rounded-[2px] shrink-0 after:absolute after:-inset-3.5 after:content-['']"
+        style={{
+          border: "1px solid rgba(3,7,18,0.08)",
+          backgroundColor: checked ? COLOR_BRAND : "transparent",
+        }}
+        aria-label={label}
+        aria-pressed={checked}
+      />
+      <p
+        className="text-[14px] leading-[18px]"
+        style={{ color: COLOR_SECONDARY, letterSpacing: TRACKING }}
+      >
+        {children}
+      </p>
+    </div>
+  );
+}
+
+/** Текст со ссылками на документы — тоже в двух местах. */
+function LegalLinks({ onOpenLegal }: { onOpenLegal?: (id: LegalDocumentId) => void }) {
+  return (
+    <>
+      Я согласен с{" "}
+      <button
+        type="button"
+        onClick={() => onOpenLegal?.("terms")}
+        className="underline underline-offset-2"
+        style={{ color: COLOR_BRAND }}
+      >
+        Условиями использования
+      </button>{" "}
+      и{" "}
+      <button
+        type="button"
+        onClick={() => onOpenLegal?.("privacy")}
+        className="underline underline-offset-2"
+        style={{ color: COLOR_BRAND }}
+      >
+        Политикой конфиденциальности
+      </button>
+    </>
   );
 }
 
@@ -232,6 +329,7 @@ export function AuthScreen({
   onAuthenticated,
   initialIntent,
   showInstallGuide = true,
+  onOpenLegal,
 }: {
   onAuthenticated: (token: string, user: ApiUser, isNew: boolean) => void;
   /** Задан там, где намерение известно заранее — например на публичной странице
@@ -240,15 +338,18 @@ export function AuthScreen({
   /** Подсказка про установку PWA уместна не везде: перед сохранением места по
    *  ссылке она лишнее трение (решение п.14 бэклога «Дизайн — шеринг…»). */
   showInstallGuide?: boolean;
+  /** Открыть документ поверх экрана входа. Не переход по адресу: иначе
+   *  перезагрузка стёрла бы уже введённую почту и шаг, на котором человек стоит. */
+  onOpenLegal?: (id: LegalDocumentId) => void;
 }) {
-  const [step, setStep] = useState<"email" | "code" | "profile">("email");
+  const [step, setStep] = useState<"email" | "code" | "consent" | "profile">("email");
   const [intent, setIntent] = useState<"login" | "register">(
     () => initialIntent ?? initialAuthIntent(),
   );
   const [installNoticeDismissed, setInstallNoticeDismissed] = useState(false);
   const [standalonePwa] = useState(isStandalonePwa);
   const [email, setEmail] = useState("");
-  const [codeDigits, setCodeDigits] = useState(["", "", "", ""]);
+  const [codeDigits, setCodeDigits] = useState<string[]>(() => Array(CODE_LENGTH).fill(""));
   const [resendIn, setResendIn] = useState(0);
   const [resending, setResending] = useState(false);
   const digitRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -256,6 +357,11 @@ export function AuthScreen({
   const [lastName, setLastName] = useState("");
   const [username, setUsernameInput] = useState("");
   const [agreed, setAgreed] = useState(false);
+  // Отдельно от `agreed`: сервис заявляет 18+, и это заявление о факте, а не
+  // принятие документа. Одна общая галочка сделала бы недоказуемым, что человек
+  // подтвердил именно возраст.
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
+  const consentGiven = agreed && ageConfirmed;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [emailError, setEmailError] = useState("");
@@ -282,7 +388,7 @@ export function AuthScreen({
     setEmailError("");
     try {
       await requestCode(email.trim());
-      setCodeDigits(["", "", "", ""]);
+      setCodeDigits(Array(CODE_LENGTH).fill(""));
       setResendIn(RESEND_COOLDOWN_SEC);
       setStep("code");
     } catch (e) {
@@ -311,7 +417,7 @@ export function AuthScreen({
     setError("");
     try {
       await requestCode(email.trim());
-      setCodeDigits(["", "", "", ""]);
+      setCodeDigits(Array(CODE_LENGTH).fill(""));
       setResendIn(RESEND_COOLDOWN_SEC);
       digitRefs.current[0]?.focus();
     } catch (e) {
@@ -325,11 +431,14 @@ export function AuthScreen({
 
   const submitCode = async (fullCode?: string) => {
     const value = fullCode ?? codeDigits.join("");
-    if (value.length < 4) return;
+    if (value.length < CODE_LENGTH) return;
     setLoading(true);
     setError("");
     try {
-      const res = await verifyCode(email.trim(), value);
+      // Согласие отправляем, только если человек его действительно отметил.
+      // Существующему пользователю оно не нужно — он принимал документы при
+      // регистрации, и повторная запись означала бы принятие, которого не было.
+      const res = await verifyCode(email.trim(), value, consentGiven ? CONSENT_VERSIONS : undefined);
       if (res.user.username) {
         onAuthenticated(res.token, res.user, res.isNew);
       } else {
@@ -340,8 +449,19 @@ export function AuthScreen({
         setStep("profile");
       }
     } catch (e) {
+      if (isConsentRequiredError(e)) {
+        /*
+         * Человек вошёл через «Войти», но адрес оказался незнакомым — значит это
+         * регистрация, и документы он ещё не принимал. Код сервер намеренно не
+         * израсходовал, поэтому просто показываем согласие и отправляем тот же
+         * код повторно. Цифры не стираем: возвращаться к их вводу не нужно.
+         */
+        setStep("consent");
+        setError("");
+        return;
+      }
       setError(e instanceof Error ? e.message : "Неверный код");
-      setCodeDigits(["", "", "", ""]);
+      setCodeDigits(Array(CODE_LENGTH).fill(""));
       digitRefs.current[0]?.focus();
     } finally {
       setLoading(false);
@@ -354,8 +474,8 @@ export function AuthScreen({
 
     // Вставка/автозаполнение (iOS подставляет весь код целиком в одно поле)
     if (digits.length > 1) {
-      const next = digits.slice(0, 4).split("");
-      while (next.length < 4) next.push("");
+      const next = digits.slice(0, CODE_LENGTH).split("");
+      while (next.length < CODE_LENGTH) next.push("");
       setCodeDigits(next);
       const firstEmpty = next.findIndex((d) => !d);
       if (firstEmpty === -1) submitCode(next.join(""));
@@ -366,7 +486,7 @@ export function AuthScreen({
     const next = [...codeDigits];
     next[index] = digits;
     setCodeDigits(next);
-    if (digits && index < 3) {
+    if (digits && index < CODE_LENGTH - 1) {
       digitRefs.current[index + 1]?.focus();
     }
     if (digits && index === 3 && next.every(Boolean)) {
@@ -457,42 +577,67 @@ export function AuthScreen({
 
           </div>
 
-          <div className="auth-primary-cta max-w-sm mx-auto">
+          {/*
+            Кнопка и галочки — один блок, как в макете. Раньше галочки жили
+            отдельным `absolute bottom-6`: с одной строкой это работало, но
+            вторая строка не поместилась в зазор до кнопки и полезла под неё.
+            Опустить блок ниже нельзя — упрётся в home indicator, а safe area
+            на этом экране уже однажды чинили. Поэтому стопка растёт вверх от
+            того же безопасного отступа, что и раньше у одной кнопки.
+
+            Вертикальный ритм снят с макета приблизительно; точные отступы —
+            по ноде, когда она будет.
+          */}
+          <div
+            className="auth-primary-cta max-w-sm mx-auto flex flex-col gap-5"
+            style={
+              intent === "register"
+                ? // 34 пикселя по макету — ровно высота home indicator. Берём
+                  // максимум с реальным системным отступом: на устройствах, где
+                  // он больше, блок не должен под него залезать.
+                  { bottom: "max(34px, env(safe-area-inset-bottom))" }
+                : undefined
+            }
+          >
             <CtaButton
               onClick={submitEmail}
-              disabled={loading || (intent === "register" && !agreed)}
+              disabled={loading || (intent === "register" && !consentGiven)}
             >
               {loading ? "Отправляем…" : intent === "login" ? "Дальше" : "Создать"}
             </CtaButton>
 
+            {intent === "register" && (
+              /*
+                Группа центрируется целиком, а строки внутри выровнены по левому
+                краю — так квадратики стоят друг под другом. Ширина ограничена,
+                чтобы строка про документы переносилась на две, как нарисовано.
+              */
+              <div className="flex justify-center">
+                <div className="flex flex-col gap-2.5 w-full max-w-[280px]">
+                  <CheckRow
+                    checked={agreed}
+                    onToggle={() => setAgreed(!agreed)}
+                    label="Согласие с условиями"
+                  >
+                    <LegalLinks onOpenLegal={onOpenLegal} />
+                  </CheckRow>
+                  <CheckRow
+                    checked={ageConfirmed}
+                    onToggle={() => setAgeConfirmed(!ageConfirmed)}
+                    label="Подтверждение совершеннолетия"
+                  >
+                    Мне есть 18 лет
+                  </CheckRow>
+                </div>
+              </div>
+            )}
           </div>
-
-          {intent === "register" && (
-            <div className="absolute left-5 right-5 bottom-6 flex gap-2 items-start justify-center max-w-sm mx-auto">
-              <button
-                onClick={() => setAgreed(!agreed)}
-                className="w-3.5 h-3.5 mt-0.5 rounded-[2px] shrink-0"
-                style={{
-                  border: "1px solid rgba(3,7,18,0.08)",
-                  backgroundColor: agreed ? COLOR_BRAND : "transparent",
-                }}
-                aria-label="Согласие с условиями"
-              />
-              <p
-                className="text-[14px] leading-[18px] text-center"
-                style={{ color: COLOR_SECONDARY, letterSpacing: TRACKING }}
-              >
-                Я согласен с <span style={{ color: COLOR_BRAND }}>Условиями использования</span> и{" "}
-                <span style={{ color: COLOR_BRAND }}>Политикой конфиденциальности</span>
-              </p>
-            </div>
-          )}
         </>
       )}
 
       {step === "code" && (
         <>
-          <div className="flex flex-col items-center gap-[30px] max-w-[324px] mx-auto w-full pt-[var(--mappy-registration-heading-top)]">
+          <div className="flex flex-col items-center gap-[30px] max-w-[350px] mx-auto w-full pt-[var(--mappy-registration-heading-top)]">
             <div className="flex flex-col items-center gap-2.5 text-center" style={{ letterSpacing: TRACKING }}>
               <h1 className="text-[28px] leading-[32px] font-semibold" style={{ color: COLOR_HEADER }}>
                 Введите код
@@ -505,7 +650,8 @@ export function AuthScreen({
             </div>
 
             <div className="flex flex-col items-center gap-1.5 w-full">
-              <div className="flex gap-3 items-center w-full">
+              {/* 6 полей по 55 с зазором 4 = 350 (нода 1945:22248) */}
+              <div className="flex gap-1 items-center w-full">
                 {codeDigits.map((digit, i) => (
                   <input
                     key={i}
@@ -548,7 +694,7 @@ export function AuthScreen({
               <button
                 onClick={() => {
                   setStep("email");
-                  setCodeDigits(["", "", "", ""]);
+                  setCodeDigits(Array(CODE_LENGTH).fill(""));
                   setError("");
                 }}
                 className="text-[16px] leading-[20px] underline decoration-dotted"
@@ -561,7 +707,52 @@ export function AuthScreen({
 
           <div className="auth-primary-cta max-w-sm mx-auto">
             <CtaButton onClick={() => submitCode()} disabled={codeDigits.some((d) => !d) || loading}>
-              {loading ? "Проверяем…" : "Продолжить"}
+              {loading ? "Проверяем…" : "Дальше"}
+            </CtaButton>
+          </div>
+        </>
+      )}
+
+      {/*
+        Шаг появляется только у того, кто пришёл через «Войти» с незнакомой
+        почтой: для него это на самом деле регистрация, а документы он не
+        принимал. Код при этом уже проверен и всё ещё действует.
+      */}
+      {step === "consent" && (
+        <>
+          <div className="flex flex-col items-center gap-[30px] max-w-[350px] mx-auto w-full pt-[var(--mappy-registration-heading-top)]">
+            <div className="flex flex-col items-center gap-2.5 text-center" style={{ letterSpacing: TRACKING }}>
+              <h1 className="text-[28px] leading-[32px] font-semibold" style={{ color: COLOR_HEADER }}>
+                Создаём аккаунт
+              </h1>
+              <p className="text-[16px] leading-[20px]" style={{ color: COLOR_HEADER }}>
+                Такой почты у нас ещё нет, поэтому заведём новый аккаунт
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2.5 w-full">
+              <CheckRow
+                checked={agreed}
+                onToggle={() => setAgreed(!agreed)}
+                label="Согласие с условиями"
+              >
+                <LegalLinks onOpenLegal={onOpenLegal} />
+              </CheckRow>
+              <CheckRow
+                checked={ageConfirmed}
+                onToggle={() => setAgeConfirmed(!ageConfirmed)}
+                label="Подтверждение совершеннолетия"
+              >
+                Мне есть 18 лет
+              </CheckRow>
+            </div>
+
+            {error && <FieldError text={error} />}
+          </div>
+
+          <div className="auth-primary-cta max-w-sm mx-auto">
+            <CtaButton onClick={() => submitCode()} disabled={!consentGiven || loading}>
+              {loading ? "Создаём…" : "Создать аккаунт"}
             </CtaButton>
           </div>
         </>

@@ -12,6 +12,13 @@ import { NotesList } from "./components/NotesList";
 import { FriendsScreen } from "./components/FriendsScreen";
 import { SearchOverlay } from "./components/SearchOverlay";
 import { AuthScreen } from "./components/AuthScreen";
+import { LegalScreen } from "./components/LegalScreen";
+import {
+  LEGAL_DOCUMENTS,
+  readLegalDocument,
+  type LegalDocument,
+  type LegalDocumentId,
+} from "./legal/documents";
 import { SharedPlaceScreen } from "./components/SharedPlaceScreen";
 import { OnboardingScreen, hasSeenOnboarding } from "./components/OnboardingScreen";
 import { LocationPermissionScreen } from "./components/LocationPermissionScreen";
@@ -158,6 +165,11 @@ export default function App() {
   });
   const [showOnboarding, setShowOnboarding] = useState(() => !hasSeenOnboarding());
   const [shareToken, setShareToken] = useState<string | null>(readShareToken);
+  // Документ читается из адреса при запуске (человек мог прийти по прямой
+  // ссылке на /privacy) и открывается поверх экрана входа по тапу в чекбоксе.
+  const [legalDocument, setLegalDocument] = useState<LegalDocument | null>(() =>
+    readLegalDocument(window.location.pathname),
+  );
   const [mapLaunch, setMapLaunch] = useState<MapLaunchState | null>(() => {
     const stored = getStoredLocation();
     if (stored) return { center: stored, zoom: 12 };
@@ -213,6 +225,20 @@ export default function App() {
     setShareToken(null);
   };
 
+  const openLegalDocument = (id: LegalDocumentId) => {
+    setLegalDocument(LEGAL_DOCUMENTS.find((document) => document.id === id) ?? null);
+  };
+
+  const closeLegalDocument = () => {
+    // Адрес чистим только если человек пришёл по прямой ссылке на документ.
+    // Когда документ открыт поверх экрана входа, в адресной строке всё это время
+    // остаётся «/», и трогать историю незачем.
+    if (readLegalDocument(window.location.pathname)) {
+      window.history.replaceState(null, "", "/");
+    }
+    setLegalDocument(null);
+  };
+
   if (shareToken) {
     return (
       <SharedPlaceScreen
@@ -228,7 +254,22 @@ export default function App() {
   }
 
   if (!token || !user) {
-    return <AuthScreen onAuthenticated={handleAuthenticated} />;
+    // Документ идёт слоем поверх, а не вместо: иначе возврат из Политики стирал
+    // бы уже введённую почту и отбрасывал человека в начало входа.
+    return (
+      <>
+        <AuthScreen onAuthenticated={handleAuthenticated} onOpenLegal={openLegalDocument} />
+        {legalDocument && (
+          <LegalScreen document={legalDocument} onClose={closeLegalDocument} />
+        )}
+      </>
+    );
+  }
+
+  // Сюда попадает уже вошедший человек, открывший /privacy или /terms по прямой
+  // ссылке, — например из письма или закладки.
+  if (legalDocument) {
+    return <LegalScreen document={legalDocument} onClose={closeLegalDocument} />;
   }
 
   if (showOnboarding) {

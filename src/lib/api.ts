@@ -25,15 +25,20 @@ export class ApiError extends Error {
   readonly kind: "http" | "network" | "timeout" | "staging";
   /** Сколько секунд ждать до повтора. Приходит с 429 от лимита запросов кода. */
   readonly retryAfterSec: number | null;
+  /** Машиночитаемый код ошибки от сервера, если он его прислал. Нужен там, где
+   *  на отказ надо не показать текст, а сменить шаг — например `CONSENT_REQUIRED`. */
+  readonly code: string | null;
 
   constructor(
     message: string,
     status: number | null,
     kind: "http" | "network" | "timeout" | "staging",
     retryAfterSec: number | null = null,
+    code: string | null = null,
   ) {
     super(message);
     this.name = "ApiError";
+    this.code = code;
     this.status = status;
     this.kind = kind;
     this.retryAfterSec = retryAfterSec;
@@ -164,9 +169,11 @@ async function request<T>(
       let message = `Ошибка ${res.status}`;
       let kind: "http" | "staging" = "http";
       let retryAfterSec: number | null = null;
+      let code: string | null = null;
       try {
         const data = await res.json();
         if (data?.error) message = data.error;
+        if (typeof data?.code === "string") code = data.code;
         // Сервер отказал как стенд — например, при попытке регистрации,
         // которую клиентский белый список пропускает как обычный вход.
         if (data?.code === "STAGING_READ_ONLY") kind = "staging";
@@ -178,7 +185,7 @@ async function request<T>(
         const header = Number(res.headers.get("Retry-After"));
         if (Number.isFinite(header) && header > 0) retryAfterSec = header;
       }
-      throw new ApiError(message, res.status, kind, retryAfterSec);
+      throw new ApiError(message, res.status, kind, retryAfterSec, code);
     }
     if (res.status === 204) return undefined as T;
     return (await res.json()) as T;
@@ -205,10 +212,23 @@ export function requestCode(email: string) {
   });
 }
 
-export function verifyCode(email: string, code: string) {
+/** Отказ сервера создать аккаунт без принятых документов. */
+export function isConsentRequiredError(error: unknown): boolean {
+  return error instanceof ApiError && error.code === "CONSENT_REQUIRED";
+}
+
+export interface ConsentVersions {
+  terms: string;
+  privacy: string;
+  /** Заявление пользователя о совершеннолетии. Отдельно от принятия документов:
+   *  это утверждение о факте, а не согласие с текстом, и склеивать их нельзя. */
+  ageConfirmed: true;
+}
+
+export function verifyCode(email: string, code: string, consent?: ConsentVersions) {
   return request<{ token: string; isNew: boolean; user: ApiUser }>("/auth/verify-code", {
     method: "POST",
-    body: JSON.stringify({ email, code }),
+    body: JSON.stringify({ email, code, ...(consent ? { consent } : {}) }),
   });
 }
 
