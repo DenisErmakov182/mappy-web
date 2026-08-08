@@ -2,6 +2,7 @@ import type { Place } from "../types";
 import { CategoryIcon } from "./CategoryIcon";
 import { RatingChip } from "./primitives";
 import { FriendAvatarOnPhoto } from "./FriendAvatar";
+import { PhotoPlaceholder } from "./PhotoPlaceholder";
 
 function formatPlaceDate(createdAt?: string): string | null {
   if (!createdAt) return null;
@@ -47,8 +48,10 @@ export function PlaceRowCard({
         className="relative h-[132px] min-w-0 flex-1 overflow-hidden rounded-[20px]"
         style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
       >
-        {place.photos?.[0] && (
+        {place.photos?.[0] ? (
           <img src={place.photos[0].url} alt="" className="w-full h-full object-cover" />
+        ) : (
+          <PhotoPlaceholder compact />
         )}
         {showOwnerAvatar && place.owner && (
           <FriendAvatarOnPhoto person={place.owner} />

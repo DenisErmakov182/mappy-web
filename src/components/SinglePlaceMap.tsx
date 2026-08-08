@@ -18,16 +18,48 @@ import { buildPinElement, type PinPlace } from "./placePin";
 
 const SINGLE_PLACE_ZOOM = 15;
 
+/* Пилюля «Назад ›», нода 2190:10428: серый фон, текст 14px medium, шеврон вправо. */
+function BackPillButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex items-center gap-1 rounded-[10px] p-2"
+      style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
+    >
+      <span
+        className="text-[14px] font-medium leading-[18px] tracking-[-0.6px]"
+        style={{ color: "var(--mappy-text-primary)" }}
+      >
+        Назад
+      </span>
+      <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <path d="M7.5 4.5L13 10l-5.5 5.5" stroke="#1e2939" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </button>
+  );
+}
+
 export function SinglePlaceMap({
   place,
   onClose,
   footer,
+  closeVariant = "cross",
 }: {
   place: PinPlace & { latitude: number; longitude: number; address: string };
   onClose: () => void;
   /** Та же кнопка сохранения, что и на странице места: карта — не тупик, с неё
    *  тоже можно завести аккаунт и забрать место себе. */
   footer?: ReactNode;
+  /**
+   * "cross" — прежний крестик слева, как на публичной странице шеринга.
+   * "back" — пилюля «Назад ›» справа сверху, нода `2190:10428`, для карты
+   * из карточки собственного или чужого места в приложении (`2190:8705`).
+   * Владельцу здесь нечего сохранять, поэтому у второго варианта своя
+   * семантика — не «закрыть шит», а «вернуться» — хотя оба варианта просто
+   * вызывают `onClose`.
+   */
+  closeVariant?: "cross" | "back";
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const placeRef = useRef(place);
@@ -75,9 +107,15 @@ export function SinglePlaceMap({
         адресе на узком экране.
       */}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex flex-col items-center gap-3 px-4 pt-[calc(env(safe-area-inset-top)+11px)]">
-        <div className="pointer-events-auto flex w-full justify-start">
-          <CloseButton onClick={onClose} size={36} backgroundColor="#fff" />
-        </div>
+        {closeVariant === "back" ? (
+          <div className="pointer-events-auto flex w-full justify-end">
+            <BackPillButton onClick={onClose} />
+          </div>
+        ) : (
+          <div className="pointer-events-auto flex w-full justify-start">
+            <CloseButton onClick={onClose} size={36} backgroundColor="#fff" />
+          </div>
+        )}
         <MapAddressChip address={place.address} />
       </div>
 

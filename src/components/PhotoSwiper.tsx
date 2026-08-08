@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { Photo } from "../types";
+import { PhotoPlaceholder } from "./PhotoPlaceholder";
 
 /*
  * Заглавные фото места как карусель отдельных карточек. Каждый снимок — свой
@@ -51,7 +52,9 @@ export function PhotoSwiper({ photos }: { photos: Photo[] }) {
   return (
     <div className="flex w-full shrink-0 flex-col items-center gap-4">
       {photos.length === 0 ? (
-        <div className={CARD} style={{ backgroundColor: "var(--mappy-surface-secondary)" }} />
+        <div className={CARD} style={{ backgroundColor: "var(--mappy-surface-secondary)" }}>
+          <PhotoPlaceholder />
+        </div>
       ) : (
         // Скролл-контейнер вырывается во всю ширину экрана (родитель — px-4) и
         // задаёт отступы сам: 16px по бокам — инсет карточки, вертикальные —

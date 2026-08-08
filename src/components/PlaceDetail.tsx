@@ -6,6 +6,9 @@ import { RatingChip, CloseButton } from "./primitives";
 import { ActionSheet } from "./ActionSheet";
 import { PhotoSwiper } from "./PhotoSwiper";
 import { formatPlaceDate } from "../lib/formatDate";
+import { SinglePlaceMap } from "./SinglePlaceMap";
+import { OwnerTag } from "./OwnerTag";
+import mapIcon from "../assets/icons/tab-map.webp";
 
 /*
  * Открытая карточка по макету 1829:23152. У места друга тот же просмотр,
@@ -27,6 +30,9 @@ export function PlaceDetail({
   onShare: () => void | Promise<void>;
 }) {
   const [showActions, setShowActions] = useState(false);
+  // Карта с одним пином — тот же компонент, что и на публичной странице
+  // шеринга, только без нижней кнопки: владельцу нечего себе сохранять.
+  const [showMap, setShowMap] = useState(false);
   const [savingCopy, setSavingCopy] = useState(false);
   const createdAt = formatPlaceDate(place.createdAt);
 
@@ -79,6 +85,7 @@ export function PlaceDetail({
       ];
 
   return (
+    <>
     <div className="fixed inset-0 z-50 overflow-y-auto overflow-x-hidden bg-white">
       <div className="flex min-h-full flex-col gap-3 px-4 pb-[calc(env(safe-area-inset-bottom)+34px)] pt-[calc(env(safe-area-inset-top)+11px)]">
         {/*
@@ -127,27 +134,60 @@ export function PlaceDetail({
             >
               {place.title}
             </h1>
-            <div className="flex min-w-0 items-center gap-2">
-              {place.rating > 0 && (
-                <span className="[&>span]:h-[26px] [&>span]:rounded-[10px]">
-                  <RatingChip rating={place.rating} />
-                </span>
-              )}
+            {/*
+              Порядок строк по ноде 2189:39298: название → адрес с кнопкой
+              «На карте» справа → оценка и дата одной строкой.
+
+              Раньше оценка стояла между названием и адресом и разрывала
+              логику: что это → как оценили → где это. Теперь читается подряд —
+              что, где, и уже потом отметки. Оценка с датой ушли вниз одной
+              строкой как однородные метки.
+            */}
+            <div className="flex min-w-0 items-start gap-2">
               <span
-                className="min-w-0 truncate text-[20px] leading-6"
+                className="min-w-0 flex-1 truncate pt-[5px] text-[20px] leading-6"
                 style={{ color: "var(--mappy-text-secondary)" }}
               >
                 {place.address}
               </span>
+              <button
+                type="button"
+                onClick={() => setShowMap(true)}
+                className="flex h-[34px] shrink-0 items-center gap-1 rounded-[12px] pl-2 pr-2"
+                style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
+              >
+                <img src={mapIcon} alt="" className="h-4 w-4 shrink-0 object-contain" />
+                <span
+                  className="text-[14px] leading-[18px] font-medium"
+                  style={{ color: "var(--mappy-text-primary)" }}
+                >
+                  На карте
+                </span>
+              </button>
             </div>
-            {createdAt && (
-              <p className="text-[16px] font-medium leading-[18px] tracking-[-0.6px]" style={{ color: "#99a1af" }}>
-                {createdAt}
-              </p>
+
+            {(place.rating > 0 || createdAt) && (
+              <div className="flex items-center gap-1">
+                {place.rating > 0 && (
+                  <span className="[&>span]:h-[26px] [&>span]:rounded-[10px]">
+                    <RatingChip rating={place.rating} />
+                  </span>
+                )}
+                {createdAt && (
+                  <span
+                    className="flex h-[26px] items-center rounded-[10px] px-2 text-[16px] font-medium leading-[18px] tracking-[-0.6px]"
+                    style={{ backgroundColor: "var(--mappy-surface-secondary)", color: "#99a1af" }}
+                  >
+                    {createdAt}
+                  </span>
+                )}
+              </div>
             )}
           </div>
 
           <div className="flex w-full flex-col gap-4">
+            {place.owner && <OwnerTag owner={place.owner} />}
+
             {place.categories.length > 0 && (
               <div className="flex flex-wrap gap-1">
                 {place.categories.map((category) => (
@@ -177,5 +217,8 @@ export function PlaceDetail({
 
       {showActions && <ActionSheet actions={actions} onCancel={() => setShowActions(false)} />}
     </div>
+
+      {showMap && <SinglePlaceMap place={place} onClose={() => setShowMap(false)} closeVariant="back" />}
+    </>
   );
 }

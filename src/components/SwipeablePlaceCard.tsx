@@ -6,6 +6,7 @@ import type { Place } from "../types";
 import { CategoryIcon } from "./CategoryIcon";
 import { FriendAvatarOnPhoto } from "./FriendAvatar";
 import { RatingChip } from "./primitives";
+import { PhotoPlaceholder } from "./PhotoPlaceholder";
 
 const ACTION_WIDTH = 80;
 const ACTIONS_WIDTH = ACTION_WIDTH * 3;
@@ -202,8 +203,10 @@ export function SwipeablePlaceCard({
             className="relative h-[132px] min-w-0 flex-1 overflow-hidden rounded-[20px]"
             style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
           >
-            {place.photos?.[0] && (
+            {place.photos?.[0] ? (
               <img src={place.photos[0].url} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <PhotoPlaceholder compact />
             )}
             {place.owner && (
               <FriendAvatarOnPhoto person={place.owner} />
