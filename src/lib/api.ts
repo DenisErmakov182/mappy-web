@@ -355,8 +355,15 @@ export interface AddressSuggestion {
   name?: string;
 }
 
-export function suggestAddresses(query: string) {
+export function suggestAddresses(query: string, origin?: { lat: number; lng: number }) {
   const params = new URLSearchParams({ q: query });
+  // Без текущей точки карты бэкенд ищет по названию по всему миру и не может
+  // предпочесть заведение рядом заведению с тем же именем на другом
+  // континенте — см. разбор «Birch» в geocode.ts.
+  if (origin) {
+    params.set("lat", String(origin.lat));
+    params.set("lng", String(origin.lng));
+  }
   return request<{ suggestions: AddressSuggestion[] }>(`/geocode/suggest?${params}`).then(
     (result) => result.suggestions,
   );

@@ -105,7 +105,7 @@ export function SearchOverlay({
 
     let active = true;
     const timer = window.setTimeout(() => {
-      suggestAddresses(value)
+      suggestAddresses(value, origin)
         .then((suggestions) => {
           if (!active) return;
           const sorted = [...suggestions].sort(
