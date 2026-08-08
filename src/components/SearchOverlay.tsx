@@ -47,6 +47,34 @@ function placeMatchRank(place: Place, query: string): number {
   return 5; // совпало только где-то внутри адреса
 }
 
+// Административные сегменты label, которые ничего не говорят человеку и
+// только удлиняют строку — федеральный округ и страна почти всегда есть в
+// конце ответа Nominatim/DaData, но их не показывают ни Яндекс.Карты, ни
+// 2ГИС (владелец прислал скриншоты сравнения, этап 66).
+const NOISY_LABEL_SEGMENT = /федеральный округ|^Россия$/i;
+// Сегменты только из цифр — почтовый индекс.
+const NUMERIC_ONLY_SEGMENT = /^\d+$/;
+
+/*
+ * Nominatim/DaData отдают адрес одной длинной строкой со всей
+ * административной цепочкой целиком («Мама Рома, проспект Славы, округ
+ * Купчино, Санкт-Петербург, Северо-Западный федеральный округ, 192286,
+ * Россия») — читать это на маленьком экране неудобно, а у Яндекс.Карт и
+ * 2ГИС результат короткий: название + район, город. Делим на то же самое:
+ * первый сегмент — заголовок (сам объект), из оставшихся выбрасываем индекс,
+ * страну и федеральный округ, и берём последние два сегмента, что остались —
+ * это и есть «район, город» в подавляющем большинстве российских адресов.
+ * Не идеальная геокодерная логика (для нестандартных зарубежных цепочек
+ * ориентир может оказаться на уровень выше или ниже), но эта же неточность
+ * уже была бы и в исходной строке — здесь только короче.
+ */
+function splitAddressLabel(label: string): { title: string; context: string } {
+  const segments = label.split(",").map((s) => s.trim());
+  const [title, ...rest] = segments;
+  const meaningful = rest.filter((s) => s && !NUMERIC_ONLY_SEGMENT.test(s) && !NOISY_LABEL_SEGMENT.test(s));
+  return { title: title ?? label, context: meaningful.slice(-2).join(", ") };
+}
+
 /*
  * Открытый поиск по макету 1489:16146: белый экран, слева кнопка «назад»,
  * строка с крестиком очистки, ниже — результаты по названию/адресу.
@@ -229,21 +257,29 @@ export function SearchOverlay({
                 Адреса
               </p>
             )}
-            {addressResults.map((suggestion) => (
-              <button
-                key={`${suggestion.lat},${suggestion.lng}`}
-                onClick={() => {
-                  onSelectAddress(suggestion);
-                  onClose();
-                }}
-                className="w-full text-left py-3 border-b"
-                style={{ borderColor: "var(--mappy-divider)" }}
-              >
-                <p className="text-[16px] font-medium" style={{ color: "var(--mappy-text-primary)" }}>
-                  {suggestion.label}
-                </p>
-              </button>
-            ))}
+            {addressResults.map((suggestion) => {
+              const { title, context } = splitAddressLabel(suggestion.label);
+              return (
+                <button
+                  key={`${suggestion.lat},${suggestion.lng}`}
+                  onClick={() => {
+                    onSelectAddress(suggestion);
+                    onClose();
+                  }}
+                  className="w-full text-left py-3 border-b"
+                  style={{ borderColor: "var(--mappy-divider)" }}
+                >
+                  <p className="text-[16px] font-medium" style={{ color: "var(--mappy-text-primary)" }}>
+                    {title}
+                  </p>
+                  {context && (
+                    <p className="text-[13px]" style={{ color: "var(--mappy-text-secondary)" }}>
+                      {context}
+                    </p>
+                  )}
+                </button>
+              );
+            })}
           </>
         )}
       </div>
