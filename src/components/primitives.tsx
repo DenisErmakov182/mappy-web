@@ -3,6 +3,23 @@ import { ratingChipColors } from "../types";
 import starGold from "../assets/icons/star-gold.webp";
 import starSoft from "../assets/icons/star-soft.svg";
 
+/*
+ * Маленький серый информационный тег (дата добавления, системное название…) —
+ * по компоненту Figma «Tag» (1120:102794). Раньше это была одна и та же
+ * инлайн-разметка, скопированная в PlaceDetail и на публичной странице
+ * шеринга — вынесено сюда, чтобы они не расходились снова.
+ */
+export function Tag({ children }: { children: ReactNode }) {
+  return (
+    <span
+      className="flex h-[26px] items-center rounded-[10px] px-2 text-[16px] font-medium leading-[18px] tracking-[-0.6px]"
+      style={{ backgroundColor: "var(--mappy-surface-secondary)", color: "#99a1af" }}
+    >
+      {children}
+    </span>
+  );
+}
+
 /* Чип оценки: цифра + звезда на цветном фоне (surface/success|warning|danger) */
 export function RatingChip({ rating, size = "m" }: { rating: number; size?: "m" | "l" }) {
   const { bg, text } = ratingChipColors(rating);

@@ -26,6 +26,28 @@ function distanceScore(point: { lat: number; lng: number }, origin: { lat: numbe
 }
 
 /*
+ * Ранг совпадения своего места с запросом — раньше список фильтровался, но
+ * не сортировался вовсе: место оставалось в исходном порядке `places»
+ * (по дате создания), даже если это точное совпадение по названию, а выше
+ * него — место, совпавшее только частью адреса. Владелец заметил на примере:
+ * «мама рома» не оказывалась первой в списке, хотя набранный текст ей и
+ * соответствовал точнее всего.
+ *
+ * Меньше — релевантнее. Совпадение по названию всегда выше совпадения только
+ * по адресу, а внутри — точное/с начала слова важнее совпадения где-то в середине.
+ */
+function placeMatchRank(place: Place, query: string): number {
+  const title = place.title.toLowerCase();
+  const address = place.address.toLowerCase();
+  if (title === query) return 0;
+  if (title.startsWith(query)) return 1;
+  if (title.split(/\s+/).some((word) => word.startsWith(query))) return 2;
+  if (title.includes(query)) return 3;
+  if (address.startsWith(query)) return 4;
+  return 5; // совпало только где-то внутри адреса
+}
+
+/*
  * Открытый поиск по макету 1489:16146: белый экран, слева кнопка «назад»,
  * строка с крестиком очистки, ниже — результаты по названию/адресу.
  *
@@ -58,13 +80,21 @@ export function SearchOverlay({
     inputRef.current?.focus();
   }, []);
 
-  const results = query.trim()
-    ? places.filter(
-        (p) =>
-          p.title.toLowerCase().includes(query.toLowerCase()) ||
-          p.address.toLowerCase().includes(query.toLowerCase()),
-      )
-    : [];
+  const results = (() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
+    return places
+      .filter((p) => p.title.toLowerCase().includes(q) || p.address.toLowerCase().includes(q))
+      .sort((a, b) => {
+        const rankDiff = placeMatchRank(a, q) - placeMatchRank(b, q);
+        if (rankDiff !== 0) return rankDiff;
+        // При равной релевантности — ближе к текущему центру карты раньше.
+        return (
+          distanceScore({ lat: a.latitude, lng: a.longitude }, origin) -
+          distanceScore({ lat: b.latitude, lng: b.longitude }, origin)
+        );
+      });
+  })();
 
   useEffect(() => {
     const value = query.trim();

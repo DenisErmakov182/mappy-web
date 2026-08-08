@@ -13,9 +13,8 @@ import { AuthScreen } from "./AuthScreen";
 import { CategoryIcon } from "./CategoryIcon";
 import { PhotoSwiper } from "./PhotoSwiper";
 import { SinglePlaceMap } from "./SinglePlaceMap";
-import { formatPlaceDate } from "../lib/formatDate";
-import { CloseButton, CtaButton, RatingChip } from "./primitives";
-import mapIcon from "../assets/icons/tab-map.webp";
+import { CloseButton, CtaButton } from "./primitives";
+import { PlaceHeader } from "./PlaceHeader";
 
 /*
  * Публичная страница места по ссылке `/s/:token` — макет Figma 2137:9564
@@ -124,8 +123,6 @@ export function SharedPlaceScreen({
     );
   }
 
-  const createdAt = formatPlaceDate(place.createdAt);
-
   // Одна и та же кнопка внизу страницы и внизу карты: с карты уходить ради
   // сохранения места не нужно.
   const saveCta = (
@@ -153,56 +150,21 @@ export function SharedPlaceScreen({
         <PhotoSwiper photos={place.photos} />
 
         <div className="mt-3 flex w-full flex-col gap-6">
-          <div className="flex flex-col gap-2 px-1">
-            {/* Тот же заголовок до трёх строк, что и в карточке места (2113:2653). */}
-            <h1
-              className="block max-h-[96px] overflow-hidden text-ellipsis text-[28px] font-semibold leading-8 tracking-[-0.6px] [overflow-wrap:anywhere] [word-break:break-word]"
-              style={{
-                color: "var(--mappy-text-primary)",
-                display: "-webkit-box",
-                WebkitBoxOrient: "vertical",
-                WebkitLineClamp: 3,
-              }}
-            >
-              {place.title}
-            </h1>
-            <div className="flex min-w-0 items-center gap-2">
-              {place.rating > 0 && (
-                <span className="[&>span]:h-[26px] [&>span]:rounded-[10px]">
-                  <RatingChip rating={place.rating} />
-                </span>
-              )}
-              <span
-                className="min-w-0 truncate text-[20px] leading-6"
-                style={{ color: "var(--mappy-text-secondary)" }}
-              >
-                {place.address}
-              </span>
-            </div>
-            {createdAt && (
-              <p
-                className="text-[16px] font-medium leading-[18px] tracking-[-0.6px]"
-                style={{ color: "#99a1af" }}
-              >
-                {createdAt}
-              </p>
-            )}
-          </div>
-
           {/*
-            Карта — кнопка, а не встроенный снимок: маленькая врезка нечитаема, а
-            честно отрендерить статичный снимок MapLibre без отдельного сервера
-            нечем. В макете кнопка уже нарисована именно так (2138:1152).
+            Тот же компонент, что и в карточке владельца (PlaceDetail) — по
+            узлу Figma 2189:39328. Раньше здесь была отдельная, устаревшая
+            копия разметки (рейтинг+адрес одной строкой, дата отдельным
+            абзацем, полноширинная кнопка карты вместо пилюли рядом с
+            адресом) — переверстка карточки из этапа 62 сюда не попадала.
           */}
-          <button
-            type="button"
-            onClick={() => setShowMap(true)}
-            className="flex h-[54px] w-full items-center justify-center gap-1 rounded-[14px] px-4 py-3 text-[16px] font-medium leading-[18px] tracking-[-0.6px]"
-            style={{ backgroundColor: "var(--mappy-surface-secondary)", color: "var(--mappy-text-primary)" }}
-          >
-            <img src={mapIcon} alt="" className="h-6 w-6 shrink-0 object-contain" />
-            Посмотреть на карте
-          </button>
+          <PlaceHeader
+            title={place.title}
+            address={place.address}
+            rating={place.rating}
+            createdAt={place.createdAt}
+            systemName={place.systemName}
+            onShowMap={() => setShowMap(true)}
+          />
 
           {place.categories.length > 0 && (
             <div className="flex flex-wrap gap-1">

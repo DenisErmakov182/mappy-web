@@ -281,6 +281,7 @@ export interface PlaceInput {
   isPrivate: boolean;
   status: VisitStatus;
   photos: Photo[];
+  systemName?: string;
 }
 
 export function fetchPlaces() {
@@ -321,6 +322,7 @@ export interface SharedPlace {
   rating: number;
   categories: PlaceCategory[];
   photos: Photo[];
+  systemName?: string;
   createdAt: string;
 }
 
@@ -349,6 +351,8 @@ export interface AddressSuggestion {
   label: string;
   lat: number;
   lng: number;
+  /** Название точки (магазин, кафе…), если оно есть — подставляется в поле «Название». */
+  name?: string;
 }
 
 export function suggestAddresses(query: string) {

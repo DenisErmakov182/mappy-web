@@ -134,15 +134,22 @@ function RatingStarButton({
 export function AddPlaceSheet({
   coordinate,
   initialPlace,
+  suggestedTitle,
   onSave,
   onClose,
 }: {
   coordinate: { lat: number; lng: number };
   initialPlace?: Place;
+  /** Название из выбранной подсказки поиска — подставляется в поле, но остаётся редактируемым. */
+  suggestedTitle?: string;
   onSave: (place: Place) => Promise<void>;
   onClose: () => void;
 }) {
-  const [title, setTitle] = useState(initialPlace?.title ?? "");
+  const [title, setTitle] = useState(initialPlace?.title ?? suggestedTitle ?? "");
+  // Захватываем один раз при открытии формы — не меняется, даже если человек
+  // сам отредактирует или сотрёт название в поле выше. Показывается сноской
+  // на карточке места (см. PlaceHeader), поэтому переживает правки заголовка.
+  const systemNameRef = useRef(initialPlace?.systemName ?? suggestedTitle);
   const [address, setAddress] = useState(initialPlace?.address ?? "");
   const [status, setStatus] = useState<VisitStatus>(initialPlace?.status ?? "been");
   const [rating, setRating] = useState(initialPlace?.rating ?? 0);
@@ -316,6 +323,7 @@ export function AddPlaceSheet({
         isPrivate,
         status,
         photos: uploadedPhotos,
+        systemName: systemNameRef.current,
       });
       onClose();
     } catch (e) {

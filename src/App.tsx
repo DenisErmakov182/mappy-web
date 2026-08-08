@@ -24,6 +24,7 @@ import { OnboardingScreen, hasSeenOnboarding } from "./components/OnboardingScre
 import { LocationPermissionScreen } from "./components/LocationPermissionScreen";
 import { CloseButton } from "./components/primitives";
 import { PwaUpdateBanner } from "./components/PwaUpdateBanner";
+import { distanceMeters } from "./lib/geo";
 import locateMeIcon from "./assets/icons/locate-me-3d.webp";
 import {
   hasPwaUpdate,
@@ -145,6 +146,7 @@ function toPlaceInput(place: Place): PlaceInput {
     isPrivate: place.isPrivate,
     status: place.status,
     photos: place.photos,
+    systemName: place.systemName,
   };
 }
 
@@ -339,6 +341,11 @@ function MapApp({
   const [filters, setFilters] = useState<PlaceFilters>(emptyFilters());
   const [showFilters, setShowFilters] = useState(false);
   const [draftCoordinate, setDraftCoordinate] = useState<{ lat: number; lng: number } | null>(null);
+  // Название из подсказки поиска («Магнит»), выбранной перед тапом по пину —
+  // см. onSelectAddress ниже. Хранится вместе с координатой суффикса, чтобы
+  // не подставить чужое имя, если между выбором и тапом центр карты сдвинулся
+  // на что-то другое (см. проверку рядом с setDraftCoordinate).
+  const [pendingPlaceName, setPendingPlaceName] = useState<{ lat: number; lng: number; name: string } | null>(null);
   const [showSearch, setShowSearch] = useState(false);
   const [selectedPlaces, setSelectedPlaces] = useState<Place[]>([]);
   const [detailPlace, setDetailPlace] = useState<Place | null>(null);
@@ -741,6 +748,11 @@ function MapApp({
             setCenter({ lat: suggestion.lat, lng: suggestion.lng });
             setFlyTo({ lat: suggestion.lat, lng: suggestion.lng, ts: Date.now() });
             setTab("map");
+            // «Магнит», «Кофейня Циферблат» и т.п. — подскажем это же имя как
+            // название места, когда форма откроется тапом по пину (см. ниже).
+            setPendingPlaceName(
+              suggestion.name ? { lat: suggestion.lat, lng: suggestion.lng, name: suggestion.name } : null,
+            );
           }}
           onClose={() => setShowSearch(false)}
         />
@@ -761,6 +773,19 @@ function MapApp({
       {draftCoordinate && (
         <AddPlaceSheet
           coordinate={draftCoordinate}
+          suggestedTitle={
+            // Применимо, только если карта всё ещё стоит там же, где было
+            // выбрано в поиске — иначе это уже другая точка (человек подвинул
+            // карту вручную после выбора подсказки), и подставлять чужое имя
+            // сюда нельзя.
+            pendingPlaceName &&
+            distanceMeters(
+              { latitude: pendingPlaceName.lat, longitude: pendingPlaceName.lng },
+              { latitude: draftCoordinate.lat, longitude: draftCoordinate.lng },
+            ) <= 30
+              ? pendingPlaceName.name
+              : undefined
+          }
           onSave={async (place) => {
             const saved = await createPlace(toPlaceInput(place));
             // Новую запись сразу показываем в интерфейсе. Географический якорь
@@ -768,7 +793,10 @@ function MapApp({
             // массива больше не способен сдвинуть уже существующий пин.
             setPlaces((prev) => [saved, ...prev]);
           }}
-          onClose={() => setDraftCoordinate(null)}
+          onClose={() => {
+            setDraftCoordinate(null);
+            setPendingPlaceName(null);
+          }}
         />
       )}
 
