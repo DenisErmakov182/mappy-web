@@ -128,7 +128,18 @@ export function SearchOverlay({
     <div className="fixed inset-0 z-50 bg-white flex flex-col">
       {/* Единая белая капсула: [назад][поле] — по макету Bar focused (1489:16188) */}
       <div className="px-4 pt-[max(env(safe-area-inset-top),12px)] pb-2">
-        <div className="flex gap-1 p-2 bg-white rounded-[32px]">
+        <div
+          className="flex gap-1 p-2 bg-white rounded-[32px]"
+          style={{
+            // Токен «shadow m» из дизайн-системы (нода 2216:15782) — пять
+            // слоёв drop-shadow нарастающего радиуса и убывающей плотности.
+            // Последний слой (73px/88px, radius 32) отброшен: alpha там 0,
+            // то есть он ничего не рисует — оставлен бы только для полной
+            // формальной точности с токеном, без всякого визуального эффекта.
+            boxShadow:
+              "3px 4px 10px rgba(71,71,71,0.051), 12px 14px 18px rgba(71,71,71,0.039), 26px 32px 25px rgba(71,71,71,0.031), 47px 56px 29px rgba(71,71,71,0.012)",
+          }}
+        >
           <button
             onClick={onClose}
             className="w-[56px] h-12 rounded-l-[32px] rounded-r-[10px] flex items-center justify-center shrink-0"
@@ -182,7 +193,13 @@ export function SearchOverlay({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-5">
+      {/*
+        28px = 16px общего отступа экрана (тот же, что у капсулы поиска
+        выше) + 12px собственного отступа блока результатов (нода 2214:11904,
+        --spacing/space-sm) — это и есть тот самый «особый» отступ: не просто
+        унаследованные от капсулы 16px, а на 12px больше.
+      */}
+      <div className="flex-1 overflow-y-auto px-7">
         {results.map((place) => (
           <button
             key={place.id}
