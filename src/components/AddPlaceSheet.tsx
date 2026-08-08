@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+import { gps as readPhotoGps } from "exifr";
 import type { Place, PlaceCategory, VisitStatus } from "../types";
 import { categoryLabel } from "../types";
 import { reverseGeocode, uploadPhoto } from "../lib/api";
+import { distanceMeters } from "../lib/geo";
 import { CategoryIcon } from "./CategoryIcon";
 import { CategoriesSheet } from "./CategoriesSheet";
 import { PhotoCaptionSheet } from "./PhotoCaptionSheet";
@@ -12,6 +14,9 @@ import stickerCafe from "../assets/photos/sticker-cafe.webp";
 
 const MAX_PHOTOS = 4;
 const NOTE_MAX = 250;
+// Не предлагаем координату из фото, если она и так почти совпадает с уже
+// выбранной точкой — считаем это одним и тем же местом, спрашивать незачем.
+const GPS_SUGGESTION_MIN_DISTANCE_M = 150;
 
 interface PhotoSlot {
   url: string; // blob-превью для новых или уже загруженный URL для существующих
@@ -156,6 +161,23 @@ export function AddPlaceSheet({
   const [saveError, setSaveError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Координата из EXIF выбранного фото, если она заметно отличается от точки,
+  // с которой открыта форма (см. checkPhotoGps ниже). Подставляется в само
+  // сохранение места только после подтверждения — тап по карте остаётся
+  // источником истины, пока человек явно не согласился на замену.
+  const [overrideCoordinate, setOverrideCoordinate] = useState<{ lat: number; lng: number } | null>(null);
+  const [photoLocationSuggestion, setPhotoLocationSuggestion] = useState<{
+    lat: number;
+    lng: number;
+    address: string;
+  } | null>(null);
+  // Не переспрашиваем повторно в рамках одной открытой формы после того, как
+  // человек один раз принял или отклонил подсказку — но до этого момента
+  // проверяем каждое новое фото, а не только первое (вдруг GPS есть не у него).
+  const suggestionResolvedRef = useRef(false);
+
+  const effectiveCoordinate = overrideCoordinate ?? coordinate;
+
   // Адрес подтягивается автоматически из координат точки (обратный геокодинг)
   // и не редактируется вручную. При редактировании берём сохранённый адрес.
   useEffect(() => {
@@ -194,14 +216,72 @@ export function AddPlaceSheet({
 
   const pickPhotos = () => fileInputRef.current?.click();
 
+  /*
+   * Идея владельца 08.08.2026: на iPhone у фото часто есть GPS-метка из EXIF
+   * (Photos.app показывает по ней адрес съёмки) — читаем её на клиенте
+   * (`exifr`, ничего никуда не отправляется) и предлагаем подставить точнее
+   * место, чем то, с которого открыта форма. Только подсказка: без
+   * подтверждения координата не меняется.
+   *
+   * Метаданные не нужно отдельно стирать перед загрузкой — фото и так проходят
+   * через `downscaleImage` (canvas → `toBlob`) в `uploadPhoto`, а Canvas API не
+   * сохраняет EXIF в принципе, GPS туда не попадает уже сегодня.
+   */
+  const checkPhotoGps = (files: File[]) => {
+    if (initialPlace || suggestionResolvedRef.current || photoLocationSuggestion) return;
+    void (async () => {
+      for (const file of files) {
+        let gps: { latitude: number; longitude: number } | undefined;
+        try {
+          gps = await readPhotoGps(file);
+        } catch {
+          continue; // в этом файле нет GPS-тегов — пробуем следующий
+        }
+        if (!gps) continue;
+
+        const tooClose =
+          distanceMeters(
+            { latitude: gps.latitude, longitude: gps.longitude },
+            { latitude: effectiveCoordinate.lat, longitude: effectiveCoordinate.lng },
+          ) < GPS_SUGGESTION_MIN_DISTANCE_M;
+        if (tooClose) return; // и так почти та же точка — спрашивать незачем
+
+        try {
+          const addr = await reverseGeocode(gps.latitude, gps.longitude);
+          if (addr) setPhotoLocationSuggestion({ lat: gps.latitude, lng: gps.longitude, address: addr });
+        } catch {
+          // геокодер не ответил — молча не предлагаем, это лишь подсказка
+        }
+        return;
+      }
+    })();
+  };
+
+  const acceptPhotoLocation = () => {
+    if (!photoLocationSuggestion) return;
+    suggestionResolvedRef.current = true;
+    setOverrideCoordinate({ lat: photoLocationSuggestion.lat, lng: photoLocationSuggestion.lng });
+    setAddress(photoLocationSuggestion.address);
+    setShowAddressAnimation(true);
+    setPhotoLocationSuggestion(null);
+  };
+
+  const dismissPhotoLocation = () => {
+    suggestionResolvedRef.current = true;
+    setPhotoLocationSuggestion(null);
+  };
+
   const onFilesSelected = (files: FileList | null) => {
     if (!files) return;
     const next = [...photos];
+    const added: File[] = [];
     for (const file of Array.from(files)) {
       if (next.length >= MAX_PHOTOS) break;
       next.push({ url: URL.createObjectURL(file), file });
+      added.push(file);
     }
     setPhotos(next);
+    checkPhotoGps(added);
   };
 
   const removePhoto = (index: number) => {
@@ -228,8 +308,8 @@ export function AddPlaceSheet({
         id: initialPlace?.id ?? "",
         title: title.trim(),
         address: address.trim(),
-        latitude: initialPlace?.latitude ?? coordinate.lat,
-        longitude: initialPlace?.longitude ?? coordinate.lng,
+        latitude: initialPlace?.latitude ?? effectiveCoordinate.lat,
+        longitude: initialPlace?.longitude ?? effectiveCoordinate.lng,
         rating,
         categories: [...categories],
         note: note.trim(),
@@ -305,6 +385,37 @@ export function AddPlaceSheet({
             </p>
           )}
         </div>
+
+        {/* Подсказка из GPS-метки фото — только если явно отличается от текущей точки */}
+        {photoLocationSuggestion && (
+          <div
+            className="flex items-center gap-3 rounded-[14px] px-4 py-3"
+            style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
+          >
+            <p className="min-w-0 flex-1 text-[13px] leading-[18px]" style={{ color: "var(--mappy-text-primary)" }}>
+              Судя по фото, это здесь:{" "}
+              <span className="font-medium">{photoLocationSuggestion.address}</span>
+            </p>
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={dismissPhotoLocation}
+                className="flex h-8 items-center rounded-[10px] px-3 text-[13px] font-medium"
+                style={{ color: "var(--mappy-text-secondary)" }}
+              >
+                Нет
+              </button>
+              <button
+                type="button"
+                onClick={acceptPhotoLocation}
+                className="flex h-8 items-center rounded-[10px] px-3 text-[13px] font-medium text-white"
+                style={{ backgroundColor: "#ff637e" }}
+              >
+                Да
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Сегмент-контрол 390x44, полное скругление — по макету */}
         <div

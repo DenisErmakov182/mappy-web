@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { Place } from "../types";
+import { distanceMeters } from "../lib/geo";
 import { CENTER_PIN_SCREEN_OFFSET_Y } from "./CenterPin";
 import { buildClusterElement, buildPinElement, pinBoundsFromTip } from "./placePin";
 
@@ -29,19 +30,6 @@ function normalizeAddress(address: string): string {
     .replaceAll("ё", "е")
     .replace(/[.,]/g, " ")
     .replace(/\s+/g, " ");
-}
-
-function distanceMeters(first: Place, second: Place): number {
-  const earthRadius = 6_371_000;
-  const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
-  const latitudeDelta = toRadians(second.latitude - first.latitude);
-  const longitudeDelta = toRadians(second.longitude - first.longitude);
-  const firstLatitude = toRadians(first.latitude);
-  const secondLatitude = toRadians(second.latitude);
-  const a =
-    Math.sin(latitudeDelta / 2) ** 2 +
-    Math.cos(firstLatitude) * Math.cos(secondLatitude) * Math.sin(longitudeDelta / 2) ** 2;
-  return earthRadius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 /*
