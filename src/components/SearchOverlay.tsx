@@ -157,7 +157,7 @@ export function SearchOverlay({
       {/* Единая белая капсула: [назад][поле] — по макету Bar focused (1489:16188) */}
       <div className="px-4 pt-[max(env(safe-area-inset-top),12px)] pb-2">
         <div
-          className="flex gap-1 p-2 bg-white rounded-[32px]"
+          className="flex gap-1 p-2 bg-white rounded-[32px] overflow-hidden"
           style={{
             // Токен «shadow m» из дизайн-системы (нода 2216:15782) — пять
             // слоёв drop-shadow нарастающего радиуса и убывающей плотности.
@@ -181,11 +181,11 @@ export function SearchOverlay({
           </button>
 
           <div
-            className="flex items-center gap-2.5 flex-1 h-12 px-4 rounded-l-[10px] rounded-r-[32px]"
+            className="flex items-center gap-2 flex-1 h-12 pl-3 pr-3 rounded-l-[10px] rounded-r-[32px] overflow-hidden"
             style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
           >
             <SearchIcon
-              className="w-6 h-6 shrink-0"
+              className="w-5 h-5 shrink-0"
               color={query ? "var(--mappy-text-primary)" : "var(--mappy-text-tertiary)"}
             />
             <input
