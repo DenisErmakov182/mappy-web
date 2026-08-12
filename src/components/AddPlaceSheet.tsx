@@ -178,11 +178,6 @@ export function AddPlaceSheet({
     lng: number;
     address: string;
   } | null>(null);
-  // Не переспрашиваем повторно в рамках одной открытой формы после того, как
-  // человек один раз принял или отклонил подсказку — но до этого момента
-  // проверяем каждое новое фото, а не только первое (вдруг GPS есть не у него).
-  const suggestionResolvedRef = useRef(false);
-
   const effectiveCoordinate = overrideCoordinate ?? coordinate;
 
   // Адрес подтягивается автоматически из координат точки (обратный геокодинг)
@@ -233,9 +228,22 @@ export function AddPlaceSheet({
    * Метаданные не нужно отдельно стирать перед загрузкой — фото и так проходят
    * через `downscaleImage` (canvas → `toBlob`) в `uploadPhoto`, а Canvas API не
    * сохраняет EXIF в принципе, GPS туда не попадает уже сегодня.
+   *
+   * Раньше после первого принятия/отклонения подсказки для любого следующего
+   * фото в этой же форме проверка больше не выполнялась вообще (флаг
+   * suggestionResolvedRef ставился раз и навсегда) — на практике это читалось
+   * как «нашёл место по фото только один раз за всю карточку», хотя каждое
+   * новое фото может быть снято совсем в другом месте. Убрали одноразовый
+   * флаг: единственное, что защищает от повторного вопроса — уже открытая
+   * подсказка (photoLocationSuggestion), чтобы не показывать два тост-баннера
+   * разом.
+   *
+   * Внутри одной пачки фото раньше при неудаче на первом файле с GPS (точка
+   * слишком близко к текущей или геокодер не ответил) проверка сдавалась
+   * целиком, не пробуя остальные файлы — теперь идём дальше по пачке.
    */
   const checkPhotoGps = (files: File[]) => {
-    if (initialPlace || suggestionResolvedRef.current || photoLocationSuggestion) return;
+    if (initialPlace || photoLocationSuggestion) return;
     void (async () => {
       for (const file of files) {
         let gps: { latitude: number; longitude: number } | undefined;
@@ -251,22 +259,23 @@ export function AddPlaceSheet({
             { latitude: gps.latitude, longitude: gps.longitude },
             { latitude: effectiveCoordinate.lat, longitude: effectiveCoordinate.lng },
           ) < GPS_SUGGESTION_MIN_DISTANCE_M;
-        if (tooClose) return; // и так почти та же точка — спрашивать незачем
+        if (tooClose) continue; // и так почти та же точка — пробуем следующее фото
 
         try {
           const addr = await reverseGeocode(gps.latitude, gps.longitude);
-          if (addr) setPhotoLocationSuggestion({ lat: gps.latitude, lng: gps.longitude, address: addr });
+          if (addr) {
+            setPhotoLocationSuggestion({ lat: gps.latitude, lng: gps.longitude, address: addr });
+            return;
+          }
         } catch {
-          // геокодер не ответил — молча не предлагаем, это лишь подсказка
+          // геокодер не ответил на это фото — пробуем следующее, а не сдаёмся
         }
-        return;
       }
     })();
   };
 
   const acceptPhotoLocation = () => {
     if (!photoLocationSuggestion) return;
-    suggestionResolvedRef.current = true;
     setOverrideCoordinate({ lat: photoLocationSuggestion.lat, lng: photoLocationSuggestion.lng });
     setAddress(photoLocationSuggestion.address);
     setShowAddressAnimation(true);
@@ -274,7 +283,6 @@ export function AddPlaceSheet({
   };
 
   const dismissPhotoLocation = () => {
-    suggestionResolvedRef.current = true;
     setPhotoLocationSuggestion(null);
   };
 
