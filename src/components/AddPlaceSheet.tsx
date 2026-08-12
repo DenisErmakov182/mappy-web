@@ -7,6 +7,7 @@ import { distanceMeters } from "../lib/geo";
 import { CategoryIcon } from "./CategoryIcon";
 import { CategoriesSheet } from "./CategoriesSheet";
 import { PhotoCaptionSheet } from "./PhotoCaptionSheet";
+import { ReorderPhotosSheet } from "./ReorderPhotosSheet";
 import { Sheet, CloseButton, CtaButton, StarIcon } from "./primitives";
 import { SplitFlapAddress } from "./SplitFlapAddress";
 import stickerMuseum from "../assets/photos/sticker-museum.webp";
@@ -18,7 +19,7 @@ const NOTE_MAX = 250;
 // выбранной точкой — считаем это одним и тем же местом, спрашивать незачем.
 const GPS_SUGGESTION_MIN_DISTANCE_M = 150;
 
-interface PhotoSlot {
+export interface PhotoSlot {
   url: string; // blob-превью для новых или уже загруженный URL для существующих
   file?: File; // задано только для ещё не загруженных на S3 фото
   caption?: string;
@@ -28,6 +29,20 @@ function PlusIcon({ size = 18 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function SwapIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M7 4L3 8M3 8L7 12M3 8H21M17 20L21 16M21 16L17 12M21 16H3"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -161,6 +176,7 @@ export function AddPlaceSheet({
   );
   const [captionSlotIndex, setCaptionSlotIndex] = useState<number | null>(null);
   const [showCategories, setShowCategories] = useState(false);
+  const [showReorder, setShowReorder] = useState(false);
   const [addressLoading, setAddressLoading] = useState(false);
   const [addressError, setAddressError] = useState("");
   const [showAddressAnimation, setShowAddressAnimation] = useState(false);
@@ -565,12 +581,25 @@ export function AddPlaceSheet({
         ) : (
           /* Заполненное состояние: заголовок + сетка 5 колонок со слотами (макет 1489:16383) */
           <div className="flex flex-col gap-4">
-            <p
-              className="px-1 text-[20px] leading-6 font-medium tracking-[-0.6px]"
-              style={{ color: "var(--mappy-text-primary)" }}
-            >
-              Добавьте фото
-            </p>
+            <div className="flex items-center justify-between">
+              <p
+                className="px-1 text-[20px] leading-6 font-medium tracking-[-0.6px]"
+                style={{ color: "var(--mappy-text-primary)" }}
+              >
+                Добавьте фото
+              </p>
+              {photos.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setShowReorder(true)}
+                  className="flex size-7 shrink-0 items-center justify-center rounded-full"
+                  style={{ backgroundColor: "var(--mappy-surface-secondary)", color: "var(--mappy-text-tertiary)" }}
+                  aria-label="Поменять местами"
+                >
+                  <SwapIcon size={16} />
+                </button>
+              )}
+            </div>
             <div className="grid grid-cols-4 gap-3">
               {Array.from({ length: MAX_PHOTOS }).map((_, i) =>
                 photos[i] ? (
@@ -604,6 +633,14 @@ export function AddPlaceSheet({
                           iconStrokeWidth={1.4}
                         />
                       </span>
+                      {i === 0 && photos.length > 1 && (
+                        <span
+                          className="absolute bottom-1.5 left-1/2 -translate-x-1/2 rounded-full px-2 py-0.5 text-[10px] font-medium"
+                          style={{ backgroundColor: "var(--mappy-surface-primary)", color: "var(--mappy-text-primary)" }}
+                        >
+                          Обложка
+                        </span>
+                      )}
                     </div>
                     <button
                       type="button"
@@ -709,6 +746,17 @@ export function AddPlaceSheet({
           selected={categories}
           onApply={setCategories}
           onClose={() => setShowCategories(false)}
+        />
+      )}
+
+      {showReorder && (
+        <ReorderPhotosSheet
+          photos={photos}
+          onApply={(reordered) => {
+            setPhotos(reordered);
+            setShowReorder(false);
+          }}
+          onClose={() => setShowReorder(false)}
         />
       )}
 
