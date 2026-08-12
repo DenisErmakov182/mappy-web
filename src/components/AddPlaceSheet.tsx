@@ -511,7 +511,7 @@ export function AddPlaceSheet({
                 Личная заметка
               </p>
               <p
-                className="text-[12px] leading-4 tracking-[-0.6px]"
+                className="text-[14px] leading-[18px] tracking-[-0.6px]"
                 style={{ color: "#99a1af" }}
               >
                 Только вы увидите это место

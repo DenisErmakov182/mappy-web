@@ -78,18 +78,20 @@ export function ReorderPhotosSheet({
   return (
     <Sheet onClose={onClose} footer={<CtaButton onClick={() => onApply(photos)}>Готово</CtaButton>}>
       <div className="flex flex-col gap-6 px-5 pb-4">
-        <div className="flex items-center justify-between">
-          <h3
-            className="text-[20px] leading-6 font-medium tracking-[-0.6px]"
-            style={{ color: "var(--mappy-text-primary)" }}
-          >
-            Порядок фото
-          </h3>
-          <CloseButton onClick={onClose} />
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h3
+              className="text-[20px] leading-6 font-medium tracking-[-0.6px]"
+              style={{ color: "var(--mappy-text-primary)" }}
+            >
+              Порядок фото
+            </h3>
+            <CloseButton onClick={onClose} />
+          </div>
+          <p className="text-[16px] leading-[18px] tracking-[-0.6px]" style={{ color: "var(--mappy-text-secondary)" }}>
+            Перетащите фото, чтобы поменять местами — первое станет обложкой места.
+          </p>
         </div>
-        <p className="text-[13px] leading-[18px]" style={{ color: "var(--mappy-text-secondary)" }}>
-          Перетащите фото, чтобы поменять местами — первое станет обложкой места.
-        </p>
         <div className="grid grid-cols-4 gap-3">
           {photos.map((photo, i) => (
             <div
