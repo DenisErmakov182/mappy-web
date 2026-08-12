@@ -105,7 +105,16 @@ export function SearchIcon({ className, color }: { className?: string; color?: s
  * Нижний лист: полоска-граббер тянется пальцем/мышью — вниз закрывает лист,
  * вверх раскрывает на максимум.
  */
-export function Sheet({ children, onClose }: { children: ReactNode; onClose: () => void }) {
+export function Sheet({
+  children,
+  footer,
+  onClose,
+}: {
+  children: ReactNode;
+  /** Неподвижный блок под скроллом — например, кнопка сохранения (макет 2218:27480). */
+  footer?: ReactNode;
+  onClose: () => void;
+}) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const dragStart = useRef<number | null>(null);
   const [dragOffset, setDragOffset] = useState(0);
@@ -136,7 +145,7 @@ export function Sheet({ children, onClose }: { children: ReactNode; onClose: () 
     <div className="fixed inset-0 z-50 flex items-end bg-black/30" onClick={onClose}>
       <div
         ref={sheetRef}
-        className="w-full bg-white rounded-t-[24px] overflow-y-auto pb-[max(env(safe-area-inset-bottom),8px)]"
+        className="flex w-full flex-col bg-white rounded-t-[24px] overflow-hidden"
         style={{
           maxHeight: expanded ? "96dvh" : "92dvh",
           transform: dragOffset > 0 ? `translateY(${dragOffset}px)` : undefined,
@@ -144,15 +153,24 @@ export function Sheet({ children, onClose }: { children: ReactNode; onClose: () 
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Граббер — в неподвижном блоке, не уезжает при скролле контента, им же
+            и открывается/закрывается лист (обработчики drag висят именно здесь). */}
         <div
-          className="flex justify-center pt-1.5 pb-3 touch-none cursor-grab active:cursor-grabbing"
+          className="flex shrink-0 justify-center pt-1.5 pb-3 touch-none cursor-grab active:cursor-grabbing"
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
         >
           <div className="w-12 h-1 rounded-full" style={{ backgroundColor: "rgba(3,7,18,0.12)" }} />
         </div>
-        {children}
+        <div className="flex-1 overflow-y-auto overscroll-contain pb-[max(env(safe-area-inset-bottom),8px)]">
+          {children}
+        </div>
+        {/* Кнопка-футер — тоже неподвижна, отдельным блоком под скроллом, а не
+            поверх него: паддинги и safe-area по макету 2218:27480. */}
+        {footer && (
+          <div className="shrink-0 px-4 pt-3 pb-[max(env(safe-area-inset-bottom),32px)]">{footer}</div>
+        )}
       </div>
     </div>
   );

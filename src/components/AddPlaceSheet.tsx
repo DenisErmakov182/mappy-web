@@ -339,7 +339,21 @@ export function AddPlaceSheet({
   } as const;
 
   return (
-    <Sheet onClose={onClose}>
+    <Sheet
+      onClose={onClose}
+      footer={
+        <>
+          {saveError && (
+            <p className="mb-2 text-[13px] text-center" style={{ color: "#fb2c36" }}>
+              {saveError}
+            </p>
+          )}
+          <CtaButton onClick={handleSave} disabled={!title.trim() || saving}>
+            {saving ? "Сохраняем…" : initialPlace ? "Сохранить" : "Добавить точку"}
+          </CtaButton>
+        </>
+      }
+    >
       <input
         ref={fileInputRef}
         type="file"
@@ -680,14 +694,6 @@ export function AddPlaceSheet({
           </div>
         </div>
 
-        {saveError && (
-          <p className="text-[13px] text-center" style={{ color: "#fb2c36" }}>
-            {saveError}
-          </p>
-        )}
-        <CtaButton onClick={handleSave} disabled={!title.trim() || saving}>
-          {saving ? "Сохраняем…" : initialPlace ? "Сохранить" : "Добавить точку"}
-        </CtaButton>
       </div>
 
       {showCategories && (
