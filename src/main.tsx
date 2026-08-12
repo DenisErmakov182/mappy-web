@@ -3,8 +3,14 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import { AppErrorBoundary } from './components/AppRecoveryScreen.tsx'
+import { ComponentsPreviewPage } from './components/design-system/catalog/ComponentsPreviewPage.tsx'
 import { registerPwaUpdateHandling } from './lib/pwaUpdate.ts'
 import { disablePwaForReadOnlyStaging, isReadOnlyStaging } from './lib/staging.ts'
+
+// Каталог библиотеки компонентов — без роутера (в mappy-web его нет),
+// просто проверка пути. Только для разработки, в проде недоступного
+// смысла не имеет, но и не скрыт отдельно — не хранит ничего чувствительного.
+const isComponentsPreviewRoute = window.location.pathname === '/components-preview'
 
 const configureIosStandaloneViewport = () => {
   const navigatorWithStandalone = navigator as Navigator & { standalone?: boolean }
@@ -47,9 +53,13 @@ if (isReadOnlyStaging()) {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <AppErrorBoundary>
-      <App />
-    </AppErrorBoundary>
+    {isComponentsPreviewRoute ? (
+      <ComponentsPreviewPage />
+    ) : (
+      <AppErrorBoundary>
+        <App />
+      </AppErrorBoundary>
+    )}
   </StrictMode>,
 )
 

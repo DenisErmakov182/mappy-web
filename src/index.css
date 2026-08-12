@@ -1,5 +1,123 @@
 @import "tailwindcss";
 
+/*
+ * Токены дизайн-системы Mappy — вытащены напрямую из переменных Figma
+ * (страница «01 · Атомы», 12.08.2026), не переизобретены руками.
+ *
+ * Это НЕ замена блоку --mappy-* ниже — тот уже используется по всему коду
+ * через var(--mappy-...) в inline style и трогать его не стали, чтобы не
+ * ломать всё разом. Это отдельный, более полный набор: старых 10 токенов
+ * не хватало (не было, например, Surface/Tertiary, всех Border/Text/Icon
+ * ролей, спейсингов, радиусов и типографики) — вместо них весь код был
+ * усеян магическими числами (text-[14px], rounded-[14px], #fb2c36...).
+ *
+ * @theme — механизм Tailwind v4: переменные из специальных пространств имён
+ * (--color-*, --spacing-*, --text-*, --tracking-*, --font-*) не просто
+ * становятся CSS-переменными, а автоматически дают готовые классы —
+ * bg-surface-secondary, text-body-2, tracking-densed и т.д., без var()
+ * в inline style.
+ *
+ * Радиусы (--radius-*) сюда сознательно НЕ включены: Tailwind резервирует
+ * имена sm/md/lg/xl/2xl под свою дефолтную шкалу, и переопределение задело
+ * бы уже живой код за пределами сегодняшних правок — нашлись голые классы
+ * rounded-xl/rounded-2xl в App.tsx (баннер ошибки загрузки мест), которые
+ * молча поменяли бы вид. Радиусы Mappy лежат ниже как обычные
+ * CSS-переменные (--mappy-radius-*), без риска задеть чужой код.
+ */
+@theme {
+  /* Цвета — поверхности */
+  --color-surface-primary: #f9fafb;
+  --color-surface-secondary: #f3f4f6;
+  --color-surface-tertiary: #e5e7eb;
+  --color-surface-canvas: #ffffff;
+  --color-surface-inverse: #101828;
+  --color-surface-brand: #ff637e;
+  --color-surface-brand-subtle: #ff20561c;
+  --color-surface-brand-secondary: #a50036;
+  --color-surface-success: #dcfce7;
+  --color-surface-success-tertiary: #f0fdf4;
+  --color-surface-success-secondary: #008236;
+  --color-surface-warning: #fef9c2;
+  --color-surface-danger: #ffe2e2;
+
+  /* Цвета — текст */
+  --color-text-primary: #1e2939;
+  --color-text-secondary: #4a5565;
+  --color-text-tertiary: #99a1af;
+  --color-text-disabled: #e5e7eb;
+  --color-text-inverse: #ffffff;
+  --color-text-brand: #ff2056;
+  --color-text-brand-subtle: #ff20563b;
+  --color-text-success: #00a63e;
+  --color-text-warning: #d08700;
+  --color-text-danger: #fb2c36;
+
+  /* Цвета — иконки */
+  --color-icon-secondary: #4a5565;
+  --color-icon-tertiary: #6a7282;
+  --color-icon-fourth: #99a1af;
+  --color-icon-disabled: #e5e7eb;
+  --color-icon-on-inverse: #ffffff;
+  --color-icon-on-brand: #ffffff;
+  --color-icon-brand: #ff2056;
+  --color-icon-success: #00a63e;
+  --color-icon-success-tertiary: #b9f8cf;
+  --color-icon-warning: #d08700;
+  --color-icon-danger: #fb2c36;
+
+  /* Цвета — границы */
+  --color-border-default: #03071214;
+  --color-border-success: #00a63e;
+  --color-border-brand: #ff2056b2;
+  --color-border-danger: #fb2c36;
+
+  /* Спейсинг — именованные токены поверх числовой шкалы Tailwind (p-3 и т.п. продолжают работать как раньше) */
+  --spacing-2xs: 4px;
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* Шрифты — Caption сознательно на Inter, не SF Pro (так в самой Figma) */
+  --font-heading: "SF Pro Text", sans-serif;
+  --font-body: "SF Pro Text", sans-serif;
+  --font-caption: "Inter", sans-serif;
+
+  /* Размеры текста с парным line-height (Tailwind сам подставит оба свойства разом) */
+  --text-caption: 12px;
+  --text-caption--line-height: 16px;
+  --text-body-2: 14px;
+  --text-body-2--line-height: 18px;
+  --text-body: 16px;
+  --text-body--line-height: 18px;
+  --text-header: 28px;
+
+  /* Трекинг — замена вездесущему tracking-[-0.6px] на именованный класс tracking-densed */
+  --tracking-densed: -0.6px;
+}
+
+/*
+ * Радиусы (см. пояснение выше — не в @theme, чтобы не переопределить чужие
+ * rounded-xl/2xl), толщина границ и высота контрола — обычные
+ * CSS-переменные, без готовых классов. Используются как
+ * var(--mappy-radius-md) в inline style или rounded-[length:var(--mappy-radius-md)]
+ * в className.
+ */
+:root {
+  --mappy-radius-xxs: 2px;
+  --mappy-radius-xs: 6px;
+  --mappy-radius-sm: 10px;
+  --mappy-radius-md: 14px;
+  --mappy-radius-lg: 20px;
+  --mappy-radius-xl: 28px;
+  --mappy-radius-2xl: 32px;
+  --mappy-border-sm: 1.2px;
+  --mappy-border-md: 1.5px;
+  --mappy-border-lg: 2px;
+  --mappy-height-control-xl: 56px;
+}
+
 :root {
   /* Токены из дизайн-системы Mappy (Figma) */
   --mappy-pink: #ff2056;
