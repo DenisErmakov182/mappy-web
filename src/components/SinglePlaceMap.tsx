@@ -4,8 +4,11 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { CloseButton, RouteIcon } from "./primitives";
 import { MapAddressChip } from "./MapAddressChip";
 import { buildPinElement, type PinPlace } from "./placePin";
-import { formatDistance, formatDurationSeconds, getLastKnownLocation, rememberLocation } from "../lib/geo";
-import { fetchWalkingRoute } from "../lib/api";
+import { formatDurationSeconds, getLastKnownLocation, rememberLocation } from "../lib/geo";
+import { fetchWalkingRoute, reverseGeocode } from "../lib/api";
+import { Button } from "./design-system/01-atoms/controls/Button";
+import originPinShape from "../assets/icons/origin-pin.svg";
+import originPersonIllustration from "../assets/icons/origin-person.png";
 
 /*
  * Лёгкий вид карты с одним пином — то, что открывается по кнопке «Посмотреть на
@@ -20,6 +23,44 @@ import { fetchWalkingRoute } from "../lib/api";
 
 const SINGLE_PLACE_ZOOM = 15;
 const ROUTE_SOURCE_ID = "walking-route";
+
+// Масштабировано от исходных пропорций узла Figma `Person Icon` (2230:30664,
+// пин-капля 64×79 с иллюстрацией человека 48×48 на left:8/top:9) вниз до
+// ширины основного пина места (mainPin — тоже 40×49) — это не совпадение
+// размеров случайно, а осознанный выбор: маркер «Вы здесь» не должен
+// перетягивать внимание с самого места.
+const ORIGIN_MARKER_WIDTH = 40;
+const ORIGIN_MARKER_SCALE = ORIGIN_MARKER_WIDTH / 64;
+const ORIGIN_MARKER_HEIGHT = Math.round(79 * ORIGIN_MARKER_SCALE);
+const ORIGIN_PERSON_SIZE = Math.round(48 * ORIGIN_MARKER_SCALE);
+const ORIGIN_PERSON_LEFT = Math.round(8 * ORIGIN_MARKER_SCALE);
+const ORIGIN_PERSON_TOP = Math.round(9 * ORIGIN_MARKER_SCALE);
+
+/*
+ * Маркер точки «Вы здесь», откуда строится маршрут — узел Figma
+ * `Person Icon` (2230:30664). Появляется только вместе с уже построенным
+ * маршрутом (drawRoute/placeOriginMarker вызываются вместе в
+ * handleBuildRoute) — просто открыв карту без запроса маршрута, свою
+ * позицию не показываем.
+ */
+function buildOriginMarkerElement(): HTMLElement {
+  const root = document.createElement("div");
+  root.style.cssText = `position:relative;width:${ORIGIN_MARKER_WIDTH}px;height:${ORIGIN_MARKER_HEIGHT}px;`;
+
+  const pin = document.createElement("img");
+  pin.src = originPinShape;
+  pin.alt = "";
+  pin.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:contain;";
+  root.appendChild(pin);
+
+  const person = document.createElement("img");
+  person.src = originPersonIllustration;
+  person.alt = "";
+  person.style.cssText = `position:absolute;left:${ORIGIN_PERSON_LEFT}px;top:${ORIGIN_PERSON_TOP}px;width:${ORIGIN_PERSON_SIZE}px;height:${ORIGIN_PERSON_SIZE}px;object-fit:contain;`;
+  root.appendChild(person);
+
+  return root;
+}
 
 /*
  * Пилюля «Назад ›», нода 2190:10428: в макете серый фон, текст 14px medium,
@@ -48,33 +89,10 @@ function BackPillButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-/* Общий стиль белой пилюли-кнопки внизу карты — «Маршрут» и её же состояния загрузки/ошибки. */
-function RoutePill({
-  children,
-  onClick,
-  disabled,
-}: {
-  children: ReactNode;
-  onClick?: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className="flex h-14 w-full shrink-0 items-center justify-center gap-1.5 rounded-[14px] bg-white text-[16px] font-medium disabled:opacity-70"
-      style={{ color: "var(--mappy-text-primary)" }}
-    >
-      {children}
-    </button>
-  );
-}
-
 type RouteState =
   | { status: "idle" }
   | { status: "locating" | "loading" }
-  | { status: "ready"; distanceMeters: number | null; durationSeconds: number | null }
+  | { status: "ready"; distanceMeters: number | null; durationSeconds: number | null; originAddress: string | null }
   | { status: "error" };
 
 export function SinglePlaceMap({
@@ -117,6 +135,7 @@ export function SinglePlaceMap({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<maplibregl.Map | null>(null);
+  const originMarkerRef = useRef<maplibregl.Marker | null>(null);
   const placeRef = useRef(place);
   placeRef.current = place;
   const [routeState, setRouteState] = useState<RouteState>({ status: "idle" });
@@ -148,10 +167,26 @@ export function SinglePlaceMap({
     return () => {
       resizeObserver.disconnect();
       marker.remove();
+      originMarkerRef.current?.remove();
+      originMarkerRef.current = null;
       map.remove();
       mapInstanceRef.current = null;
     };
   }, []);
+
+  // Ставит/двигает маркер «Вы здесь» — переиспользует уже добавленный
+  // маркер на повторный запрос маршрута (setLngLat), а не пересоздаёт его.
+  function placeOriginMarker(origin: { lat: number; lng: number }) {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+    if (originMarkerRef.current) {
+      originMarkerRef.current.setLngLat([origin.lng, origin.lat]);
+    } else {
+      originMarkerRef.current = new maplibregl.Marker({ element: buildOriginMarkerElement(), anchor: "bottom" })
+        .setLngLat([origin.lng, origin.lat])
+        .addTo(map);
+    }
+  }
 
   // Рисует/обновляет линию маршрута и подгоняет вид карты под неё целиком.
   // Источник и слой живут только пока открыта эта карта — пересоздавать
@@ -180,7 +215,7 @@ export function SinglePlaceMap({
           type: "line",
           source: ROUTE_SOURCE_ID,
           layout: { "line-cap": "round", "line-join": "round" },
-          paint: { "line-color": "#ff2056", "line-width": 4 },
+          paint: { "line-color": "#ff2056", "line-width": 8 },
         });
       }
 
@@ -221,9 +256,23 @@ export function SinglePlaceMap({
 
     setRouteState({ status: "loading" });
     try {
-      const route = await fetchWalkingRoute(origin, { lat: place.latitude, lng: place.longitude });
+      // Адрес точки «Вы здесь» (2228:27643) — параллельно с самим маршрутом,
+      // не последовательно: обе просьбы независимы, ждать вторую после первой
+      // означало бы удвоить время до появления карточки без необходимости.
+      // Обратный геокодинг не критичен для самого маршрута — если он не
+      // ответил, показываем маршрут всё равно, просто без подписи «Вы здесь».
+      const [route, originAddress] = await Promise.all([
+        fetchWalkingRoute(origin, { lat: place.latitude, lng: place.longitude }),
+        reverseGeocode(origin.lat, origin.lng).catch(() => null),
+      ]);
       drawRoute(route.geometry);
-      setRouteState({ status: "ready", distanceMeters: route.distanceMeters, durationSeconds: route.durationSeconds });
+      placeOriginMarker(origin);
+      setRouteState({
+        status: "ready",
+        distanceMeters: route.distanceMeters,
+        durationSeconds: route.durationSeconds,
+        originAddress,
+      });
     } catch {
       setRouteState({ status: "error" });
     }
@@ -253,53 +302,71 @@ export function SinglePlaceMap({
         <MapAddressChip address={place.address} />
       </div>
 
-      {(interactiveRoute || navigateUrl || footer) && (
-        <>
-          <div className="blur-edge-bottom" />
-          <div className="absolute inset-x-0 bottom-0 z-20 flex flex-col gap-2 px-4 pb-[calc(env(safe-area-inset-bottom)+16px)]">
-            {interactiveRoute ? (
-              <>
-                {routeState.status === "idle" && (
-                  <RoutePill onClick={() => void handleBuildRoute()}>
-                    <RouteIcon className="h-5 w-5 shrink-0" />
-                    Маршрут
-                  </RoutePill>
+      {interactiveRoute ? (
+        // Белая карточка с закруглённым верхом — «Submit Button Container»,
+        // 2190:8705 (состояние до маршрута) / 2228:27643 (после). Не
+        // полупрозрачная плашка с blur-edge-bottom, как в остальных местах
+        // этого экрана — здесь по макету именно сплошной белый фон.
+        <div className="absolute inset-x-0 bottom-0 z-20 flex flex-col gap-[length:var(--mappy-spacing-lg)] rounded-t-[length:var(--mappy-radius-lg)] bg-white px-[length:var(--mappy-spacing-md)] pb-[calc(var(--mappy-spacing-xl)+env(safe-area-inset-bottom))] pt-[length:var(--mappy-spacing-md)]">
+          {routeState.status === "idle" && (
+            <Button tone="cta" onClick={() => void handleBuildRoute()}>
+              Маршрут
+            </Button>
+          )}
+          {(routeState.status === "locating" || routeState.status === "loading") && (
+            <Button tone="cta" disabled>
+              {routeState.status === "locating" ? "Определяем позицию…" : "Строим маршрут…"}
+            </Button>
+          )}
+          {routeState.status === "ready" && (
+            <>
+              {/* Строка «Вы здесь / N мин / Назначение», 2228:27706 — адрес точки
+                  «Вы здесь» получен обратным геокодингом координат старта,
+                  может быть null (гео ответило, а геокодер — нет); в этом
+                  случае подпись просто не показываем, маршрут всё равно на карте. */}
+              <div className="flex w-full items-center justify-between gap-2 px-[length:var(--mappy-spacing-2xs)]">
+                <div className="flex min-w-0 flex-1 flex-col gap-[length:var(--mappy-spacing-2xs)] tracking-densed">
+                  <p className="text-body-2 text-text-tertiary">Вы здесь</p>
+                  <p className="truncate text-body font-medium text-text-secondary">
+                    {routeState.originAddress ?? "Текущее место"}
+                  </p>
+                </div>
+                {routeState.durationSeconds != null && (
+                  <div className="flex h-[28px] shrink-0 items-center justify-center gap-[length:var(--mappy-spacing-2xs)] rounded-[length:var(--mappy-radius-sm)] bg-surface-secondary px-[length:var(--mappy-spacing-xs)]">
+                    <p className="text-body-2 font-medium tracking-densed text-text-secondary">
+                      {formatDurationSeconds(routeState.durationSeconds)}
+                    </p>
+                  </div>
                 )}
-                {(routeState.status === "locating" || routeState.status === "loading") && (
-                  <RoutePill disabled>
-                    <RouteIcon className="h-5 w-5 shrink-0 animate-pulse" />
-                    {routeState.status === "locating" ? "Определяем позицию…" : "Строим маршрут…"}
-                  </RoutePill>
-                )}
-                {routeState.status === "ready" && (
-                  <RoutePill onClick={() => void handleBuildRoute()}>
-                    <RouteIcon className="h-5 w-5 shrink-0" />
-                    {routeState.durationSeconds != null && formatDurationSeconds(routeState.durationSeconds)}
-                    {routeState.durationSeconds != null && routeState.distanceMeters != null && " · "}
-                    {routeState.distanceMeters != null && formatDistance(routeState.distanceMeters)}
-                  </RoutePill>
-                )}
-                {routeState.status === "error" &&
-                  (navigateUrl ? (
-                    <a
-                      href={navigateUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex h-14 w-full shrink-0 items-center justify-center gap-1.5 rounded-[14px] bg-white text-[16px] font-medium"
-                      style={{ color: "var(--mappy-text-primary)" }}
-                    >
-                      <RouteIcon className="h-5 w-5 shrink-0" />
-                      Не вышло — открыть во внешней карте
-                    </a>
-                  ) : (
-                    <RoutePill onClick={() => void handleBuildRoute()}>
-                      <RouteIcon className="h-5 w-5 shrink-0" />
-                      Не вышло — попробовать снова
-                    </RoutePill>
-                  ))}
-              </>
-            ) : (
-              navigateUrl && (
+                <div className="flex min-w-0 flex-1 flex-col items-end gap-[length:var(--mappy-spacing-2xs)] tracking-densed">
+                  <p className="text-body-2 text-text-tertiary">Назначение</p>
+                  <p className="truncate text-body font-medium text-text-secondary">{place.address}</p>
+                </div>
+              </div>
+              {/* Вторая «Маршрут» (2228:27659 в макете) — здесь сознательно НЕ
+                  внешняя ссылка, только внутренние решения: пересчитывает путь
+                  от текущей позиции ещё раз (та же handleBuildRoute, что и на
+                  первом нажатии). Пригодится, если человек уже идёт и успел
+                  сместиться — старое время/расстояние иначе так и останутся
+                  висеть на карточке. Тон brandSecondary (бледно-розовый),
+                  не cta — по макету вторая кнопка ниже по значимости первой. */}
+              <Button tone="brandSecondary" onClick={() => void handleBuildRoute()}>
+                Обновить маршрут
+              </Button>
+            </>
+          )}
+          {routeState.status === "error" && (
+            <Button tone="secondary" onClick={() => void handleBuildRoute()}>
+              Не вышло — попробовать снова
+            </Button>
+          )}
+        </div>
+      ) : (
+        (navigateUrl || footer) && (
+          <>
+            <div className="blur-edge-bottom" />
+            <div className="absolute inset-x-0 bottom-0 z-20 flex flex-col gap-2 px-4 pb-[calc(env(safe-area-inset-bottom)+16px)]">
+              {navigateUrl && (
                 <a
                   href={navigateUrl}
                   target="_blank"
@@ -310,11 +377,11 @@ export function SinglePlaceMap({
                   <RouteIcon className="h-5 w-5 shrink-0" />
                   Маршрут
                 </a>
-              )
-            )}
-            {footer}
-          </div>
-        </>
+              )}
+              {footer}
+            </div>
+          </>
+        )
       )}
     </div>
   );

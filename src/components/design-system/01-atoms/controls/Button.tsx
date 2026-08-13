@@ -24,7 +24,11 @@ import { cn } from "../../../../lib/utils";
  * см. ADR-013.
  */
 
-const buttonVariants = cva(
+// Экспортирован (не только Button) — нужен вне компонента для стилизации
+// не-<button> элементов теми же вариантами, например <a> для внешней ссылки
+// «Маршрут» на SinglePlaceMap (2228:27659) — тот же визуал, но это переход
+// по ссылке, а не действие формы, семантически не <button>.
+export const buttonVariants = cva(
   "inline-flex shrink-0 items-center justify-center gap-[length:var(--mappy-spacing-2xs)] rounded-[length:var(--mappy-radius-md)] text-center font-medium tracking-densed transition-colors disabled:pointer-events-none [&_svg]:pointer-events-none",
   {
     variants: {
