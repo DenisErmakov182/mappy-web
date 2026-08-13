@@ -1,9 +1,11 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { CloseButton } from "./primitives";
+import { CloseButton, RouteIcon } from "./primitives";
 import { MapAddressChip } from "./MapAddressChip";
 import { buildPinElement, type PinPlace } from "./placePin";
+import { formatDistance, formatDurationSeconds, getLastKnownLocation, rememberLocation } from "../lib/geo";
+import { fetchWalkingRoute } from "../lib/api";
 
 /*
  * Лёгкий вид карты с одним пином — то, что открывается по кнопке «Посмотреть на
@@ -17,15 +19,21 @@ import { buildPinElement, type PinPlace } from "./placePin";
  */
 
 const SINGLE_PLACE_ZOOM = 15;
+const ROUTE_SOURCE_ID = "walking-route";
 
-/* Пилюля «Назад ›», нода 2190:10428: серый фон, текст 14px medium, шеврон вправо. */
+/*
+ * Пилюля «Назад ›», нода 2190:10428: в макете серый фон, текст 14px medium,
+ * шеврон вправо. Перекрашена в белый сознательно — на одном экране с кнопкой
+ * «Маршрут» (своего узла в Figma не имеет) серый рядом с белым выглядел
+ * разнобоем сильнее, чем отход от макета в цвете фона.
+ */
 function BackPillButton({ onClick }: { onClick: () => void }) {
   return (
     <button
       type="button"
       onClick={onClick}
       className="flex items-center gap-1 rounded-[10px] p-2"
-      style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
+      style={{ backgroundColor: "#fff" }}
     >
       <span
         className="text-[14px] font-medium leading-[18px] tracking-[-0.6px]"
@@ -40,11 +48,42 @@ function BackPillButton({ onClick }: { onClick: () => void }) {
   );
 }
 
+/* Общий стиль белой пилюли-кнопки внизу карты — «Маршрут» и её же состояния загрузки/ошибки. */
+function RoutePill({
+  children,
+  onClick,
+  disabled,
+}: {
+  children: ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="flex h-14 w-full shrink-0 items-center justify-center gap-1.5 rounded-[14px] bg-white text-[16px] font-medium disabled:opacity-70"
+      style={{ color: "var(--mappy-text-primary)" }}
+    >
+      {children}
+    </button>
+  );
+}
+
+type RouteState =
+  | { status: "idle" }
+  | { status: "locating" | "loading" }
+  | { status: "ready"; distanceMeters: number | null; durationSeconds: number | null }
+  | { status: "error" };
+
 export function SinglePlaceMap({
   place,
   onClose,
   footer,
   closeVariant = "cross",
+  navigateUrl,
+  interactiveRoute = false,
 }: {
   place: PinPlace & { latitude: number; longitude: number; address: string };
   onClose: () => void;
@@ -60,10 +99,27 @@ export function SinglePlaceMap({
    * вызывают `onClose`.
    */
   closeVariant?: "cross" | "back";
+  /**
+   * Ссылка «Маршрут» во внешней карте. При `interactiveRoute` — это резервный
+   * вариант на случай ошибки (ORS недоступен/не настроен), а не основная
+   * кнопка. Без `interactiveRoute` — единственный способ проложить путь,
+   * так и остаётся на публичной странице шеринга: там нет входа, а бесплатный
+   * дневной лимит OpenRouteService общий на всё приложение — открывать этот
+   * запрос кому угодно без авторизации не стали (см. mappy-api/routes/route.ts).
+   */
+  navigateUrl?: string;
+  /**
+   * Рисовать пеший маршрут прямо на этой карте (линией по дорогам, не по
+   * прямой) вместо ухода во внешнее приложение. Только для авторизованного
+   * контекста — см. комментарий у navigateUrl.
+   */
+  interactiveRoute?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<maplibregl.Map | null>(null);
   const placeRef = useRef(place);
   placeRef.current = place;
+  const [routeState, setRouteState] = useState<RouteState>({ status: "idle" });
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -76,6 +132,7 @@ export function SinglePlaceMap({
       zoom: SINGLE_PLACE_ZOOM,
       attributionControl: false,
     });
+    mapInstanceRef.current = map;
 
     // Как и в MapView: корневой элемент маркера нулевого размера стоит ровно в
     // географической точке, а графика пина размещена вокруг неё так, что остриё
@@ -92,8 +149,77 @@ export function SinglePlaceMap({
       resizeObserver.disconnect();
       marker.remove();
       map.remove();
+      mapInstanceRef.current = null;
     };
   }, []);
+
+  // Рисует/обновляет линию маршрута и подгоняет вид карты под неё целиком.
+  // Источник и слой живут только пока открыта эта карта — пересоздавать
+  // не нужно, `setData` на повторный клик обновит уже добавленный источник.
+  function drawRoute(geometry: { type: "LineString"; coordinates: [number, number][] }) {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    const apply = () => {
+      const data: GeoJSON.Feature = { type: "Feature", properties: {}, geometry };
+      const existingSource = map.getSource(ROUTE_SOURCE_ID) as maplibregl.GeoJSONSource | undefined;
+      if (existingSource) {
+        existingSource.setData(data);
+      } else {
+        map.addSource(ROUTE_SOURCE_ID, { type: "geojson", data });
+        map.addLayer({
+          id: ROUTE_SOURCE_ID,
+          type: "line",
+          source: ROUTE_SOURCE_ID,
+          layout: { "line-cap": "round", "line-join": "round" },
+          paint: { "line-color": "#ff2056", "line-width": 4 },
+        });
+      }
+
+      const bounds = geometry.coordinates.reduce(
+        (b, coordinate) => b.extend(coordinate as [number, number]),
+        new maplibregl.LngLatBounds(geometry.coordinates[0], geometry.coordinates[0]),
+      );
+      map.fitBounds(bounds, { padding: 64, maxZoom: 17, duration: 600 });
+    };
+
+    if (map.isStyleLoaded()) apply();
+    else map.once("load", apply);
+  }
+
+  async function handleBuildRoute() {
+    setRouteState({ status: "locating" });
+
+    // Та же последняя известная позиция, что и на карточке места — если её
+    // ещё нет (разрешение на геолокацию не давали или это первый запуск),
+    // спрашиваем свежую прямо здесь: человек уже явно попросил маршрут,
+    // самое уместное место спросить геолокацию, если раньше не спрашивали.
+    let origin = getLastKnownLocation();
+    if (!origin) {
+      origin = await new Promise<{ lat: number; lng: number } | null>((resolve) => {
+        if (!navigator.geolocation) return resolve(null);
+        navigator.geolocation.getCurrentPosition(
+          (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+          () => resolve(null),
+          { enableHighAccuracy: true, timeout: 10_000 },
+        );
+      });
+      if (origin) rememberLocation(origin.lat, origin.lng);
+    }
+    if (!origin) {
+      setRouteState({ status: "error" });
+      return;
+    }
+
+    setRouteState({ status: "loading" });
+    try {
+      const route = await fetchWalkingRoute(origin, { lat: place.latitude, lng: place.longitude });
+      drawRoute(route.geometry);
+      setRouteState({ status: "ready", distanceMeters: route.distanceMeters, durationSeconds: route.durationSeconds });
+    } catch {
+      setRouteState({ status: "error" });
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 bg-white">
@@ -119,10 +245,65 @@ export function SinglePlaceMap({
         <MapAddressChip address={place.address} />
       </div>
 
-      {footer && (
+      {(interactiveRoute || navigateUrl || footer) && (
         <>
           <div className="blur-edge-bottom" />
           <div className="absolute inset-x-0 bottom-0 z-20 flex flex-col gap-2 px-4 pb-[calc(env(safe-area-inset-bottom)+16px)]">
+            {interactiveRoute ? (
+              <>
+                {routeState.status === "idle" && (
+                  <RoutePill onClick={() => void handleBuildRoute()}>
+                    <RouteIcon className="h-5 w-5 shrink-0" />
+                    Маршрут
+                  </RoutePill>
+                )}
+                {(routeState.status === "locating" || routeState.status === "loading") && (
+                  <RoutePill disabled>
+                    <RouteIcon className="h-5 w-5 shrink-0 animate-pulse" />
+                    {routeState.status === "locating" ? "Определяем позицию…" : "Строим маршрут…"}
+                  </RoutePill>
+                )}
+                {routeState.status === "ready" && (
+                  <RoutePill onClick={() => void handleBuildRoute()}>
+                    <RouteIcon className="h-5 w-5 shrink-0" />
+                    {routeState.durationSeconds != null && formatDurationSeconds(routeState.durationSeconds)}
+                    {routeState.durationSeconds != null && routeState.distanceMeters != null && " · "}
+                    {routeState.distanceMeters != null && formatDistance(routeState.distanceMeters)}
+                  </RoutePill>
+                )}
+                {routeState.status === "error" &&
+                  (navigateUrl ? (
+                    <a
+                      href={navigateUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex h-14 w-full shrink-0 items-center justify-center gap-1.5 rounded-[14px] bg-white text-[16px] font-medium"
+                      style={{ color: "var(--mappy-text-primary)" }}
+                    >
+                      <RouteIcon className="h-5 w-5 shrink-0" />
+                      Не вышло — открыть во внешней карте
+                    </a>
+                  ) : (
+                    <RoutePill onClick={() => void handleBuildRoute()}>
+                      <RouteIcon className="h-5 w-5 shrink-0" />
+                      Не вышло — попробовать снова
+                    </RoutePill>
+                  ))}
+              </>
+            ) : (
+              navigateUrl && (
+                <a
+                  href={navigateUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex h-14 w-full shrink-0 items-center justify-center gap-1.5 rounded-[14px] bg-white text-[16px] font-medium"
+                  style={{ color: "var(--mappy-text-primary)" }}
+                >
+                  <RouteIcon className="h-5 w-5 shrink-0" />
+                  Маршрут
+                </a>
+              )
+            )}
             {footer}
           </div>
         </>

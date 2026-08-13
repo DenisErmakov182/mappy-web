@@ -15,6 +15,7 @@ import { PhotoSwiper } from "./PhotoSwiper";
 import { SinglePlaceMap } from "./SinglePlaceMap";
 import { CloseButton, CtaButton } from "./primitives";
 import { PlaceHeader } from "./PlaceHeader";
+import { buildWalkingDirectionsUrl } from "../lib/mapsDeepLink";
 
 /*
  * Публичная страница места по ссылке `/s/:token` — макет Figma 2137:9564
@@ -188,7 +189,12 @@ export function SharedPlaceScreen({
       </div>
 
       {showMap && (
-        <SinglePlaceMap place={place} onClose={() => setShowMap(false)} footer={saveCta} />
+        <SinglePlaceMap
+          place={place}
+          onClose={() => setShowMap(false)}
+          footer={saveCta}
+          navigateUrl={buildWalkingDirectionsUrl(place.latitude, place.longitude)}
+        />
       )}
 
       {showAuth && (

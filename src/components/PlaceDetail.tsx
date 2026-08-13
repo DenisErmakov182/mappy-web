@@ -8,6 +8,8 @@ import { PhotoSwiper } from "./PhotoSwiper";
 import { SinglePlaceMap } from "./SinglePlaceMap";
 import { OwnerTag } from "./OwnerTag";
 import { PlaceHeader } from "./PlaceHeader";
+import { distanceMeters, getLastKnownLocation } from "../lib/geo";
+import { buildWalkingDirectionsUrl } from "../lib/mapsDeepLink";
 
 /*
  * Открытая карточка по макету 1829:23152. У места друга тот же просмотр,
@@ -33,6 +35,18 @@ export function PlaceDetail({
   // шеринга, только без нижней кнопки: владельцу нечего себе сохранять.
   const [showMap, setShowMap] = useState(false);
   const [savingCopy, setSavingCopy] = useState(false);
+
+  // Последняя известная позиция устройства — та же, что кладёт кнопка «Найти
+  // меня» на карте. Может отсутствовать (разрешение не давали) — тогда просто
+  // не показываем расстояние, кнопка «Маршрут» от этого не зависит.
+  const myLocation = getLastKnownLocation();
+  const distanceToPlace = myLocation
+    ? distanceMeters(
+        { latitude: myLocation.lat, longitude: myLocation.lng },
+        { latitude: place.latitude, longitude: place.longitude },
+      )
+    : null;
+  const navigateUrl = buildWalkingDirectionsUrl(place.latitude, place.longitude);
 
   const share = () => {
     setShowActions(false);
@@ -120,6 +134,7 @@ export function PlaceDetail({
             createdAt={place.createdAt}
             systemName={place.systemName}
             onShowMap={() => setShowMap(true)}
+            distanceMeters={distanceToPlace}
           />
 
           <div className="flex w-full flex-col gap-4">
@@ -155,7 +170,15 @@ export function PlaceDetail({
       {showActions && <ActionSheet actions={actions} onCancel={() => setShowActions(false)} />}
     </div>
 
-      {showMap && <SinglePlaceMap place={place} onClose={() => setShowMap(false)} closeVariant="back" />}
+      {showMap && (
+        <SinglePlaceMap
+          place={place}
+          onClose={() => setShowMap(false)}
+          closeVariant="back"
+          navigateUrl={navigateUrl}
+          interactiveRoute
+        />
+      )}
     </>
   );
 }

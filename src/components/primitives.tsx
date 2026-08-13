@@ -101,6 +101,22 @@ export function SearchIcon({ className, color }: { className?: string; color?: s
   );
 }
 
+/* Иконка кнопки «Маршрут» — точка старта, S-образный путь, точка назначения. */
+export function RouteIcon({ className, color }: { className?: string; color?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} style={{ color }} aria-hidden="true">
+      <circle cx="5" cy="18" r="2" stroke="currentColor" strokeWidth="1.7" />
+      <circle cx="19" cy="6" r="2" stroke="currentColor" strokeWidth="1.7" />
+      <path
+        d="M5 16C5 10 9 12 12 9C15 6 14 4 19 4"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 /*
  * Нижний лист: полоска-граббер тянется пальцем/мышью — вниз закрывает лист,
  * вверх раскрывает на максимум.

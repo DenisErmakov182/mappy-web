@@ -347,6 +347,26 @@ export function reverseGeocode(lat: number, lng: number) {
   return request<{ address: string }>(`/geocode/reverse?${params}`).then((result) => result.address);
 }
 
+export interface WalkingRoute {
+  geometry: { type: "LineString"; coordinates: [number, number][] };
+  distanceMeters: number | null;
+  durationSeconds: number | null;
+}
+
+/** Пеший маршрут от точки до точки (линия по дорогам, не по прямой) — рисуется на SinglePlaceMap. */
+export function fetchWalkingRoute(
+  from: { lat: number; lng: number },
+  to: { lat: number; lng: number },
+) {
+  const params = new URLSearchParams({
+    fromLat: String(from.lat),
+    fromLng: String(from.lng),
+    toLat: String(to.lat),
+    toLng: String(to.lng),
+  });
+  return request<WalkingRoute>(`/route/walking?${params}`, {}, 12_000);
+}
+
 export interface AddressSuggestion {
   label: string;
   lat: number;

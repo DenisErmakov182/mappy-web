@@ -1,4 +1,5 @@
 import { formatPlaceDate } from "../lib/formatDate";
+import { formatDistance, formatWalkingDuration } from "../lib/geo";
 import { RatingChip, Tag } from "./primitives";
 import mapIcon from "../assets/icons/tab-map.webp";
 
@@ -17,6 +18,7 @@ export function PlaceHeader({
   createdAt,
   systemName,
   onShowMap,
+  distanceMeters,
 }: {
   title: string;
   address: string;
@@ -25,12 +27,18 @@ export function PlaceHeader({
   /** Название, предложенное подсказкой поиска при создании — сноска, если владелец переименовал место. */
   systemName?: string;
   onShowMap: () => void;
+  /** Расстояние по прямой от последней известной позиции устройства — null/undefined, если она неизвестна. */
+  distanceMeters?: number | null;
 }) {
   const formattedDate = formatPlaceDate(createdAt);
   // Сноска не имеет смысла, если её и так видно в заголовке — показываем,
   // только когда владелец правда отредактировал название.
   const showSystemNameTag =
     systemName && systemName.trim().toLowerCase() !== title.trim().toLowerCase();
+  const walkingLabel =
+    distanceMeters != null
+      ? `${formatWalkingDuration(distanceMeters)} · ${formatDistance(distanceMeters)}`
+      : null;
 
   return (
     <div className="flex flex-col gap-2 px-1">
@@ -73,13 +81,14 @@ export function PlaceHeader({
         </button>
       </div>
 
-      {(rating > 0 || formattedDate || showSystemNameTag) && (
+      {(rating > 0 || formattedDate || showSystemNameTag || walkingLabel) && (
         <div className="flex flex-wrap items-center gap-1">
           {rating > 0 && (
             <span className="[&>span]:h-[26px] [&>span]:rounded-[10px]">
               <RatingChip rating={rating} />
             </span>
           )}
+          {walkingLabel && <Tag>{walkingLabel}</Tag>}
           {formattedDate && <Tag>{formattedDate}</Tag>}
           {showSystemNameTag && <Tag>{systemName}</Tag>}
         </div>

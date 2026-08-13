@@ -24,7 +24,7 @@ import { OnboardingScreen, hasSeenOnboarding } from "./components/OnboardingScre
 import { LocationPermissionScreen } from "./components/LocationPermissionScreen";
 import { CloseButton } from "./components/primitives";
 import { PwaUpdateBanner } from "./components/PwaUpdateBanner";
-import { distanceMeters } from "./lib/geo";
+import { distanceMeters, forgetLocation, getLastKnownLocation, rememberLocation } from "./lib/geo";
 import locateMeIcon from "./assets/icons/locate-me-3d.webp";
 import {
   hasPwaUpdate,
@@ -61,7 +61,6 @@ import {
 } from "./types";
 
 const SHARE_PATH_PREFIX = "/s/";
-const LAST_LOCATION_KEY = "mappy_last_location";
 const LOCATION_PROMPT_COMPLETED_KEY = "mappy_location_prompt_completed";
 const MAP_WITHOUT_LOCATION = { center: { lat: 61.524, lng: 105.3188 }, zoom: 3 };
 
@@ -69,23 +68,6 @@ type MapLaunchState = {
   center: { lat: number; lng: number };
   zoom: number;
 };
-
-function getStoredLocation(): { lat: number; lng: number } | null {
-  try {
-    const raw = localStorage.getItem(LAST_LOCATION_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-function storeLocation(lat: number, lng: number) {
-  try {
-    localStorage.setItem(LAST_LOCATION_KEY, JSON.stringify({ lat, lng }));
-  } catch {
-    // localStorage недоступен (приватный режим и т.п.) — не критично
-  }
-}
 
 function hasCompletedLocationPrompt(): boolean {
   try {
@@ -104,8 +86,8 @@ function completeLocationPrompt() {
 }
 
 function resetLocationPrompt() {
+  forgetLocation();
   try {
-    localStorage.removeItem(LAST_LOCATION_KEY);
     localStorage.removeItem(LOCATION_PROMPT_COMPLETED_KEY);
   } catch {
     // Состояние всё равно сбросится в памяти текущего запуска.
@@ -173,7 +155,7 @@ export default function App() {
     readLegalDocument(window.location.pathname),
   );
   const [mapLaunch, setMapLaunch] = useState<MapLaunchState | null>(() => {
-    const stored = getStoredLocation();
+    const stored = getLastKnownLocation();
     if (stored) return { center: stored, zoom: 12 };
     return hasCompletedLocationPrompt() ? MAP_WITHOUT_LOCATION : null;
   });
@@ -282,7 +264,7 @@ export default function App() {
     return (
       <LocationPermissionScreen
         onLocated={(coordinates) => {
-          storeLocation(coordinates.lat, coordinates.lng);
+          rememberLocation(coordinates.lat, coordinates.lng);
           completeLocationPrompt();
           setMapLaunch({ center: coordinates, zoom: 12 });
         }}
@@ -421,7 +403,7 @@ function MapApp({
       (pos) => {
         setLocating(false);
         const { latitude: lat, longitude: lng } = pos.coords;
-        storeLocation(lat, lng);
+        rememberLocation(lat, lng);
         setCenter({ lat, lng });
         // При автозапуске карта уже открыта примерно в нужном месте (сохранённые
         // координаты) — анимированный перелёт нужен только по ручному нажатию кнопки.
