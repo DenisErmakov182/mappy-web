@@ -3,14 +3,19 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import { AppErrorBoundary } from './components/AppRecoveryScreen.tsx'
-import { ComponentsPreviewPage } from './components/design-system/catalog/ComponentsPreviewPage.tsx'
+import { ComponentsPreviewPage } from './components/ComponentsPreviewPage.tsx'
 import { registerPwaUpdateHandling } from './lib/pwaUpdate.ts'
 import { disablePwaForReadOnlyStaging, isReadOnlyStaging } from './lib/staging.ts'
 
 // Каталог библиотеки компонентов — без роутера (в mappy-web его нет),
-// просто проверка пути. Только для разработки, в проде недоступного
-// смысла не имеет, но и не скрыт отдельно — не хранит ничего чувствительного.
-const isComponentsPreviewRoute = window.location.pathname === '/components-preview'
+// просто проверка пути. Защита в два уровня (см. ComponentsPreviewPage.tsx
+// для второго): первый — этот флаг, роут вообще не монтируется, если сборка
+// не dev-режима и не включён VITE_ENABLE_COMPONENTS_PREVIEW. В проде эта
+// переменная никогда не выставляется — там роута физически нет. На стенде
+// включена, но саму страницу дополнительно закрывает секретный ключ.
+const isComponentsPreviewRoute =
+  window.location.pathname === '/components-preview' &&
+  (import.meta.env.DEV || import.meta.env.VITE_ENABLE_COMPONENTS_PREVIEW === 'true')
 
 const configureIosStandaloneViewport = () => {
   const navigatorWithStandalone = navigator as Navigator & { standalone?: boolean }

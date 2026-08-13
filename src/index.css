@@ -71,14 +71,6 @@
   --color-border-brand: #ff2056b2;
   --color-border-danger: #fb2c36;
 
-  /* Спейсинг — именованные токены поверх числовой шкалы Tailwind (p-3 и т.п. продолжают работать как раньше) */
-  --spacing-2xs: 4px;
-  --spacing-xs: 8px;
-  --spacing-sm: 12px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
-
   /* Шрифты — Caption сознательно на Inter, не SF Pro (так в самой Figma) */
   --font-heading: "SF Pro Text", sans-serif;
   --font-body: "SF Pro Text", sans-serif;
@@ -99,10 +91,19 @@
 
 /*
  * Радиусы (см. пояснение выше — не в @theme, чтобы не переопределить чужие
- * rounded-xl/2xl), толщина границ и высота контрола — обычные
+ * rounded-xl/2xl), спейсинг, толщина границ и высота контрола — обычные
  * CSS-переменные, без готовых классов. Используются как
  * var(--mappy-radius-md) в inline style или rounded-[length:var(--mappy-radius-md)]
  * в className.
+ *
+ * Спейсинг сюда же перенесён из @theme 13.08.2026: там он назывался
+ * --spacing-2xs..xl и переопределял встроенную T-shirt-size шкалу Tailwind
+ * (max-w-sm, w-md и т.п. читают тот же namespace --spacing-*, а не только
+ * числовые p-3/gap-4) — max-w-sm вместо 384px стал 12px, экран входа и
+ * несколько других экранов схлопнулись до нескольких пикселей на staging.
+ * Пойман по живому диффу prod/staging — см. AuthScreen.tsx, где инпут внезапно
+ * стал 34px. Та же логика, что уже применили к радиусам, просто не была
+ * продолжена на спейсинг.
  */
 :root {
   --mappy-radius-xxs: 2px;
@@ -112,6 +113,12 @@
   --mappy-radius-lg: 20px;
   --mappy-radius-xl: 28px;
   --mappy-radius-2xl: 32px;
+  --mappy-spacing-2xs: 4px;
+  --mappy-spacing-xs: 8px;
+  --mappy-spacing-sm: 12px;
+  --mappy-spacing-md: 16px;
+  --mappy-spacing-lg: 24px;
+  --mappy-spacing-xl: 32px;
   --mappy-border-sm: 1.2px;
   --mappy-border-md: 1.5px;
   --mappy-border-lg: 2px;
@@ -130,6 +137,10 @@
   --mappy-text-tertiary: #99a1af;
   --mappy-divider: rgba(3, 7, 18, 0.04);
   --mappy-gradient-cta: linear-gradient(180deg, #ffa1ad 0%, #ff2056 99%);
+  /* Pressed-состояние того же градиента — из Figma-компонента Button (1419:25008,
+     Style=CTA), а не подобрано на глаз: старый CtaButton его не знал (нажатие
+     никак не отличалось от обычного вида), новый атом Button — знает. */
+  --mappy-gradient-cta-pressed: linear-gradient(180deg, #ff637e 0%, #a50036 99%);
   --mappy-registration-heading-top: 110px;
   --mappy-primary-cta-bottom: 80px;
   --mappy-floating-top: max(env(safe-area-inset-top), 12px);
