@@ -4,7 +4,13 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { CloseButton, RouteIcon } from "./primitives";
 import { MapAddressChip } from "./MapAddressChip";
 import { buildPinElement, type PinPlace } from "./placePin";
-import { formatDurationSeconds, getLastKnownLocation, rememberLocation } from "../lib/geo";
+import {
+  MAX_WALKING_DISTANCE_METERS,
+  distanceMeters,
+  formatDurationSeconds,
+  getLastKnownLocation,
+  rememberLocation,
+} from "../lib/geo";
 import { fetchWalkingRoute, reverseGeocode } from "../lib/api";
 import { Button } from "./design-system/01-atoms/controls/Button";
 import originPinShape from "../assets/icons/origin-pin.svg";
@@ -93,7 +99,8 @@ type RouteState =
   | { status: "idle" }
   | { status: "locating" | "loading" }
   | { status: "ready"; distanceMeters: number | null; durationSeconds: number | null; originAddress: string | null }
-  | { status: "error" };
+  | { status: "error" }
+  | { status: "tooFar" };
 
 export function SinglePlaceMap({
   place,
@@ -254,6 +261,17 @@ export function SinglePlaceMap({
       return;
     }
 
+    // Дальше 100км — не пешая прогулка, а другой город; не тратим на это
+    // дневной лимит ORS вообще (см. MAX_WALKING_DISTANCE_METERS).
+    const beelineDistance = distanceMeters(
+      { latitude: origin.lat, longitude: origin.lng },
+      { latitude: place.latitude, longitude: place.longitude },
+    );
+    if (beelineDistance > MAX_WALKING_DISTANCE_METERS) {
+      setRouteState({ status: "tooFar" });
+      return;
+    }
+
     setRouteState({ status: "loading" });
     try {
       // Адрес точки «Вы здесь» (2228:27643) — параллельно с самим маршрутом,
@@ -359,6 +377,11 @@ export function SinglePlaceMap({
             <Button tone="secondary" onClick={() => void handleBuildRoute()}>
               Не вышло — попробовать снова
             </Button>
+          )}
+          {routeState.status === "tooFar" && (
+            <p className="w-full py-[length:var(--mappy-spacing-sm)] text-center text-body-2 tracking-densed text-text-tertiary">
+              Место дальше 100 км — это не пешая прогулка
+            </p>
           )}
         </div>
       ) : (
