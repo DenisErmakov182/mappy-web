@@ -161,7 +161,15 @@ export function SinglePlaceMap({
     if (!map) return;
 
     const apply = () => {
-      const data: GeoJSON.Feature = { type: "Feature", properties: {}, geometry };
+      // Не аннотируем явно GeoJSON.Feature: этот тип приходит из глобального
+      // неймспейса @types/geojson (транзитивная зависимость maplibre-gl), а
+      // tsconfig.app.json держит "types" явным списком без него — сборка на
+      // Timeweb (tsc -b, не tsc --noEmit -p .) на такой аннотации падает с
+      // TS2503, хотя maplibre-gl использует тот же тип у себя без проблем
+      // (skipLibCheck прощает объявления библиотек, но не наш собственный код).
+      // Структурно совместимый литерал без аннотации работает одинаково и там,
+      // и там.
+      const data = { type: "Feature" as const, properties: {}, geometry };
       const existingSource = map.getSource(ROUTE_SOURCE_ID) as maplibregl.GeoJSONSource | undefined;
       if (existingSource) {
         existingSource.setData(data);
