@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   emptyFilters,
   filtersAreEmpty,
@@ -29,6 +29,7 @@ import { avatarGradient, avatarInitials } from "../lib/avatarGradient";
 import { CtaButton, SearchIcon } from "./primitives";
 import { PlaceRowCard } from "./PlaceRowCard";
 import friendsEmptyIllustration from "../assets/illustrations/friends-empty.webp";
+import friendsPreviewIllustration from "../assets/illustrations/friends-preview.png";
 import friendPhotoPin from "../assets/icons/friend-photo-pin.png";
 import filterIcon from "../assets/icons/filter-icon.svg";
 import dotsHorizontalIcon from "../assets/icons/dots-horizontal.svg";
@@ -37,6 +38,7 @@ import { FilterSheet } from "./FilterSheet";
 
 type FriendsView =
   | { kind: "home" }
+  | { kind: "list" }
   | { kind: "requests" }
   | { kind: "notifications" }
   | { kind: "profile"; person: ApiFriendProfile };
@@ -77,15 +79,11 @@ export function FriendsScreen({
   const [incoming, setIncoming] = useState<ApiFriendProfile[]>([]);
   const [outgoing, setOutgoing] = useState<ApiFriendProfile[]>([]);
   const [showAccount, setShowAccount] = useState(false);
-  const [query, setQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<ApiFriendProfile[]>([]);
-  const [searching, setSearching] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notifications, setNotifications] = useState<ApiNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notificationsLoading, setNotificationsLoading] = useState(true);
-  const searchRef = useRef<HTMLInputElement>(null);
 
   const loadRelationships = async () => {
     try {
@@ -139,36 +137,6 @@ export function FriendsScreen({
     }
   };
 
-  useEffect(() => {
-    if (view.kind !== "home") return;
-    const value = query.trim();
-    if (!value) {
-      setSearchResults([]);
-      setSearching(false);
-      return;
-    }
-
-    let active = true;
-    setSearching(true);
-    const timer = window.setTimeout(() => {
-      searchFriends(value)
-        .then((results) => {
-          if (active) setSearchResults(results);
-        })
-        .catch((searchError) => {
-          if (active) setError(searchError instanceof Error ? searchError.message : "Не удалось выполнить поиск");
-        })
-        .finally(() => {
-          if (active) setSearching(false);
-        });
-    }, 250);
-
-    return () => {
-      active = false;
-      window.clearTimeout(timer);
-    };
-  }, [query, view.kind]);
-
   // Повторный тап по уже активной вкладке «Друзья» возвращает экран в корень.
   // Это единственный выход с профиля друга, когда список его мест прокручен:
   // «Назад» и меню «…» уезжают вверх вместе с шапкой профиля, а липкая строка
@@ -179,7 +147,6 @@ export function FriendsScreen({
     setError("");
     setView({ kind: "home" });
     setShowAccount(false);
-    setQuery("");
   }, [resetSignal]);
 
   const openProfile = (person: ApiFriendProfile) => {
@@ -191,6 +158,19 @@ export function FriendsScreen({
     setError("");
     setView({ kind: "home" });
   };
+
+  if (view.kind === "list") {
+    return (
+      <FriendsListView
+        friends={friends}
+        incoming={incoming}
+        loading={loading}
+        onBack={returnHome}
+        onOpenRequests={() => setView({ kind: "requests" })}
+        onOpenProfile={openProfile}
+      />
+    );
+  }
 
   if (view.kind === "requests") {
     return (
@@ -239,8 +219,6 @@ export function FriendsScreen({
     );
   }
 
-  const hasSearch = Boolean(query.trim());
-
   return (
     <div className="h-full overflow-y-auto pb-32" style={{ backgroundColor: "var(--mappy-surface-primary)" }}>
       <div className="flex flex-col gap-4 px-4 pt-[var(--mappy-floating-top)]">
@@ -266,83 +244,52 @@ export function FriendsScreen({
           )}
         </button>
 
-        <section className="rounded-[28px] bg-white p-4">
-          <SearchField ref={searchRef} value={query} onChange={setQuery} placeholder="Найти друга" />
-
-          {hasSearch ? (
-            <div className="mt-6">
-              {searching && <EmptyLine>Ищем…</EmptyLine>}
-              {!searching && searchResults.length === 0 && <EmptyLine>Никого не нашли</EmptyLine>}
-              {!searching && searchResults.map((person, index) => (
-                <PersonRow
-                  key={person.id}
-                  person={person}
-                  border={index > 0}
-                  suffix={<RelationLabel relation={person.relation} />}
-                  onClick={() => openProfile(person)}
-                />
-              ))}
-            </div>
-          ) : friends.length === 0 && !loading ? (
-            <div className="pt-5 text-center">
-              <p className="text-[20px] font-semibold leading-6" style={{ color: "var(--mappy-text-primary)" }}>
-                Вы еще не добавили друзей
-              </p>
-              <p className="mt-1 text-[14px] leading-5" style={{ color: "var(--mappy-text-secondary)" }}>
-                Добавьте друзей — и находите
-                <br />
-                проверенные места
-              </p>
-              <img src={friendsEmptyIllustration} alt="" className="mx-auto mb-5 mt-2 w-[215px]" />
-              {(incoming.length > 0 || outgoing.length > 0) && (
-                <button
-                  type="button"
-                  onClick={() => setView({ kind: "requests" })}
-                  className="mb-2 flex h-12 w-full items-center justify-center gap-2 rounded-[14px] bg-[#f3f4f6] text-[16px] font-medium text-[var(--mappy-text-primary)]"
-                >
-                  Запросы
-                  {incoming.length > 0 && (
-                    <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-[var(--mappy-pink)] px-1.5 text-[12px] leading-5 text-white">
-                      {incoming.length}
-                    </span>
-                  )}
-                </button>
-              )}
-              <CtaButton onClick={() => searchRef.current?.focus()}>Добавить по нику</CtaButton>
-            </div>
-          ) : (
-            <>
-              <div className="mb-6 mt-6 flex items-center justify-between px-1">
-                <span className="text-[15px]" style={{ color: "var(--mappy-text-secondary)" }}>
-                  {friends.length} {friendCountLabel(friends.length)}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setView({ kind: "requests" })}
-                  className="inline-flex items-center gap-1 text-[15px] font-medium text-[var(--mappy-pink)]"
-                >
-                  Запросы
-                  {incoming.length > 0 && (
-                    <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-[var(--mappy-pink)] px-1.5 text-[12px] leading-5 text-white">
-                      {incoming.length}
-                    </span>
-                  )}
-                </button>
+        {/* Карточка-превью «Друзья» (макеты 2026:57142 пустой / 2026:57183 с
+            друзьями, 14.08.2026) — раньше поиск и список друзей жили прямо
+            здесь; теперь это просто вход, вся карточка целиком кликабельна и
+            ведёт на отдельный экран FriendsListView (там и поиск, и список,
+            и «Запросы» — макет 2264:9330). Владелец подтвердил: пустое
+            состояние тоже кликабельно, отдельного места для поиска на этом
+            экране в макете нет. */}
+        {friends.length === 0 && !loading ? (
+          <button
+            type="button"
+            onClick={() => setView({ kind: "list" })}
+            className="flex w-full flex-col items-start gap-2 rounded-[28px] bg-white p-4 text-left"
+          >
+            <span className="text-[16px] font-medium" style={{ color: "var(--mappy-text-primary)" }}>
+              Друзья
+            </span>
+            <div className="flex w-full flex-col items-center gap-5 px-3 pt-1 text-center tracking-densed">
+              <div className="flex flex-col items-center gap-2">
+                <p className="text-[20px] font-medium leading-6" style={{ color: "var(--mappy-text-primary)" }}>
+                  Вы еще не добавили друзей
+                </p>
+                <p className="text-[16px] leading-5" style={{ color: "var(--mappy-text-secondary)" }}>
+                  Добавьте друзей - находите проверенные места
+                </p>
               </div>
+              <img src={friendsEmptyIllustration} alt="" className="w-[215px]" />
+            </div>
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setView({ kind: "list" })}
+            className="relative flex h-[72px] w-full items-center overflow-hidden rounded-[28px] bg-white px-4 text-left"
+          >
+            <span className="text-[16px] font-medium" style={{ color: "var(--mappy-text-primary)" }}>
+              Друзья <span style={{ color: "var(--mappy-text-tertiary)" }}>{friends.length}</span>
+            </span>
+            <img
+              src={friendsPreviewIllustration}
+              alt=""
+              className="pointer-events-none absolute -right-1 -top-2 w-[175px]"
+            />
+          </button>
+        )}
 
-              {friends.map((friend, index) => (
-                <PersonRow
-                  key={friend.id}
-                  person={friend}
-                  border={index > 0}
-                  onClick={() => openProfile(friend)}
-                />
-              ))}
-            </>
-          )}
-
-          {error && <p className="mt-3 px-1 text-center text-[13px] text-[#fb2c36]">{error}</p>}
-        </section>
+        {error && <p className="px-1 text-center text-[13px] text-[#fb2c36]">{error}</p>}
       </div>
 
       {showAccount && (
@@ -354,6 +301,182 @@ export function FriendsScreen({
           onDeleteAccount={onDeleteAccount}
         />
       )}
+    </div>
+  );
+}
+
+/*
+ * Полный список друзей + поиск/добавление по нику — макет 2264:9330 (узел
+ * назван «Friends / Search» в Figma, но по факту это общий экран списка:
+ * владелец подтвердил, что своего узла с заполненным списком под строкой
+ * поиска нет, строки друзей — переиспользованный PersonRow без изменений).
+ * Раньше это всё жило прямо на корневом экране «Друзья» внутри одной
+ * секции; вынесено сюда 14.08.2026 — на корне осталась только
+ * кликабельная карточка-превью (см. FriendsScreen).
+ */
+function FriendsListView({
+  friends,
+  incoming,
+  loading,
+  onBack,
+  onOpenRequests,
+  onOpenProfile,
+}: {
+  friends: ApiFriendProfile[];
+  incoming: ApiFriendProfile[];
+  loading: boolean;
+  onBack: () => void;
+  onOpenRequests: () => void;
+  onOpenProfile: (person: ApiFriendProfile) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<ApiFriendProfile[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [error, setError] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const value = query.trim();
+    if (!value) {
+      setSearchResults([]);
+      setSearching(false);
+      return;
+    }
+
+    let active = true;
+    setSearching(true);
+    const timer = window.setTimeout(() => {
+      searchFriends(value)
+        .then((results) => {
+          if (active) setSearchResults(results);
+        })
+        .catch((searchError) => {
+          if (active) setError(searchError instanceof Error ? searchError.message : "Не удалось выполнить поиск");
+        })
+        .finally(() => {
+          if (active) setSearching(false);
+        });
+    }, 250);
+
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [query]);
+
+  const hasSearch = Boolean(query.trim());
+
+  return (
+    <div className="relative h-full bg-[var(--mappy-surface-primary)]">
+      {/* Список — под блюром и под шапкой при скролле, как в RequestsView. */}
+      <div
+        className="absolute inset-0 overflow-y-auto pb-32"
+        style={{ paddingTop: "calc(env(safe-area-inset-top) + 152px)" }}
+      >
+        {friends.length === 0 && !loading && !hasSearch ? (
+          // Пустое состояние здесь — только текст, без иллюстрации и CTA
+          // (те остались на карточке-превью корневого экрана, дублировать их
+          // тут не стали по просьбе владельца 14.08.2026) — и плашка по
+          // центру доступной высоты экрана, а не прижата к шапке.
+          <div className="flex h-full items-center justify-center px-4">
+            <section className="rounded-[28px] bg-white px-6 py-8 text-center">
+              <p className="text-[20px] font-semibold leading-6" style={{ color: "var(--mappy-text-primary)" }}>
+                Вы еще не добавили друзей
+              </p>
+              <p className="mt-1 text-[14px] leading-5" style={{ color: "var(--mappy-text-secondary)" }}>
+                Добавьте друзей — и находите
+                <br />
+                проверенные места
+              </p>
+            </section>
+          </div>
+        ) : (
+        <div className="px-4">
+          {hasSearch ? (
+            <section className="rounded-[28px] bg-white p-4">
+              {searching && <EmptyLine>Ищем…</EmptyLine>}
+              {!searching && searchResults.length === 0 && <EmptyLine>Никого не нашли</EmptyLine>}
+              {!searching && searchResults.map((person, index) => (
+                <PersonRow
+                  key={person.id}
+                  person={person}
+                  border={index > 0}
+                  suffix={<RelationLabel relation={person.relation} />}
+                  onClick={() => onOpenProfile(person)}
+                />
+              ))}
+            </section>
+          ) : (
+            <section className="rounded-[28px] bg-white p-4">
+              {friends.map((friend, index) => (
+                <PersonRow
+                  key={friend.id}
+                  person={friend}
+                  border={index > 0}
+                  onClick={() => onOpenProfile(friend)}
+                />
+              ))}
+            </section>
+          )}
+
+          {error && <p className="mt-3 px-1 text-center text-[13px] text-[#fb2c36]">{error}</p>}
+        </div>
+        )}
+      </div>
+
+      <div className="blur-edge-top" />
+
+      {/* Шапка (назад/заголовок+счётчик/«Запросы») и строка поиска слиты в
+          одну карточку с тенью — тот же приём, что уже был в RequestsView,
+          только тут заголовочная строка ещё и трёхчастная: назад слева,
+          заголовок по центру, «Запросы» справа (макет 2264:9330). */}
+      <div
+        className="absolute left-4 right-4 z-20 rounded-[28px] bg-white shadow-[0_20px_40px_rgba(30,41,57,0.12)]"
+        style={{ top: "calc(env(safe-area-inset-top) + 16px)" }}
+      >
+        <div className="relative flex h-[52px] items-center justify-center px-4">
+          <button
+            type="button"
+            onClick={onBack}
+            aria-label="Назад"
+            className="absolute left-4 inline-flex items-center text-[#99a1af]"
+          >
+            <BackIcon />
+          </button>
+          <h1 className="text-[20px] font-medium leading-6" style={{ color: "var(--mappy-text-primary)" }}>
+            Друзья <span style={{ color: "var(--mappy-text-tertiary)" }}>{friends.length}</span>
+          </h1>
+          <button
+            type="button"
+            onClick={onOpenRequests}
+            className="absolute right-4 inline-flex items-center gap-1 text-[16px] font-medium"
+            style={{ color: "var(--mappy-text-tertiary)" }}
+          >
+            Запросы
+            {incoming.length > 0 && (
+              <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-[var(--mappy-pink)] px-1.5 text-[12px] leading-5 text-white">
+                {incoming.length}
+              </span>
+            )}
+            <ChevronRightIcon />
+          </button>
+        </div>
+        <div className="px-2 pb-2">
+          <label className="flex h-12 items-center gap-2.5 rounded-full bg-[var(--mappy-surface-secondary)] px-4">
+            <SearchIcon
+              className="h-6 w-6 shrink-0"
+              color={query ? "var(--mappy-text-primary)" : "var(--mappy-text-tertiary)"}
+            />
+            <input
+              ref={searchRef}
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Поиск по людям"
+              className="min-w-0 flex-1 bg-transparent text-[16px] text-[var(--mappy-text-primary)] outline-none placeholder:text-[var(--mappy-text-tertiary)]"
+            />
+          </label>
+        </div>
+      </div>
     </div>
   );
 }
@@ -809,28 +932,6 @@ function FriendPlacesSearchBar({
   );
 }
 
-const SearchField = forwardRef<HTMLInputElement, {
-    value: string;
-    onChange: (value: string) => void;
-    placeholder: string;
-  }>(function SearchField({ value, onChange, placeholder }, ref) {
-  return (
-    <label className="flex h-12 items-center gap-2.5 rounded-[14px] bg-[var(--mappy-surface-secondary)] px-4">
-      <SearchIcon
-        className="h-5 w-5 shrink-0"
-        color={value ? "var(--mappy-text-primary)" : "var(--mappy-text-tertiary)"}
-      />
-      <input
-        ref={ref}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        className="min-w-0 flex-1 bg-transparent text-[16px] text-[var(--mappy-text-primary)] outline-none placeholder:text-[var(--mappy-text-tertiary)]"
-      />
-    </label>
-  );
-});
-
 function PersonRow({
   person,
   border,
@@ -986,16 +1087,13 @@ function EmptyLine({ children }: { children: ReactNode }) {
   return <p className="py-6 text-center text-[14px] text-[#99a1af]">{children}</p>;
 }
 
-function friendCountLabel(count: number) {
-  const mod10 = count % 10;
-  const mod100 = count % 100;
-  if (mod10 === 1 && mod100 !== 11) return "друг";
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "друга";
-  return "друзей";
-}
-
 export function BackIcon() {
   return <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12.5 4.5L7 10l5.5 5.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+}
+
+/* Зеркало BackIcon — для «Запросы ›» в шапке FriendsListView (макет 2264:9330, M/chevron-right). */
+function ChevronRightIcon() {
+  return <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7.5 4.5L13 10l-5.5 5.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 }
 
 /* Значок настроек поверх аватара — по макету 1821:34749 (Correct Button / settings-02) */
