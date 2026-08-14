@@ -31,6 +31,10 @@ const iconButtonVariants = cva(
         s: "size-[26px] [&_svg]:size-4", // 26px, иконка 16px
         m: "size-7 [&_svg]:size-5", // 28px, иконка 20px
         l: "size-8 [&_svg]:size-6", // 32px, иконка 24px
+        // 48px (p-sm 12px вокруг иконки 24px) — узел Submit Button Container
+        // (2235:31199), кнопки «Обновить»/«Закрыть» рядом со сводкой маршрута.
+        // Своего узла Size в наборе IconButton нет, добавлена по факту нужды.
+        xl: "size-12 [&_svg]:size-6",
       },
       tone: {
         default:
@@ -39,6 +43,11 @@ const iconButtonVariants = cva(
           "rounded-[length:var(--mappy-radius-xs)] bg-transparent text-icon-tertiary active:bg-surface-tertiary disabled:bg-transparent disabled:text-icon-disabled",
         positive:
           "rounded-full bg-surface-success text-icon-success active:bg-surface-success-secondary active:text-icon-on-inverse disabled:bg-surface-success-tertiary disabled:text-icon-success",
+        // Тот же узел 2235:31199: фон surface-primary (не -secondary), угол
+        // radius-md (не круг) — своего названия тона в Figma не нашлось,
+        // назвали по сути (поверхность карточки, не акцент).
+        surface:
+          "rounded-[length:var(--mappy-radius-md)] bg-surface-primary text-icon-secondary active:bg-surface-secondary disabled:bg-surface-primary disabled:text-icon-disabled",
       },
     },
     defaultVariants: { size: "m", tone: "default" },

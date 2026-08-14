@@ -4,15 +4,11 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { CloseButton, RouteIcon } from "./primitives";
 import { MapAddressChip } from "./MapAddressChip";
 import { buildPinElement, type PinPlace } from "./placePin";
-import {
-  MAX_WALKING_DISTANCE_METERS,
-  distanceMeters,
-  formatDurationSeconds,
-  getLastKnownLocation,
-  rememberLocation,
-} from "../lib/geo";
+import { MAX_WALKING_DISTANCE_METERS, distanceMeters, getLastKnownLocation, rememberLocation } from "../lib/geo";
 import { fetchWalkingRoute, reverseGeocode } from "../lib/api";
 import { Button } from "./design-system/01-atoms/controls/Button";
+import { IconButton } from "./design-system/01-atoms/controls/IconButton";
+import { Icon } from "./design-system/00-foundations/Icon";
 import originPinShape from "../assets/icons/origin-pin.svg";
 import originPersonIllustration from "../assets/icons/origin-person.png";
 
@@ -29,6 +25,8 @@ import originPersonIllustration from "../assets/icons/origin-person.png";
 
 const SINGLE_PLACE_ZOOM = 15;
 const ROUTE_SOURCE_ID = "walking-route";
+const ROUTE_HALO_LAYER_ID = "walking-route-halo";
+const ROUTE_LINE_LAYER_ID = "walking-route-line";
 
 // Масштабировано от исходных пропорций узла Figma `Person Icon` (2230:30664,
 // пин-капля 64×79 с иллюстрацией человека 48×48 на left:8/top:9) вниз до
@@ -98,9 +96,32 @@ function BackPillButton({ onClick }: { onClick: () => void }) {
 type RouteState =
   | { status: "idle" }
   | { status: "locating" | "loading" }
-  | { status: "ready"; distanceMeters: number | null; durationSeconds: number | null; originAddress: string | null }
+  | {
+      status: "ready";
+      distanceMeters: number | null;
+      durationSeconds: number | null;
+      originAddress: string | null;
+      /** Момент, когда маршрут построен — время выхода в паре «HH:MM–HH:MM» это оно, а не отдельный запрос. */
+      departedAt: number;
+    }
   | { status: "error" }
   | { status: "tooFar" };
+
+/** «14:35» — часы:минуты локального времени, для пары «время выхода–прибытия». */
+function formatClockTime(timestamp: number): string {
+  return new Date(timestamp).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+}
+
+/**
+ * Значение и единица расстояния раздельно — та же логика округления, что и в
+ * formatDistance (lib/geo.ts), но не единой строкой: в группе цифр 2235:31211
+ * число и подпись на разных строках разным размером шрифта, склеенную строку
+ * не разбить обратно чисто.
+ */
+function splitDistance(meters: number): { value: string; unit: string } {
+  if (meters < 1000) return { value: String(Math.round(meters / 10) * 10), unit: "м" };
+  return { value: (meters / 1000).toFixed(1).replace(".", ","), unit: "км" };
+}
 
 export function SinglePlaceMap({
   place,
@@ -195,6 +216,24 @@ export function SinglePlaceMap({
     }
   }
 
+  // «✕» на сводке маршрута (2235:31216) — не закрывает карту (это уже делает
+  // «Назад» сверху), а возвращает именно к состоянию «до маршрута»: убирает
+  // линию, маркер «Вы здесь» и саму сводку, оставляя только пин места — как
+  // на идле-макете 2190:8705.
+  function clearRoute() {
+    const map = mapInstanceRef.current;
+    if (map) {
+      // Оба слоя убрать раньше источника — MapLibre не даёт удалить источник,
+      // пока на него ссылается хоть один слой.
+      if (map.getLayer(ROUTE_LINE_LAYER_ID)) map.removeLayer(ROUTE_LINE_LAYER_ID);
+      if (map.getLayer(ROUTE_HALO_LAYER_ID)) map.removeLayer(ROUTE_HALO_LAYER_ID);
+      if (map.getSource(ROUTE_SOURCE_ID)) map.removeSource(ROUTE_SOURCE_ID);
+    }
+    originMarkerRef.current?.remove();
+    originMarkerRef.current = null;
+    setRouteState({ status: "idle" });
+  }
+
   // Рисует/обновляет линию маршрута и подгоняет вид карты под неё целиком.
   // Источник и слой живут только пока открыта эта карта — пересоздавать
   // не нужно, `setData` на повторный клик обновит уже добавленный источник.
@@ -217,12 +256,24 @@ export function SinglePlaceMap({
         existingSource.setData(data);
       } else {
         map.addSource(ROUTE_SOURCE_ID, { type: "geojson", data });
+        // Два слоя на одном источнике — узел Figma 2239:9121: сплошная белая
+        // подложка шире (16px) под пунктирным розовым штрихом (8px, dash 16/
+        // gap 16 — те же числа, что в исходном SVG, `line-dasharray` в
+        // MapLibre задаётся в множителях line-width, 16/8 = 2, отсюда [2, 2]).
+        // Слой-подложка добавлен первым — рисуется снизу, поверх него штрих.
         map.addLayer({
-          id: ROUTE_SOURCE_ID,
+          id: ROUTE_HALO_LAYER_ID,
           type: "line",
           source: ROUTE_SOURCE_ID,
           layout: { "line-cap": "round", "line-join": "round" },
-          paint: { "line-color": "#ff2056", "line-width": 8 },
+          paint: { "line-color": "#ffffff", "line-width": 16 },
+        });
+        map.addLayer({
+          id: ROUTE_LINE_LAYER_ID,
+          type: "line",
+          source: ROUTE_SOURCE_ID,
+          layout: { "line-cap": "round", "line-join": "round" },
+          paint: { "line-color": "#ff2056", "line-width": 8, "line-dasharray": [2, 2] },
         });
       }
 
@@ -290,6 +341,7 @@ export function SinglePlaceMap({
         distanceMeters: route.distanceMeters,
         durationSeconds: route.durationSeconds,
         originAddress,
+        departedAt: Date.now(),
       });
     } catch {
       setRouteState({ status: "error" });
@@ -299,6 +351,11 @@ export function SinglePlaceMap({
   return (
     <div className="fixed inset-0 z-50 bg-white">
       <div ref={containerRef} className="h-full w-full" />
+
+      {/* Привычный градиентный блюр сверху (как на основной карте) — под пином и
+          застройкой карты плашка «Назад»/адрес иначе читалась бы хуже. Узел
+          BottomFadeGradient используется в макете и сверху, и снизу (2235:30905). */}
+      <div className="blur-edge-top" />
 
       {/*
         Адрес плашкой сверху, а не пузырьком над пином — по той же причине, что
@@ -320,12 +377,16 @@ export function SinglePlaceMap({
         <MapAddressChip address={place.address} />
       </div>
 
+      {interactiveRoute && <div className="blur-edge-bottom" />}
+
       {interactiveRoute ? (
-        // Белая карточка с закруглённым верхом — «Submit Button Container»,
-        // 2190:8705 (состояние до маршрута) / 2228:27643 (после). Не
-        // полупрозрачная плашка с blur-edge-bottom, как в остальных местах
-        // этого экрана — здесь по макету именно сплошной белый фон.
-        <div className="absolute inset-x-0 bottom-0 z-20 flex flex-col gap-[length:var(--mappy-spacing-lg)] rounded-t-[length:var(--mappy-radius-lg)] bg-white px-[length:var(--mappy-spacing-md)] pb-[calc(var(--mappy-spacing-xl)+env(safe-area-inset-bottom))] pt-[length:var(--mappy-spacing-md)]">
+        // Плавающая белая карточка — «Submit Button Container», актуальные
+        // узлы 2235:30905 (до маршрута) / 2235:31063 (после, с иконками
+        // обновить/закрыть). Уточнение 14.08.2026: в этой версии макета
+        // карточка НЕ на всю ширину и НЕ впритык к низу экрана (как было в
+        // самой первой версии, 2190:8705/2228:27643) — отступ 16px со всех
+        // сторон, скругление по всем четырём углам, не только сверху.
+        <div className="absolute inset-x-[length:var(--mappy-spacing-md)] bottom-[calc(var(--mappy-spacing-md)+env(safe-area-inset-bottom))] z-20 flex flex-col gap-[length:var(--mappy-spacing-lg)] rounded-[length:var(--mappy-radius-lg)] bg-white p-[length:var(--mappy-spacing-md)]">
           {routeState.status === "idle" && (
             <Button tone="cta" onClick={() => void handleBuildRoute()}>
               Маршрут
@@ -338,39 +399,66 @@ export function SinglePlaceMap({
           )}
           {routeState.status === "ready" && (
             <>
-              {/* Строка «Вы здесь / N мин / Назначение», 2228:27706 — адрес точки
-                  «Вы здесь» получен обратным геокодингом координат старта,
-                  может быть null (гео ответило, а геокодер — нет); в этом
-                  случае подпись просто не показываем, маршрут всё равно на карте. */}
-              <div className="flex w-full items-center justify-between gap-2 px-[length:var(--mappy-spacing-2xs)]">
-                <div className="flex min-w-0 flex-1 flex-col gap-[length:var(--mappy-spacing-2xs)] tracking-densed">
+              {/* Финальный макет 2235:31063/2235:31199 (заменил промежуточный
+                  вариант с текстовой кнопкой «Обновить маршрут»): слева —
+                  иконка-кнопка «обновить» (пересчитать маршрут ещё раз, та же
+                  handleBuildRoute), по центру три группы цифр, справа —
+                  иконка-кнопка «✕» (clearRoute — вернуться к состоянию до
+                  маршрута, не закрыть карту целиком, для этого есть «Назад»
+                  сверху). Время выхода отдельно не показываем — только
+                  прибытие, по решению владельца. */}
+              <div className="flex w-full items-center justify-between">
+                <IconButton
+                  icon={<Icon name="refresh" />}
+                  size="xl"
+                  tone="surface"
+                  aria-label="Обновить маршрут"
+                  onClick={() => void handleBuildRoute()}
+                />
+                <div className="flex items-start gap-[length:var(--mappy-spacing-xs)] tracking-densed">
+                  {routeState.durationSeconds != null && (
+                    <div className="flex w-[62px] flex-col items-center">
+                      <p className="text-header font-semibold text-text-secondary">
+                        {Math.max(1, Math.round(routeState.durationSeconds / 60))}
+                      </p>
+                      <p className="text-body-2 text-text-tertiary">мин</p>
+                    </div>
+                  )}
+                  {routeState.durationSeconds != null && (
+                    <div className="flex flex-col items-center">
+                      <p className="text-header font-semibold text-text-secondary">
+                        {formatClockTime(routeState.departedAt + routeState.durationSeconds * 1000)}
+                      </p>
+                      <p className="text-body-2 text-text-tertiary">Прибытие</p>
+                    </div>
+                  )}
+                  {routeState.distanceMeters != null && (
+                    <div className="flex w-[62px] flex-col items-center">
+                      <p className="text-header font-semibold text-text-secondary">
+                        {splitDistance(routeState.distanceMeters).value}
+                      </p>
+                      <p className="text-body-2 text-text-tertiary">{splitDistance(routeState.distanceMeters).unit}</p>
+                    </div>
+                  )}
+                </div>
+                <IconButton icon={<Icon name="x" />} size="xl" tone="surface" aria-label="Закрыть маршрут" onClick={clearRoute} />
+              </div>
+              <div className="flex w-full items-end gap-[length:var(--mappy-spacing-xs)] px-[length:var(--mappy-spacing-2xs)]">
+                <div className="flex min-w-0 max-w-[40%] shrink-0 flex-col gap-[length:var(--mappy-spacing-2xs)] tracking-densed">
                   <p className="text-body-2 text-text-tertiary">Вы здесь</p>
                   <p className="truncate text-body font-medium text-text-secondary">
                     {routeState.originAddress ?? "Текущее место"}
                   </p>
                 </div>
-                {routeState.durationSeconds != null && (
-                  <div className="flex h-[28px] shrink-0 items-center justify-center gap-[length:var(--mappy-spacing-2xs)] rounded-[length:var(--mappy-radius-sm)] bg-surface-secondary px-[length:var(--mappy-spacing-xs)]">
-                    <p className="text-body-2 font-medium tracking-densed text-text-secondary">
-                      {formatDurationSeconds(routeState.durationSeconds)}
-                    </p>
-                  </div>
-                )}
-                <div className="flex min-w-0 flex-1 flex-col items-end gap-[length:var(--mappy-spacing-2xs)] tracking-densed">
+                {/* Пунктирная линия между адресами — чисто декоративная отсылка
+                    к самому маршруту, не несёт данных. mx-1 (4px) — иначе
+                    вплотную прижимается к соседнему тексту адреса. */}
+                <div className="mx-1 mb-2 h-px min-w-[16px] flex-1 border-t-2 border-dashed border-surface-tertiary" />
+                <div className="flex min-w-0 max-w-[40%] shrink-0 flex-col items-end gap-[length:var(--mappy-spacing-2xs)] tracking-densed">
                   <p className="text-body-2 text-text-tertiary">Назначение</p>
                   <p className="truncate text-body font-medium text-text-secondary">{place.address}</p>
                 </div>
               </div>
-              {/* Вторая «Маршрут» (2228:27659 в макете) — здесь сознательно НЕ
-                  внешняя ссылка, только внутренние решения: пересчитывает путь
-                  от текущей позиции ещё раз (та же handleBuildRoute, что и на
-                  первом нажатии). Пригодится, если человек уже идёт и успел
-                  сместиться — старое время/расстояние иначе так и останутся
-                  висеть на карточке. Тон brandSecondary (бледно-розовый),
-                  не cta — по макету вторая кнопка ниже по значимости первой. */}
-              <Button tone="brandSecondary" onClick={() => void handleBuildRoute()}>
-                Обновить маршрут
-              </Button>
             </>
           )}
           {routeState.status === "error" && (

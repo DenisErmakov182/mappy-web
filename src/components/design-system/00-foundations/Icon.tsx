@@ -12,7 +12,7 @@
 
 import type { SVGProps } from "react";
 
-type IconName = "x" | "plus" | "swap";
+type IconName = "x" | "plus" | "swap" | "refresh";
 
 // Единый viewBox 24×24 и единая strokeWidth для всех иконок реестра — IconButton
 // принудительно тянет svg-элемент к одному пиксельному размеру (size-*),
@@ -29,6 +29,13 @@ const paths: Record<IconName, { viewBox: string; d: string; strokeWidth: number 
   swap: {
     viewBox: "0 0 24 24",
     d: "M7 4L3 8M3 8L7 12M3 8H21M17 20L21 16M21 16L17 12M21 16H3",
+    strokeWidth: 2,
+  },
+  // Figma: L/refresh-cw-05 (1419:27410) — стандартный «две дуги со стрелками»,
+  // четыре подпути в одном d (SVG допускает несколько M в одной строке).
+  refresh: {
+    viewBox: "0 0 24 24",
+    d: "M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8M21 3v5h-5M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16M3 21v-5h5",
     strokeWidth: 2,
   },
 };
