@@ -375,29 +375,38 @@ function FriendsListView({
 
   return (
     <div className="relative h-full bg-[var(--mappy-surface-primary)]">
+      {/* Пустое состояние — отдельный absolute-блок с явными top/bottom
+          (сестра шапки и скролл-контейнера ниже, тот же `relative h-full`
+          родитель), НЕ `flex h-full` внутри скролл-контейнера: `h-full` там
+          требовал, чтобы высота внутри overflow-y-auto резолвилась в
+          проценты надёжно, а на реальном устройстве (в отличие от превью на
+          деве) это не выполнялось — плашка съезжала вниз/не по центру.
+          Явные top/bottom не завязаны на процентную высоту (найдено и
+          исправлено 14.08.2026 по скриншоту с реального iPhone). */}
+      {friends.length === 0 && !loading && !hasSearch && (
+        <div
+          className="absolute inset-x-0 flex items-center justify-center px-4"
+          style={{ top: "calc(env(safe-area-inset-top) + 152px)", bottom: "128px" }}
+        >
+          <section className="rounded-[28px] bg-white px-6 py-8 text-center">
+            <p className="text-[20px] font-semibold leading-6" style={{ color: "var(--mappy-text-primary)" }}>
+              Вы еще не добавили друзей
+            </p>
+            <p className="mt-1 text-[14px] leading-5" style={{ color: "var(--mappy-text-secondary)" }}>
+              Добавьте друзей — и находите
+              <br />
+              проверенные места
+            </p>
+          </section>
+        </div>
+      )}
+
       {/* Список — под блюром и под шапкой при скролле, как в RequestsView. */}
       <div
         className="absolute inset-0 overflow-y-auto pb-32"
         style={{ paddingTop: "calc(env(safe-area-inset-top) + 152px)" }}
       >
-        {friends.length === 0 && !loading && !hasSearch ? (
-          // Пустое состояние здесь — только текст, без иллюстрации и CTA
-          // (те остались на карточке-превью корневого экрана, дублировать их
-          // тут не стали по просьбе владельца 14.08.2026) — и плашка по
-          // центру доступной высоты экрана, а не прижата к шапке.
-          <div className="flex h-full items-center justify-center px-4">
-            <section className="rounded-[28px] bg-white px-6 py-8 text-center">
-              <p className="text-[20px] font-semibold leading-6" style={{ color: "var(--mappy-text-primary)" }}>
-                Вы еще не добавили друзей
-              </p>
-              <p className="mt-1 text-[14px] leading-5" style={{ color: "var(--mappy-text-secondary)" }}>
-                Добавьте друзей — и находите
-                <br />
-                проверенные места
-              </p>
-            </section>
-          </div>
-        ) : (
+        {friends.length === 0 && !loading && !hasSearch ? null : (
         <div className="px-4">
           {hasSearch ? (
             <section className="rounded-[28px] bg-white p-4">
@@ -518,23 +527,31 @@ function RequestsView({
 
   return (
     <div className="relative h-full bg-[var(--mappy-surface-primary)]">
+      {/* Пустое состояние — absolute-блок с явными top/bottom, не `flex
+          h-full` внутри скролл-контейнера (тот же баг и то же исправление,
+          что в FriendsListView, найдено по скриншоту с реального устройства
+          14.08.2026 — процентная высота внутри overflow-y-auto резолвилась
+          ненадёжно). */}
+      {active.length === 0 && (
+        <div
+          className="absolute inset-x-0 flex items-center justify-center px-4"
+          style={{ top: "calc(env(safe-area-inset-top) + 152px)", bottom: "128px" }}
+        >
+          <div className="rounded-[28px] bg-white px-6 py-8 text-center">
+            <p className="text-[20px] font-semibold text-[var(--mappy-text-primary)]">Запросов нет</p>
+            <p className="mt-2 text-[14px] text-[var(--mappy-text-secondary)]">
+              Вероятно, вы уже со всеми подружились!
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Список — под блюром и под шапкой при скролле, как в NotificationsView. */}
       <div
         className="absolute inset-0 overflow-y-auto pb-32"
         style={{ paddingTop: "calc(env(safe-area-inset-top) + 152px)" }}
       >
-        {active.length === 0 ? (
-          // По центру доступной высоты экрана — тот же приём, что и в
-          // пустом состоянии FriendsListView (14.08.2026).
-          <div className="flex h-full items-center justify-center px-4">
-            <div className="rounded-[28px] bg-white px-6 py-8 text-center">
-              <p className="text-[20px] font-semibold text-[var(--mappy-text-primary)]">Запросов нет</p>
-              <p className="mt-2 text-[14px] text-[var(--mappy-text-secondary)]">
-                Вероятно, вы уже со всеми подружились!
-              </p>
-            </div>
-          </div>
-        ) : (
+        {active.length === 0 ? null : (
           <div className="px-4">
             <div className="flex flex-col gap-3">
               {active.map((person) => (
