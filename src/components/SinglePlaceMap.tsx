@@ -261,6 +261,24 @@ export function SinglePlaceMap({
         // gap 16 — те же числа, что в исходном SVG, `line-dasharray` в
         // MapLibre задаётся в множителях line-width, 16/8 = 2, отсюда [2, 2]).
         // Слой-подложка добавлен первым — рисуется снизу, поверх него штрих.
+        //
+        // Известное ограничение (уточнялось 14.08.2026, решение владельца —
+        // оставить как есть): `line-cap: round` скругляет только концы всей
+        // линии целиком, но НЕ отдельные штрихи внутри `line-dasharray` — на
+        // поворотах маршрута (частые промежуточные точки от ORS) штрихи
+        // режутся плоско поперёк направления линии, визуально похоже на
+        // ромбы вместо капсул. Это апстримная проблема MapLibre/Mapbox GL,
+        // не наш баг — https://github.com/mapbox/mapbox-gl-js/issues/884.
+        // Радиус скругления самого поворота (line-join: round) тоже жёстко
+        // равен половине line-width и отдельно не настраивается — розовая
+        // линия даёт 4px (8/2), белая подложка 8px (16/2). Поднять розовую
+        // до 8px радиуса можно только вместе с толщиной 16px, что разошлось
+        // бы с толщиной 8px, подтверждённой по исходному SVG — решили не
+        // трогать толщину ради этого.
+        // Точечный фикс — line-pattern со скруглённым спрайтом вместо
+        // line-dasharray — рассматривался и отложен: заметно больше работы
+        // (генерация PNG-паттерна под retina) ради полировки, не влияющей
+        // на функциональность.
         map.addLayer({
           id: ROUTE_HALO_LAYER_ID,
           type: "line",
@@ -384,9 +402,12 @@ export function SinglePlaceMap({
         // узлы 2235:30905 (до маршрута) / 2235:31063 (после, с иконками
         // обновить/закрыть). Уточнение 14.08.2026: в этой версии макета
         // карточка НЕ на всю ширину и НЕ впритык к низу экрана (как было в
-        // самой первой версии, 2190:8705/2228:27643) — отступ 16px со всех
-        // сторон, скругление по всем четырём углам, не только сверху.
-        <div className="absolute inset-x-[length:var(--mappy-spacing-md)] bottom-[calc(var(--mappy-spacing-md)+env(safe-area-inset-bottom))] z-20 flex flex-col gap-[length:var(--mappy-spacing-lg)] rounded-[length:var(--mappy-radius-lg)] bg-white p-[length:var(--mappy-spacing-md)]">
+        // самой первой версии, 2190:8705/2228:27643) — отступ 16px от краёв
+        // экрана (inset-x/bottom), скругление по всем четырём углам, не
+        // только сверху. Внутренний паддинг карточки (get_design_context
+        // узла 2239:9143) — НЕ равномерный: сверху/по бокам space-sm 12px,
+        // снизу space-lg 24px (было по ошибке 16px со всех сторон).
+        <div className="absolute inset-x-[length:var(--mappy-spacing-md)] bottom-[calc(var(--mappy-spacing-md)+env(safe-area-inset-bottom))] z-20 flex flex-col gap-[length:var(--mappy-spacing-lg)] rounded-[length:var(--mappy-radius-lg)] bg-white px-[length:var(--mappy-spacing-sm)] pt-[length:var(--mappy-spacing-sm)] pb-[length:var(--mappy-spacing-lg)]">
           {routeState.status === "idle" && (
             <Button tone="cta" onClick={() => void handleBuildRoute()}>
               Маршрут
@@ -406,12 +427,15 @@ export function SinglePlaceMap({
                   иконка-кнопка «✕» (clearRoute — вернуться к состоянию до
                   маршрута, не закрыть карту целиком, для этого есть «Назад»
                   сверху). Время выхода отдельно не показываем — только
-                  прибытие, по решению владельца. */}
+                  прибытие, по решению владельца. Размер/тон кнопок уточнён
+                  14.08.2026 по более новому узлу 2239:9143 — l/secondary
+                  (32px, bg-surface-secondary, radius-sm), был xl/surface
+                  (48px, bg-surface-primary, radius-md). */}
               <div className="flex w-full items-center justify-between">
                 <IconButton
                   icon={<Icon name="refresh" />}
-                  size="xl"
-                  tone="surface"
+                  size="l"
+                  tone="secondary"
                   aria-label="Обновить маршрут"
                   onClick={() => void handleBuildRoute()}
                 />
@@ -441,20 +465,32 @@ export function SinglePlaceMap({
                     </div>
                   )}
                 </div>
-                <IconButton icon={<Icon name="x" />} size="xl" tone="surface" aria-label="Закрыть маршрут" onClick={clearRoute} />
+                <IconButton icon={<Icon name="x" />} size="l" tone="secondary" aria-label="Закрыть маршрут" onClick={clearRoute} />
               </div>
+              {/* Ширина адресных блоков — узел 2246:8343 (тот же макет с длинным
+                  примером «Проспект ветеранов, 45», спрошено владельцем
+                  отдельно): фиксированные 140px (`w-[140px]`), не проценты
+                  от ширины ряда, как было раньше (`max-w-[40%]`, ошибочно
+                  унаследовано из более старой трёхколоночной версии карточки).
+                  Пунктирная линия-коннектор между ними остаётся резиновой
+                  (flex-1) и сжимается первой. */}
               <div className="flex w-full items-end gap-[length:var(--mappy-spacing-xs)] px-[length:var(--mappy-spacing-2xs)]">
-                <div className="flex min-w-0 max-w-[40%] shrink-0 flex-col gap-[length:var(--mappy-spacing-2xs)] tracking-densed">
+                <div className="flex w-[140px] min-w-0 shrink-0 flex-col gap-[length:var(--mappy-spacing-2xs)] tracking-densed">
                   <p className="text-body-2 text-text-tertiary">Вы здесь</p>
                   <p className="truncate text-body font-medium text-text-secondary">
                     {routeState.originAddress ?? "Текущее место"}
                   </p>
                 </div>
                 {/* Пунктирная линия между адресами — чисто декоративная отсылка
-                    к самому маршруту, не несёт данных. mx-1 (4px) — иначе
-                    вплотную прижимается к соседнему тексту адреса. */}
-                <div className="mx-1 mb-2 h-px min-w-[16px] flex-1 border-t-2 border-dashed border-surface-tertiary" />
-                <div className="flex min-w-0 max-w-[40%] shrink-0 flex-col items-end gap-[length:var(--mappy-spacing-2xs)] tracking-densed">
+                    к самому маршруту, не несёт данных. Раньше был лишний
+                    mx-1 (4px) поверх gap-xs контейнера — в сумме 12px вместо
+                    8px по макету (get_variable_defs узла 2239:9162:
+                    Spacing/space-xs = 8, отступ уже даёт сам flex-gap,
+                    свой mx не нужен). Цвет — тоже по узлу 2239:9162
+                    (Icon/BrandSubtle #ff20561c), а не серый surface-tertiary:
+                    у нас то же значение под именем surface-brand-subtle. */}
+                <div className="mb-2 h-px min-w-[16px] flex-1 border-t-2 border-dashed border-surface-brand-subtle" />
+                <div className="flex w-[140px] min-w-0 shrink-0 flex-col items-end gap-[length:var(--mappy-spacing-2xs)] tracking-densed">
                   <p className="text-body-2 text-text-tertiary">Назначение</p>
                   <p className="truncate text-body font-medium text-text-secondary">{place.address}</p>
                 </div>

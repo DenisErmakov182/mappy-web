@@ -48,6 +48,14 @@ const iconButtonVariants = cva(
         // назвали по сути (поверхность карточки, не акцент).
         surface:
           "rounded-[length:var(--mappy-radius-md)] bg-surface-primary text-icon-secondary active:bg-surface-secondary disabled:bg-surface-primary disabled:text-icon-disabled",
+        // Обновлённый узел Submit Button Container (2239:9143, 14.08.2026) —
+        // заменил surface+xl для кнопок «Обновить»/«Закрыть» на карточке
+        // маршрута: фон surface-secondary (не -primary), radius-sm (10px, не
+        // radius-md и не круг), иконка icon-fourth #99a1af (не icon-secondary
+        // #4a5565 — проверено по get_variable_defs узла 2239:9230, светлее,
+        // чем в других тонах). Своего названия тона в Figma тоже нет.
+        secondary:
+          "rounded-[length:var(--mappy-radius-sm)] bg-surface-secondary text-icon-fourth active:bg-surface-tertiary disabled:bg-surface-primary disabled:text-icon-disabled",
       },
     },
     defaultVariants: { size: "m", tone: "default" },
