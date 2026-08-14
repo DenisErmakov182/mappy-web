@@ -435,28 +435,33 @@ function FriendsListView({
 
       {/* Шапка (назад/заголовок+счётчик/«Запросы») и строка поиска слиты в
           одну карточку с тенью — тот же приём, что уже был в RequestsView,
-          только тут заголовочная строка ещё и трёхчастная: назад слева,
-          заголовок по центру, «Запросы» справа (макет 2264:9330). */}
+          только тут заголовочная строка ещё и трёхчастная: назад+заголовок
+          сгруппированы слева, «Запросы» прижата вправо через ml-auto (макет
+          2264:9502 группирует назад+заголовок в свой фикс-ширины блок 238px
+          с justify-between — не тянется на произвольную ширину экрана,
+          поэтому воспроизведено через group+ml-auto, а не копией пиксельных
+          238/56, паддинги pt-4/px-1/pb-1 — уже точно по узлу, уточнено
+          14.08.2026). */}
       <div
         className="absolute left-4 right-4 z-20 rounded-[28px] bg-white shadow-[0_20px_40px_rgba(30,41,57,0.12)]"
         style={{ top: "calc(env(safe-area-inset-top) + 16px)" }}
       >
-        <div className="relative flex h-[52px] items-center justify-center px-4">
+        <div className="flex items-center px-1 pb-1 pt-4">
           <button
             type="button"
             onClick={onBack}
             aria-label="Назад"
-            className="absolute left-4 inline-flex items-center text-[#99a1af]"
+            className="inline-flex shrink-0 items-center text-[#99a1af]"
           >
             <BackIcon />
           </button>
-          <h1 className="text-[20px] font-medium leading-6" style={{ color: "var(--mappy-text-primary)" }}>
+          <h1 className="ml-2 text-[20px] font-medium leading-6" style={{ color: "var(--mappy-text-primary)" }}>
             Друзья <span style={{ color: "var(--mappy-text-tertiary)" }}>{friends.length}</span>
           </h1>
           <button
             type="button"
             onClick={onOpenRequests}
-            className="absolute right-4 inline-flex items-center gap-1 text-[16px] font-medium"
+            className="ml-auto inline-flex shrink-0 items-center gap-1 text-[16px] font-medium"
             style={{ color: "var(--mappy-text-tertiary)" }}
           >
             Запросы
@@ -468,7 +473,7 @@ function FriendsListView({
             <ChevronRightIcon />
           </button>
         </div>
-        <div className="px-2 pb-2">
+        <div className="p-2">
           <label className="flex h-12 items-center gap-2.5 rounded-full bg-[var(--mappy-surface-secondary)] px-4">
             <SearchIcon
               className="h-6 w-6 shrink-0"
@@ -544,27 +549,30 @@ function RequestsView({
 
       <div className="blur-edge-top" />
 
-      {/* Шапка слита в одну карточку (макет 2030:58431): назад + заголовок +
+      {/* Шапка слита в одну карточку (макет 2030:58427): назад + заголовок +
           вкладки — единая белая пилюля поверх блюра, а не части, разбросанные
-          по скроллящемуся контенту. */}
+          по скроллящемуся контенту. Паддинги (pt-4/px-1/pb-1 на заголовке,
+          p-2 на вкладках) и невидимый спейсер справа для центровки —
+          точно по узлу, не на глаз (уточнено 14.08.2026). */}
       <div
         className="absolute left-4 right-4 z-20 rounded-[28px] bg-white shadow-[0_20px_40px_rgba(30,41,57,0.12)]"
         style={{ top: "calc(env(safe-area-inset-top) + 16px)" }}
       >
-        <div className="relative flex h-[60px] items-center justify-center">
+        <div className="flex items-center justify-between px-1 pb-1 pt-4">
           <button
             type="button"
             onClick={onBack}
             aria-label="Назад"
-            className="absolute left-4 inline-flex items-center text-[#99a1af]"
+            className="inline-flex items-center text-[#99a1af]"
           >
             <BackIcon />
           </button>
           {/* 24px/semibold → 20px/medium (Header3/med) по узлу 2030:58391 — тот же
               размер, что уже используется в заголовках FriendsListView/NotificationsView. */}
           <h1 className="text-[20px] font-medium leading-6 text-[var(--mappy-text-primary)]">Запросы</h1>
+          <span className="size-5" aria-hidden="true" />
         </div>
-        <div className="px-2 pb-2">
+        <div className="p-2">
           <RequestsTabControl
             outgoingCount={outgoing.length}
             incomingCount={incoming.length}

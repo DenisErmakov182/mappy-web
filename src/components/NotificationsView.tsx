@@ -82,17 +82,21 @@ export function NotificationsView({
 
       <div className="blur-edge-top" />
 
-      {/* Шапка слита в одну карточку (макет 2030:58430): назад + заголовок —
-          не раздельные плавающие элементы, а единая белая пилюля поверх блюра. */}
+      {/* Шапка слита в одну карточку (макет 2030:58426): назад + заголовок —
+          не раздельные плавающие элементы, а единая белая пилюля поверх блюра.
+          Паддинги (px-1/py-4) и приём с невидимым спейсером справа для
+          центровки заголовка — точно по узлу, не на глаз: без спейсера
+          justify-between/justify-center давали смещённый по центру заголовок
+          (уточнено 14.08.2026). */}
       <div
-        className="absolute left-4 right-4 z-20 flex h-[60px] items-center justify-center rounded-[28px] bg-white shadow-[0_20px_40px_rgba(30,41,57,0.12)]"
+        className="absolute left-4 right-4 z-20 flex items-center justify-between rounded-[28px] bg-white px-1 py-4 shadow-[0_20px_40px_rgba(30,41,57,0.12)]"
         style={{ top: "calc(env(safe-area-inset-top) + 16px)" }}
       >
         <button
           type="button"
           onClick={onBack}
           aria-label="Назад"
-          className="absolute left-4 inline-flex items-center text-[#99a1af]"
+          className="inline-flex items-center text-[#99a1af]"
         >
           <BackIcon />
         </button>
@@ -102,6 +106,7 @@ export function NotificationsView({
           Уведомления
           {unreadCount > 0 && <span style={{ color: "var(--mappy-text-tertiary)" }}>{unreadCount}</span>}
         </h1>
+        <span className="size-5" aria-hidden="true" />
       </div>
     </div>
   );
