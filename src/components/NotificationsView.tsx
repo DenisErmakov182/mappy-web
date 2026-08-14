@@ -96,7 +96,9 @@ export function NotificationsView({
         >
           <BackIcon />
         </button>
-        <h1 className="flex items-center gap-2 text-[24px] font-semibold leading-7 text-[var(--mappy-text-primary)]">
+        {/* 24px/semibold → 20px/medium (Header3/med) по узлу 2030:58380 — тот же
+            размер, что уже используется в заголовках FriendsListView/RequestsView. */}
+        <h1 className="flex items-center gap-2 text-[20px] font-medium leading-6 text-[var(--mappy-text-primary)]">
           Уведомления
           {unreadCount > 0 && <span style={{ color: "var(--mappy-text-tertiary)" }}>{unreadCount}</span>}
         </h1>

@@ -177,7 +177,14 @@ export function FriendsScreen({
       <RequestsView
         incoming={incoming}
         outgoing={outgoing}
-        onBack={returnHome}
+        // «Запросы» открывается только с экрана списка (FriendsListView,
+        // onOpenRequests) — назад должен возвращать туда же, на один шаг, а
+        // не сразу в корень «Друзья» (был баг: onBack={returnHome} уводил
+        // на корень, найдено и поправлено 14.08.2026 по фидбэку владельца).
+        onBack={() => {
+          setError("");
+          setView({ kind: "list" });
+        }}
         onOpenProfile={openProfile}
       />
     );
@@ -511,15 +518,19 @@ function RequestsView({
         className="absolute inset-0 overflow-y-auto pb-32"
         style={{ paddingTop: "calc(env(safe-area-inset-top) + 152px)" }}
       >
-        <div className="px-4">
-          {active.length === 0 ? (
+        {active.length === 0 ? (
+          // По центру доступной высоты экрана — тот же приём, что и в
+          // пустом состоянии FriendsListView (14.08.2026).
+          <div className="flex h-full items-center justify-center px-4">
             <div className="rounded-[28px] bg-white px-6 py-8 text-center">
               <p className="text-[20px] font-semibold text-[var(--mappy-text-primary)]">Запросов нет</p>
               <p className="mt-2 text-[14px] text-[var(--mappy-text-secondary)]">
                 Вероятно, вы уже со всеми подружились!
               </p>
             </div>
-          ) : (
+          </div>
+        ) : (
+          <div className="px-4">
             <div className="flex flex-col gap-3">
               {active.map((person) => (
                 <section key={person.id} className="rounded-[28px] bg-white p-4">
@@ -527,8 +538,8 @@ function RequestsView({
                 </section>
               ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       <div className="blur-edge-top" />
@@ -549,7 +560,9 @@ function RequestsView({
           >
             <BackIcon />
           </button>
-          <h1 className="text-[24px] font-semibold leading-7 text-[var(--mappy-text-primary)]">Запросы</h1>
+          {/* 24px/semibold → 20px/medium (Header3/med) по узлу 2030:58391 — тот же
+              размер, что уже используется в заголовках FriendsListView/NotificationsView. */}
+          <h1 className="text-[20px] font-medium leading-6 text-[var(--mappy-text-primary)]">Запросы</h1>
         </div>
         <div className="px-2 pb-2">
           <RequestsTabControl
