@@ -40,6 +40,27 @@ const ORIGIN_PERSON_SIZE = Math.round(48 * ORIGIN_MARKER_SCALE);
 const ORIGIN_PERSON_LEFT = Math.round(8 * ORIGIN_MARKER_SCALE);
 const ORIGIN_PERSON_TOP = Math.round(9 * ORIGIN_MARKER_SCALE);
 
+// Тень маркера — переменная Figma «shadow m» (узел 2246:8419, 5 слоёв
+// drop-shadow; пятый с alpha 00 не даёт вклада в картинку, опущен).
+// Смещения/радиус заданы под тот же 64px-масштаб, что и остальные ORIGIN_*
+// константы, поэтому тоже умножаются на ORIGIN_MARKER_SCALE. CSS
+// `filter: drop-shadow()` (не box-shadow) — обводит реальный силуэт
+// прозрачного PNG/SVG, а не прямоугольник картинки. У цепочки из нескольких
+// drop-shadow есть нюанс: каждый следующий слой технически ложится поверх
+// уже готовой тени предыдущего, а не строго параллельно ему, как в Figma
+// (box-shadow через запятую даёт независимые слои, drop-shadow — нет) — на
+// таких полупрозрачных слоях (5–13% alpha) разница не видна на глаз.
+const ORIGIN_MARKER_SHADOW_LAYERS = [
+  { dx: 3, dy: 4, blur: 10, color: "#4747470D" },
+  { dx: 12, dy: 14, blur: 18, color: "#4747470A" },
+  { dx: 26, dy: 32, blur: 25, color: "#47474708" },
+  { dx: 47, dy: 56, blur: 29, color: "#47474703" },
+] as const;
+const ORIGIN_MARKER_SHADOW = ORIGIN_MARKER_SHADOW_LAYERS.map(
+  ({ dx, dy, blur, color }) =>
+    `drop-shadow(${dx * ORIGIN_MARKER_SCALE}px ${dy * ORIGIN_MARKER_SCALE}px ${blur * ORIGIN_MARKER_SCALE}px ${color})`,
+).join(" ");
+
 /*
  * Маркер точки «Вы здесь», откуда строится маршрут — узел Figma
  * `Person Icon` (2230:30664). Появляется только вместе с уже построенным
@@ -49,7 +70,7 @@ const ORIGIN_PERSON_TOP = Math.round(9 * ORIGIN_MARKER_SCALE);
  */
 function buildOriginMarkerElement(): HTMLElement {
   const root = document.createElement("div");
-  root.style.cssText = `position:relative;width:${ORIGIN_MARKER_WIDTH}px;height:${ORIGIN_MARKER_HEIGHT}px;`;
+  root.style.cssText = `position:relative;width:${ORIGIN_MARKER_WIDTH}px;height:${ORIGIN_MARKER_HEIGHT}px;filter:${ORIGIN_MARKER_SHADOW};`;
 
   const pin = document.createElement("img");
   pin.src = originPinShape;
@@ -279,6 +300,23 @@ export function SinglePlaceMap({
         // line-dasharray — рассматривался и отложен: заметно больше работы
         // (генерация PNG-паттерна под retina) ради полировки, не влияющей
         // на функциональность.
+        //
+        // Второе известное ограничение (уточнялось 14.08.2026, тоже решение
+        // владельца — оставить как есть): сам штрих чуть «плывёт» по длине
+        // при изменении зума (сравнивали на живом маршруте — после
+        // `fitBounds` и после ручного приближения штрихи выглядят на
+        // разного размера), хотя `line-width` — обычное число, не
+        // zoom-выражение, и толщина линии от зума не зависит. Причина —
+        // апстримная: движок пересчитывает текстуру dash-паттерна
+        // относительно line-width «на предыдущем целом уровне зума», а не
+        // непрерывно на каждый кадр — https://github.com/mapbox/mapbox-gl-js/issues/5567,
+        // https://github.com/mapbox/mapbox-gl-style-spec/issues/633.
+        // Официальный воркэраунд (синхронизировать zoom-выражения
+        // line-width и dasharray через exponential-интерполяцию) решает
+        // другую задачу — держит пропорции штриха, когда сама линия по
+        // дизайну должна расти с зумом. У нас линия фиксированной ширины
+        // специально, так что применять его означало бы искусственно
+        // испортить толщину линии ради артефакта в дэш-паттерне.
         map.addLayer({
           id: ROUTE_HALO_LAYER_ID,
           type: "line",
@@ -309,21 +347,28 @@ export function SinglePlaceMap({
   async function handleBuildRoute() {
     setRouteState({ status: "locating" });
 
-    // Та же последняя известная позиция, что и на карточке места — если её
-    // ещё нет (разрешение на геолокацию не давали или это первый запуск),
-    // спрашиваем свежую прямо здесь: человек уже явно попросил маршрут,
-    // самое уместное место спросить геолокацию, если раньше не спрашивали.
-    let origin = getLastKnownLocation();
-    if (!origin) {
-      origin = await new Promise<{ lat: number; lng: number } | null>((resolve) => {
-        if (!navigator.geolocation) return resolve(null);
-        navigator.geolocation.getCurrentPosition(
-          (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-          () => resolve(null),
-          { enableHighAccuracy: true, timeout: 10_000 },
-        );
-      });
-      if (origin) rememberLocation(origin.lat, origin.lng);
+    // Свежий GPS каждый раз, не кэш — это и есть кнопка «Обновить маршрут»
+    // одновременно с кнопкой «моё местоположение» (владелец решил 14.08.2026
+    // не заводить для геолокации отдельную кнопку в маршруте, а починить эту
+    // же: раньше при повторном нажатии тут молча брался старый
+    // getLastKnownLocation(), если он уже был запомнен с первого построения
+    // маршрута — то есть повторное «Обновить» реально не обновляло позицию,
+    // хотя по ADR-014 задумывалось «полезным, если человек уже идёт и
+    // сместился»). Кэш остаётся резервным фолбэком, только если сам запрос
+    // геолокации не удался (разрешения нет/таймаут/недоступна) — лучше
+    // старая позиция, чем совсем никакой.
+    let origin = await new Promise<{ lat: number; lng: number } | null>((resolve) => {
+      if (!navigator.geolocation) return resolve(null);
+      navigator.geolocation.getCurrentPosition(
+        (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => resolve(null),
+        { enableHighAccuracy: true, timeout: 10_000 },
+      );
+    });
+    if (origin) {
+      rememberLocation(origin.lat, origin.lng);
+    } else {
+      origin = getLastKnownLocation();
     }
     if (!origin) {
       setRouteState({ status: "error" });
