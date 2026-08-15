@@ -283,8 +283,14 @@ export function FriendsScreen({
           <button
             type="button"
             onClick={() => setView({ kind: "list" })}
-            className="relative flex h-[72px] w-full items-center overflow-hidden rounded-[28px] bg-white px-4 text-left"
+            className="relative flex h-[68px] w-full items-start overflow-hidden rounded-[28px] bg-white p-4 text-left"
           >
+            {/* Уточнение 15.08.2026 (узел 2026:57183, get_metadata): текст
+                стоит в левом верхнем углу карточки (x=16,y=16 в рамке
+                398×68) — раньше был `items-center`, из-за чего съезжал в
+                вертикальный центр. `items-start`+`p-4` вместо `px-4`
+                воспроизводит именно верхний левый угол, как у пустого
+                состояния выше (тот же паттерн `flex-col items-start p-4`). */}
             <span className="text-[16px] font-medium" style={{ color: "var(--mappy-text-primary)" }}>
               Друзья <span style={{ color: "var(--mappy-text-tertiary)" }}>{friends.length}</span>
             </span>
@@ -451,29 +457,38 @@ function FriendsListView({
           238/390 не скопировать буквально на резиновую ширину экрана,
           поэтому блок сделан на 61% через inline-style — держит те же
           пропорции на любом экране. Паддинги pt-4/px-1/pb-1 — точно по
-          узлу (тоже уточнено 14.08.2026). */}
+          узлу (тоже уточнено 14.08.2026).
+
+          Уточнение 15.08.2026 (узел 2264:9485, `get_design_context`):
+          владелец сам упростил макет — кнопка «Назад» сделана той же
+          шириной (91px), что и «Запросы», поэтому пропорциональный
+          61%-блок больше не нужен: три элемента (назад/заголовок/запросы)
+          сидят в одном `justify-between` на всю ширину строки, заголовок
+          оказывается в геометрическом центре сам, без отдельной группировки.
+          В самом узле у «Назад» есть текстовый лейбл, но он `text-transparent`
+          (невидим) — ширина зарезервирована под него для симметрии с
+          «Запросы», в коде остаётся только иконка с `aria-label` для
+          доступности. */}
       <div
         className="absolute left-4 right-4 z-20 rounded-[28px] bg-white shadow-[0_20px_40px_rgba(30,41,57,0.12)]"
         style={{ top: "calc(env(safe-area-inset-top) + 16px)" }}
       >
-        <div className="flex items-center px-1 pb-1 pt-4">
-          <div className="flex shrink-0 items-center justify-between" style={{ width: "61%" }}>
-            <button
-              type="button"
-              onClick={onBack}
-              aria-label="Назад"
-              className="inline-flex shrink-0 items-center text-[#99a1af]"
-            >
-              <BackIcon />
-            </button>
-            <h1 className="text-[20px] font-medium leading-6" style={{ color: "var(--mappy-text-primary)" }}>
-              Друзья <span style={{ color: "var(--mappy-text-tertiary)" }}>{friends.length}</span>
-            </h1>
-          </div>
+        <div className="flex items-center justify-between px-1 pb-1 pt-4">
+          <button
+            type="button"
+            onClick={onBack}
+            aria-label="Назад"
+            className="inline-flex w-[91px] shrink-0 items-center text-[#99a1af]"
+          >
+            <BackIcon />
+          </button>
+          <h1 className="text-[20px] font-medium leading-6" style={{ color: "var(--mappy-text-primary)" }}>
+            Друзья <span style={{ color: "var(--mappy-text-tertiary)" }}>{friends.length}</span>
+          </h1>
           <button
             type="button"
             onClick={onOpenRequests}
-            className="ml-auto inline-flex shrink-0 items-center gap-1 text-[16px] font-medium"
+            className="inline-flex shrink-0 items-center gap-1 text-[16px] font-medium"
             style={{ color: "var(--mappy-text-tertiary)" }}
           >
             Запросы
