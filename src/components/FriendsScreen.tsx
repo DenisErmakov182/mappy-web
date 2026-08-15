@@ -375,38 +375,35 @@ function FriendsListView({
 
   return (
     <div className="relative h-full bg-[var(--mappy-surface-primary)]">
-      {/* Пустое состояние — отдельный absolute-блок с явными top/bottom
-          (сестра шапки и скролл-контейнера ниже, тот же `relative h-full`
-          родитель), НЕ `flex h-full` внутри скролл-контейнера: `h-full` там
-          требовал, чтобы высота внутри overflow-y-auto резолвилась в
-          проценты надёжно, а на реальном устройстве (в отличие от превью на
-          деве) это не выполнялось — плашка съезжала вниз/не по центру.
-          Явные top/bottom не завязаны на процентную высоту (найдено и
-          исправлено 14.08.2026 по скриншоту с реального iPhone). */}
-      {friends.length === 0 && !loading && !hasSearch && (
-        <div
-          className="absolute inset-x-0 flex items-center justify-center px-4"
-          style={{ top: "calc(env(safe-area-inset-top) + 152px)", bottom: "128px" }}
-        >
-          <section className="rounded-[28px] bg-white px-6 py-8 text-center">
-            <p className="text-[20px] font-semibold leading-6" style={{ color: "var(--mappy-text-primary)" }}>
-              Вы еще не добавили друзей
-            </p>
-            <p className="mt-1 text-[14px] leading-5" style={{ color: "var(--mappy-text-secondary)" }}>
-              Добавьте друзей — и находите
-              <br />
-              проверенные места
-            </p>
-          </section>
-        </div>
-      )}
-
-      {/* Список — под блюром и под шапкой при скролле, как в RequestsView. */}
+      {/* Список — под блюром и под шапкой при скролле, как в RequestsView.
+          Отступы сверху/снизу — точно по метаданным экрана 2264:9330
+          (реальный макет 430×932: статус-бар 59 + отступ 16 + высота шапки
+          108 = 124px сверху; нижний бар начинается на y=823 от 932 = 109px
+          снизу) — раньше было 152/128 (приблизительная прикидка, отличалась
+          на 28/19px, найдено 14.08.2026 при разборе перекоса центровки).
+          Пустое состояние центрируется через flex-1 внутри этого же
+          контейнера, не отдельным absolute-блоком со своим top/bottom — тот
+          вариант давал на реальном iPhone заметный перекос, не до конца
+          объяснённый одними отступами, но flex-1 переиспользует высоту уже
+          проверенного контейнера, а не считает свою отдельно. */}
       <div
-        className="absolute inset-0 overflow-y-auto pb-32"
-        style={{ paddingTop: "calc(env(safe-area-inset-top) + 152px)" }}
+        className="absolute inset-0 flex flex-col overflow-y-auto pb-[109px]"
+        style={{ paddingTop: "calc(env(safe-area-inset-top) + 124px)" }}
       >
-        {friends.length === 0 && !loading && !hasSearch ? null : (
+        {friends.length === 0 && !loading && !hasSearch ? (
+          <div className="flex flex-1 items-center justify-center px-4">
+            <section className="rounded-[28px] bg-white px-6 py-8 text-center">
+              <p className="text-[20px] font-semibold leading-6" style={{ color: "var(--mappy-text-primary)" }}>
+                Вы еще не добавили друзей
+              </p>
+              <p className="mt-1 text-[14px] leading-5" style={{ color: "var(--mappy-text-secondary)" }}>
+                Добавьте друзей — и находите
+                <br />
+                проверенные места
+              </p>
+            </section>
+          </div>
+        ) : (
         <div className="px-4">
           {hasSearch ? (
             <section className="rounded-[28px] bg-white p-4">
@@ -444,29 +441,35 @@ function FriendsListView({
 
       {/* Шапка (назад/заголовок+счётчик/«Запросы») и строка поиска слиты в
           одну карточку с тенью — тот же приём, что уже был в RequestsView,
-          только тут заголовочная строка ещё и трёхчастная: назад+заголовок
-          сгруппированы слева, «Запросы» прижата вправо через ml-auto (макет
-          2264:9502 группирует назад+заголовок в свой фикс-ширины блок 238px
-          с justify-between — не тянется на произвольную ширину экрана,
-          поэтому воспроизведено через group+ml-auto, а не копией пиксельных
-          238/56, паддинги pt-4/px-1/pb-1 — уже точно по узлу, уточнено
-          14.08.2026). */}
+          только тут заголовочная строка ещё и трёхчастная. Уточнение
+          14.08.2026 по точным координатам метаданных узла 2264:9330: назад
+          и заголовок НЕ сгруппированы вплотную (было `ml-2`, 8px — из-за
+          этого заголовок выглядел «прижатым» к кнопке назад) — в макете
+          между шевроном (кончается на x=20) и заголовком (начинается на
+          x=152) целых 132px, потому что оба сидят в общем блоке шириной
+          238px из 390px строки (61%) с `justify-between` внутри. Пиксели
+          238/390 не скопировать буквально на резиновую ширину экрана,
+          поэтому блок сделан на 61% через inline-style — держит те же
+          пропорции на любом экране. Паддинги pt-4/px-1/pb-1 — точно по
+          узлу (тоже уточнено 14.08.2026). */}
       <div
         className="absolute left-4 right-4 z-20 rounded-[28px] bg-white shadow-[0_20px_40px_rgba(30,41,57,0.12)]"
         style={{ top: "calc(env(safe-area-inset-top) + 16px)" }}
       >
         <div className="flex items-center px-1 pb-1 pt-4">
-          <button
-            type="button"
-            onClick={onBack}
-            aria-label="Назад"
-            className="inline-flex shrink-0 items-center text-[#99a1af]"
-          >
-            <BackIcon />
-          </button>
-          <h1 className="ml-2 text-[20px] font-medium leading-6" style={{ color: "var(--mappy-text-primary)" }}>
-            Друзья <span style={{ color: "var(--mappy-text-tertiary)" }}>{friends.length}</span>
-          </h1>
+          <div className="flex shrink-0 items-center justify-between" style={{ width: "61%" }}>
+            <button
+              type="button"
+              onClick={onBack}
+              aria-label="Назад"
+              className="inline-flex shrink-0 items-center text-[#99a1af]"
+            >
+              <BackIcon />
+            </button>
+            <h1 className="text-[20px] font-medium leading-6" style={{ color: "var(--mappy-text-primary)" }}>
+              Друзья <span style={{ color: "var(--mappy-text-tertiary)" }}>{friends.length}</span>
+            </h1>
+          </div>
           <button
             type="button"
             onClick={onOpenRequests}
@@ -527,31 +530,28 @@ function RequestsView({
 
   return (
     <div className="relative h-full bg-[var(--mappy-surface-primary)]">
-      {/* Пустое состояние — absolute-блок с явными top/bottom, не `flex
-          h-full` внутри скролл-контейнера (тот же баг и то же исправление,
-          что в FriendsListView, найдено по скриншоту с реального устройства
-          14.08.2026 — процентная высота внутри overflow-y-auto резолвилась
-          ненадёжно). */}
-      {active.length === 0 && (
-        <div
-          className="absolute inset-x-0 flex items-center justify-center px-4"
-          style={{ top: "calc(env(safe-area-inset-top) + 152px)", bottom: "128px" }}
-        >
-          <div className="rounded-[28px] bg-white px-6 py-8 text-center">
-            <p className="text-[20px] font-semibold text-[var(--mappy-text-primary)]">Запросов нет</p>
-            <p className="mt-2 text-[14px] text-[var(--mappy-text-secondary)]">
-              Вероятно, вы уже со всеми подружились!
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Список — под блюром и под шапкой при скролле, как в NotificationsView. */}
+      {/* Список — под блюром и под шапкой при скролле, как в NotificationsView.
+          Отступ снизу — точно по метаданным экрана 2264:9330 (нижний бар на
+          y=823 из 932 = 109px, было 128). Сверху — своя шапка тут короче
+          FriendsListView (нет строки поиска, зато есть вкладки): pt-16 +
+          title-row 44 + tabs-row 60 = 120px (было 152). Пустое состояние —
+          flex-1 внутри этого же контейнера, не отдельный absolute-блок со
+          своим top/bottom (тот же пересмотр, что и в FriendsListView,
+          14.08.2026 — см. комментарий там). */}
       <div
-        className="absolute inset-0 overflow-y-auto pb-32"
-        style={{ paddingTop: "calc(env(safe-area-inset-top) + 152px)" }}
+        className="absolute inset-0 flex flex-col overflow-y-auto pb-[109px]"
+        style={{ paddingTop: "calc(env(safe-area-inset-top) + 120px)" }}
       >
-        {active.length === 0 ? null : (
+        {active.length === 0 ? (
+          <div className="flex flex-1 items-center justify-center px-4">
+            <div className="rounded-[28px] bg-white px-6 py-8 text-center">
+              <p className="text-[20px] font-semibold text-[var(--mappy-text-primary)]">Запросов нет</p>
+              <p className="mt-2 text-[14px] text-[var(--mappy-text-secondary)]">
+                Вероятно, вы уже со всеми подружились!
+              </p>
+            </div>
+          </div>
+        ) : (
           <div className="px-4">
             <div className="flex flex-col gap-3">
               {active.map((person) => (
