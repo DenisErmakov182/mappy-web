@@ -282,6 +282,12 @@ export interface PlaceInput {
   status: VisitStatus;
   photos: Photo[];
   systemName?: string;
+  /**
+   * Папки, в которых лежит место. Едут вместе с местом, а не отдельным
+   * запросом: в форме добавления папки выбирают до того, как место создано.
+   * Семантика — замена всего набора, пустой массив вынимает из всех папок.
+   */
+  folderIds: string[];
 }
 
 export function fetchPlaces() {
@@ -295,6 +301,37 @@ export function updatePlace(id: string, input: PlaceInput) {
 }
 export function deletePlace(id: string) {
   return request<{ ok: true }>(`/places/${id}`, { method: "DELETE" });
+}
+
+/**
+ * Папка — пользовательская подборка мест. Приватна владельцу: у друзей и на
+ * публичной странице шеринга папок нет.
+ */
+export interface Folder {
+  id: string;
+  title: string;
+  createdAt: string;
+  placesCount: number;
+  /**
+   * До трёх обложек для карточки папки. `null` на месте элемента — это место
+   * без фотографии: слот занят, но рисовать надо заглушку, а не пропускать его,
+   * иначе папка из трёх мест выглядела бы как папка из двух.
+   */
+  coverPhotos: (string | null)[];
+}
+
+export function fetchFolders() {
+  return request<Folder[]>("/folders");
+}
+export function createFolder(title: string) {
+  return request<Folder>("/folders", { method: "POST", body: JSON.stringify({ title }) });
+}
+export function fetchFolderPlaces(id: string) {
+  return request<{ id: string; title: string; places: Place[] }>(`/folders/${id}/places`);
+}
+/** Вынуть место из папки. Само место остаётся в «Сохранённом» и на карте. */
+export function removePlaceFromFolder(folderId: string, placeId: string) {
+  return request<{ ok: true }>(`/folders/${folderId}/places/${placeId}`, { method: "DELETE" });
 }
 
 /**

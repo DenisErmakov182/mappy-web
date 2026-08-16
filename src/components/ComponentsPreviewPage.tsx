@@ -5,6 +5,8 @@ import { IconButton } from "./design-system/01-atoms/controls/IconButton";
 import { Button } from "./design-system/01-atoms/controls/Button";
 import { Toggle } from "./design-system/01-atoms/controls/Toggle";
 import { Chip } from "./design-system/01-atoms/controls/Chip";
+import { FolderCard } from "./FolderCard";
+import samplePhoto from "../assets/photos/sample-cafe.jpg";
 
 /*
  * /components-preview — каталог библиотеки компонентов Mappy.
@@ -211,6 +213,36 @@ export function ComponentsPreviewPage() {
             <Chip selected={true} disabled>
               Кнопка
             </Chip>
+          </PreviewRow>
+        </PreviewSection>
+
+        <PreviewSection
+          title="FolderCard"
+          sourcePath="src/components/FolderCard.tsx"
+          description="Figma: Folder (2289:43221). Собрана слоями: SVG-подложка → до трёх фотографий мест → передний карман. Геометрия в долях от макета 195×139, поэтому карточка тянется по ширине колонки."
+        >
+          <PreviewRow label="Пустая / с фото / со смешанными (null = заглушка)">
+            <div className="grid w-full max-w-md grid-cols-2 gap-3">
+              <FolderCard title="Рестораны" placesCount={0} coverPhotos={[]} onClick={() => {}} />
+              <FolderCard
+                title="Италия"
+                placesCount={3}
+                coverPhotos={[samplePhoto, samplePhoto, samplePhoto]}
+                onClick={() => {}}
+              />
+              <FolderCard
+                title="Музеи"
+                placesCount={3}
+                coverPhotos={[samplePhoto, null, null]}
+                onClick={() => {}}
+              />
+              <FolderCard
+                title="Очень длинное название папки, которое не влезает"
+                placesCount={12}
+                coverPhotos={[samplePhoto, samplePhoto]}
+                onClick={() => {}}
+              />
+            </div>
           </PreviewRow>
         </PreviewSection>
       </div>
