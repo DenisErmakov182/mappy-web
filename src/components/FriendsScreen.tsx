@@ -409,7 +409,9 @@ function FriendsListView({
             </section>
           </div>
         ) : (
-        <div className="px-4">
+        // pt-6 (24px) — отступ от шапки до первого блока, отдельно от gap-3
+        // между самими блоками (по просьбе владельца 15.08.2026).
+        <div className="px-4 pt-6">
           {hasSearch ? (
             <section className="rounded-[28px] bg-white p-4">
               {searching && <EmptyLine>Ищем…</EmptyLine>}
@@ -425,16 +427,16 @@ function FriendsListView({
               ))}
             </section>
           ) : (
-            <section className="rounded-[28px] bg-white p-4">
-              {friends.map((friend, index) => (
-                <PersonRow
-                  key={friend.id}
-                  person={friend}
-                  border={index > 0}
-                  onClick={() => onOpenProfile(friend)}
-                />
+            // Каждый друг — своя карточка (плашка), как PersonRow в RequestsView
+            // (padded={false}, section rounded-[28px] p-4), а не общая белая
+            // секция с разделителями между строками, как было раньше.
+            <div className="flex flex-col gap-3">
+              {friends.map((friend) => (
+                <section key={friend.id} className="rounded-[28px] bg-white p-4">
+                  <PersonRow person={friend} padded={false} onClick={() => onOpenProfile(friend)} />
+                </section>
               ))}
-            </section>
+            </div>
           )}
 
           {error && <p className="mt-3 px-1 text-center text-[13px] text-[#fb2c36]">{error}</p>}
