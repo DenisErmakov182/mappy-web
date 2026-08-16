@@ -8,6 +8,8 @@ import { CategoryIcon } from "./CategoryIcon";
 import { CategoriesSheet } from "./CategoriesSheet";
 import { PhotoCaptionSheet } from "./PhotoCaptionSheet";
 import { ReorderPhotosSheet } from "./ReorderPhotosSheet";
+import { FolderPickerSheet } from "./FolderPickerSheet";
+import type { Folder } from "../lib/api";
 import { Sheet, CloseButton, CtaButton, StarIcon } from "./primitives";
 import { SplitFlapAddress } from "./SplitFlapAddress";
 import stickerMuseum from "../assets/photos/sticker-museum.webp";
@@ -150,6 +152,8 @@ export function AddPlaceSheet({
   coordinate,
   initialPlace,
   suggestedTitle,
+  folders,
+  onCreateFolder,
   onSave,
   onClose,
 }: {
@@ -157,6 +161,11 @@ export function AddPlaceSheet({
   initialPlace?: Place;
   /** Название из выбранной подсказки поиска — подставляется в поле, но остаётся редактируемым. */
   suggestedTitle?: string;
+  /** Список папок владельца — грузится один раз в App.tsx, не здесь: та же
+      причина, что и у общего списка мест — не плодить параллельные копии
+      данных, которые могут разойтись. */
+  folders: Folder[];
+  onCreateFolder: (title: string) => Promise<Folder>;
   onSave: (place: Place) => Promise<void>;
   onClose: () => void;
 }) {
@@ -175,7 +184,9 @@ export function AddPlaceSheet({
     (initialPlace?.photos ?? []).map((p) => ({ url: p.url, caption: p.caption ?? undefined })),
   );
   const [captionSlotIndex, setCaptionSlotIndex] = useState<number | null>(null);
+  const [folderIds, setFolderIds] = useState<string[]>(initialPlace?.folderIds ?? []);
   const [showCategories, setShowCategories] = useState(false);
+  const [showFolderPicker, setShowFolderPicker] = useState(false);
   const [showReorder, setShowReorder] = useState(false);
   const [addressLoading, setAddressLoading] = useState(false);
   const [addressError, setAddressError] = useState("");
@@ -348,6 +359,7 @@ export function AddPlaceSheet({
         status,
         photos: uploadedPhotos,
         systemName: systemNameRef.current,
+        folderIds,
       });
       onClose();
     } catch (e) {
@@ -713,6 +725,52 @@ export function AddPlaceSheet({
           )}
         </div>
 
+        {/* «Добавьте в папку» — узел 2290:26561/2291:28092, тот же паттерн, что
+            «Добавьте категории» чуть выше. Открывает FolderPickerSheet — там же
+            и создание новой папки (третий вложенный Sheet, см. FolderPickerSheet). */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-1">
+              <h3
+                className="px-1 text-[20px] leading-6 font-medium tracking-[-0.6px]"
+                style={{ color: "var(--mappy-text-primary)" }}
+              >
+                Добавьте в папку
+              </h3>
+              <p className="px-1 text-[14px] leading-[18px]" style={{ color: "var(--mappy-text-secondary)" }}>
+                Группируйте места по удобным папкам
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowFolderPicker(true)}
+              className="flex size-7 shrink-0 items-center justify-center rounded-full"
+              style={{ backgroundColor: "var(--mappy-surface-secondary)", color: "var(--mappy-text-tertiary)" }}
+              aria-label="Добавить в папку"
+            >
+              <PlusIcon size={20} />
+            </button>
+          </div>
+
+          {folderIds.length > 0 && (
+            <div className="flex flex-wrap gap-x-2 gap-y-3">
+              {folderIds.map((id) => {
+                const folder = folders.find((f) => f.id === id);
+                if (!folder) return null;
+                return (
+                  <span
+                    key={id}
+                    className="inline-flex items-center rounded-[14px] py-3 px-3 text-[16px] leading-[18px] font-medium tracking-[-0.6px]"
+                    style={{ backgroundColor: "var(--mappy-surface-primary)", color: "var(--mappy-text-primary)" }}
+                  >
+                    {folder.title}
+                  </span>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
         <div className="flex flex-col gap-4">
           <h3
             className="px-1 text-[20px] leading-6 font-medium tracking-[-0.6px]"
@@ -746,6 +804,19 @@ export function AddPlaceSheet({
           selected={categories}
           onApply={setCategories}
           onClose={() => setShowCategories(false)}
+        />
+      )}
+
+      {showFolderPicker && (
+        <FolderPickerSheet
+          folders={folders}
+          initialSelectedIds={folderIds}
+          onCreateFolder={onCreateFolder}
+          onSave={(selectedIds) => {
+            setFolderIds(selectedIds);
+            setShowFolderPicker(false);
+          }}
+          onClose={() => setShowFolderPicker(false)}
         />
       )}
 
