@@ -7,6 +7,7 @@ import { Toggle } from "./design-system/01-atoms/controls/Toggle";
 import { Chip } from "./design-system/01-atoms/controls/Chip";
 import { FolderCard } from "./FolderCard";
 import { FolderNameSheet } from "./FolderNameSheet";
+import { FolderPickerSheet } from "./FolderPickerSheet";
 import samplePhoto from "../assets/photos/sample-cafe.jpg";
 
 /*
@@ -63,6 +64,12 @@ export function ComponentsPreviewPage() {
 
   const [toggleOn, setToggleOn] = useState(true);
   const [showFolderName, setShowFolderName] = useState(false);
+  const [showFolderPicker, setShowFolderPicker] = useState(false);
+  const demoFolders = [
+    { id: "1", title: "Рестораны", createdAt: "", placesCount: 3, coverPhotos: [] },
+    { id: "2", title: "Музеи", createdAt: "", placesCount: 1, coverPhotos: [] },
+    { id: "3", title: "Италия", createdAt: "", placesCount: 5, coverPhotos: [] },
+  ];
   const [chipSelected, setChipSelected] = useState<Set<string>>(new Set(["nature"]));
   const toggleChip = (key: string) =>
     setChipSelected((prev) => {
@@ -259,6 +266,18 @@ export function ComponentsPreviewPage() {
             </Button>
           </PreviewRow>
         </PreviewSection>
+
+        <PreviewSection
+          title="FolderPickerSheet"
+          sourcePath="src/components/FolderPickerSheet.tsx"
+          description="Figma: 2291:28094 (папки уже есть) / 2291:27724 (первой ещё нет — роутится на FolderNameSheet). «Новая папка» открывает FolderNameSheet ЕЩЁ одним уровнем поверх — третий вложенный Sheet, проверить намеренно."
+        >
+          <PreviewRow label="Открыть шит">
+            <Button size="s" onClick={() => setShowFolderPicker(true)}>
+              Показать
+            </Button>
+          </PreviewRow>
+        </PreviewSection>
       </div>
 
       {showFolderName && (
@@ -267,6 +286,22 @@ export function ComponentsPreviewPage() {
           confirmLabel="Назвать"
           onConfirm={() => setShowFolderName(false)}
           onClose={() => setShowFolderName(false)}
+        />
+      )}
+
+      {showFolderPicker && (
+        <FolderPickerSheet
+          folders={demoFolders}
+          initialSelectedIds={["3"]}
+          onCreateFolder={async (title) => ({
+            id: String(Math.random()),
+            title,
+            createdAt: "",
+            placesCount: 0,
+            coverPhotos: [],
+          })}
+          onSave={() => setShowFolderPicker(false)}
+          onClose={() => setShowFolderPicker(false)}
         />
       )}
     </div>
