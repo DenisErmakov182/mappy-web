@@ -6,6 +6,7 @@ import { Button } from "./design-system/01-atoms/controls/Button";
 import { Toggle } from "./design-system/01-atoms/controls/Toggle";
 import { Chip } from "./design-system/01-atoms/controls/Chip";
 import { FolderCard } from "./FolderCard";
+import { FolderNameSheet } from "./FolderNameSheet";
 import samplePhoto from "../assets/photos/sample-cafe.jpg";
 
 /*
@@ -61,6 +62,7 @@ export function ComponentsPreviewPage() {
   }, []);
 
   const [toggleOn, setToggleOn] = useState(true);
+  const [showFolderName, setShowFolderName] = useState(false);
   const [chipSelected, setChipSelected] = useState<Set<string>>(new Set(["nature"]));
   const toggleChip = (key: string) =>
     setChipSelected((prev) => {
@@ -245,7 +247,28 @@ export function ComponentsPreviewPage() {
             </div>
           </PreviewRow>
         </PreviewSection>
+
+        <PreviewSection
+          title="FolderNameSheet"
+          sourcePath="src/components/FolderNameSheet.tsx"
+          description="Figma: 2289:42934 / 2291:27724. Название печатается прямо на графике папки — настоящий <input>, не декорация."
+        >
+          <PreviewRow label="Открыть шит (наложение поверх этой страницы, как поверх AddPlaceSheet)">
+            <Button size="s" onClick={() => setShowFolderName(true)}>
+              Показать
+            </Button>
+          </PreviewRow>
+        </PreviewSection>
       </div>
+
+      {showFolderName && (
+        <FolderNameSheet
+          title="Как назовем папку?"
+          confirmLabel="Назвать"
+          onConfirm={() => setShowFolderName(false)}
+          onClose={() => setShowFolderName(false)}
+        />
+      )}
     </div>
   );
 }
