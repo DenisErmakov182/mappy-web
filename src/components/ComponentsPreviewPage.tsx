@@ -8,6 +8,7 @@ import { Chip } from "./design-system/01-atoms/controls/Chip";
 import { FolderCard } from "./FolderCard";
 import { FolderNameSheet } from "./FolderNameSheet";
 import { FolderPickerSheet } from "./FolderPickerSheet";
+import { FoldersGrid } from "./FoldersGrid";
 import samplePhoto from "../assets/photos/sample-cafe.jpg";
 
 /*
@@ -276,6 +277,28 @@ export function ComponentsPreviewPage() {
             <Button size="s" onClick={() => setShowFolderPicker(true)}>
               Показать
             </Button>
+          </PreviewRow>
+        </PreviewSection>
+
+        <PreviewSection
+          title="FoldersGrid"
+          sourcePath="src/components/FoldersGrid.tsx"
+          description="Узлы 2289:42911 (пусто) / 2293:28526 (1 папка — кнопка тайлом сетки) / 2+ папки — кнопка отдельной строкой. Три состояния кнопки «Добавить папку», подтверждены разными узлами Figma."
+        >
+          <PreviewRow label="Пусто">
+            <div className="h-[420px] w-full max-w-sm overflow-hidden rounded-2xl border">
+              <FoldersGrid folders={[]} onOpenFolder={() => {}} onCreateFolder={() => {}} />
+            </div>
+          </PreviewRow>
+          <PreviewRow label="1 папка (кнопка — тайл сетки)">
+            <div className="h-[420px] w-full max-w-sm overflow-hidden rounded-2xl border">
+              <FoldersGrid folders={[demoFolders[0]]} onOpenFolder={() => {}} onCreateFolder={() => {}} />
+            </div>
+          </PreviewRow>
+          <PreviewRow label="3 папки (кнопка — строка снизу)">
+            <div className="h-[420px] w-full max-w-sm overflow-hidden rounded-2xl border">
+              <FoldersGrid folders={demoFolders} onOpenFolder={() => {}} onCreateFolder={() => {}} />
+            </div>
           </PreviewRow>
         </PreviewSection>
       </div>
