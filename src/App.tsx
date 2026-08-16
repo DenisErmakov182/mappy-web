@@ -9,6 +9,9 @@ import { AddPlaceSheet } from "./components/AddPlaceSheet";
 import { PlaceDetail } from "./components/PlaceDetail";
 import { PlaceCardCarousel } from "./components/PlaceCardCarousel";
 import { NotesList } from "./components/NotesList";
+import { FoldersGrid } from "./components/FoldersGrid";
+import { FolderDetailScreen } from "./components/FolderDetailScreen";
+import { FolderNameSheet } from "./components/FolderNameSheet";
 import { FriendsScreen } from "./components/FriendsScreen";
 import { SearchOverlay } from "./components/SearchOverlay";
 import { AuthScreen } from "./components/AuthScreen";
@@ -47,9 +50,12 @@ import {
   deletePlace,
   deleteAccount,
   createPlaceShare,
+  fetchFolders,
+  createFolder,
   type ApiUser,
   type ApiFriend,
   type PlaceInput,
+  type Folder,
 } from "./lib/api";
 import {
   emptyFilters,
@@ -68,6 +74,15 @@ type MapLaunchState = {
   center: { lat: number; lng: number };
   zoom: number;
 };
+
+/*
+ * Под-режимы вкладки «Сохранённое» — переключатель «Сохраненное/Папки» над
+ * таббаром управляет list/folders, а folder (конкретная папка) — отдельное
+ * состояние поверх folders, куда попадают тапом по карточке папки. Свой тип,
+ * не булев флаг: третье состояние несёт id и название папки, которые иначе
+ * пришлось бы держать отдельными полями и синхронизировать вручную.
+ */
+type SavedView = { kind: "list" } | { kind: "folders" } | { kind: "folder"; id: string; title: string };
 
 function hasCompletedLocationPrompt(): boolean {
   try {
@@ -129,6 +144,7 @@ function toPlaceInput(place: Place): PlaceInput {
     status: place.status,
     photos: place.photos,
     systemName: place.systemName,
+    folderIds: place.folderIds ?? [],
   };
 }
 
@@ -317,6 +333,12 @@ function MapApp({
 }) {
   const [tab, setTab] = useState<AppTab>("map");
   const [places, setPlaces] = useState<Place[]>([]);
+  const [savedView, setSavedView] = useState<SavedView>({ kind: "list" });
+  const [folders, setFolders] = useState<Folder[]>([]);
+  const [loadingFolders, setLoadingFolders] = useState(false);
+  const [foldersError, setFoldersError] = useState(false);
+  const [showCreateFolder, setShowCreateFolder] = useState(false);
+  const [creatingFolder, setCreatingFolder] = useState(false);
   const [friendPlaces, setFriendPlaces] = useState<Place[]>([]);
   const [focusedFriendId, setFocusedFriendId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -370,6 +392,41 @@ function MapApp({
   useEffect(() => {
     loadPlaces();
   }, []);
+
+  const loadFolders = () => {
+    setLoadingFolders(true);
+    setFoldersError(false);
+    fetchFolders()
+      .then((data) => {
+        setFolders(data);
+        setLoadingFolders(false);
+      })
+      .catch(() => {
+        setFoldersError(true);
+        setLoadingFolders(false);
+      });
+  };
+
+  useEffect(() => {
+    loadFolders();
+  }, []);
+
+  // Новая папка создаётся и из грид-экрана «Папки» (эта функция), и из
+  // FolderPickerSheet внутри формы места (там свой onCreateFolder, не
+  // разделяем — контексты разные: тут сразу отмечать нечего). В обоих
+  // случаях список папок в App.tsx должен узнать о новой папке, иначе
+  // FoldersGrid не обновится без перезагрузки.
+  const handleCreateFolder = async (title: string) => {
+    setCreatingFolder(true);
+    try {
+      const folder = await createFolder(title);
+      setFolders((prev) => [folder, ...prev]);
+      setShowCreateFolder(false);
+      return folder;
+    } finally {
+      setCreatingFolder(false);
+    }
+  };
 
   const refreshFriendPlaces = useCallback(async () => {
     try {
@@ -530,6 +587,12 @@ function MapApp({
     await copyToClipboard(url);
   };
 
+  // Глобальная верхняя зона (SearchFilterBar + блюр) — только там, где нет
+  // собственной шапки: не на «Друзьях» и не в под-режимах «Папки»/внутри
+  // папки вкладки «Сохранённое» (у FoldersGrid поиск скроллится вместе со
+  // списком, у FolderDetailScreen — своя плавающая шапка).
+  const showGlobalTopBar = tab !== "friends" && !(tab === "notes" && savedView.kind !== "list");
+
   const shouldShowPwaUpdateBanner =
     pwaUpdateAvailable &&
     !showSearch &&
@@ -554,7 +617,7 @@ function MapApp({
             flyTo={flyTo}
           />
         )}
-        {tab === "notes" && (
+        {tab === "notes" && savedView.kind === "list" && (
           <NotesList
             places={mapPlaces}
             onSelectPlace={setDetailPlace}
@@ -567,6 +630,29 @@ function MapApp({
               setSelectedPlaces((prev) => prev.filter((item) => item.id !== place.id));
             }}
             onSharePlace={sharePlace}
+          />
+        )}
+        {tab === "notes" && savedView.kind === "folders" && (
+          <FoldersGrid
+            folders={folders}
+            onOpenFolder={(folder) => setSavedView({ kind: "folder", id: folder.id, title: folder.title })}
+            onCreateFolder={() => setShowCreateFolder(true)}
+          />
+        )}
+        {tab === "notes" && savedView.kind === "folder" && (
+          <FolderDetailScreen
+            key={savedView.id}
+            folderId={savedView.id}
+            folderTitle={savedView.title}
+            onBack={() => setSavedView({ kind: "folders" })}
+            onSelectPlace={setDetailPlace}
+            onEditPlace={(place) => setEditingPlace(place)}
+            onSharePlace={sharePlace}
+            onGoToMap={() => setTab("map")}
+            onPlaceRemoved={() => loadFolders()}
+            filters={filters}
+            hasActiveFilters={!filtersAreEmpty(filters)}
+            onFilterTap={() => setShowFilters(true)}
           />
         )}
         {tab === "friends" && (
@@ -582,12 +668,15 @@ function MapApp({
         )}
       </div>
 
-      {/* Блюр-градиенты сверху и снизу (по макету 1489:15421 — без белых подложек) */}
-      {tab !== "friends" && <div className="blur-edge-top" />}
+      {/* Блюр-градиенты сверху и снизу (по макету 1489:15421 — без белых подложек).
+          «Папки» и экран внутри папки — тоже свой верх (грид без плавающей
+          шапки, FolderDetailScreen — с собственной, рисует блюр сам, как
+          FriendsListView), поэтому глобальный SearchFilterBar здесь лишний. */}
+      {showGlobalTopBar && <div className="blur-edge-top" />}
       {!detailPlace && <div className="blur-edge-bottom" />}
 
-      {/* Верхняя зона: поиск + фильтр (на карте и в заметках) */}
-      {tab !== "friends" && (
+      {/* Верхняя зона: поиск + фильтр (на карте и в «Сохранённом»-списке) */}
+      {showGlobalTopBar && (
         <div className="absolute top-0 left-0 right-0 z-20 px-4 pt-[var(--mappy-floating-top)]">
           <SearchFilterBar
             query={query}
@@ -621,6 +710,20 @@ function MapApp({
             className="shrink-0 rounded-full bg-white/15 px-3 py-1.5 font-medium"
           >
             {loadingPlaces ? "Загрузка…" : "Повторить"}
+          </button>
+        </div>
+      )}
+
+      {/* Баннер ошибки загрузки папок — виден только там, где папки на экране */}
+      {foldersError && tab === "notes" && savedView.kind !== "list" && (
+        <div className="absolute top-[var(--mappy-floating-top)] left-4 right-4 z-50 mt-14 flex items-center justify-between gap-3 rounded-2xl bg-[#1e2939] px-4 py-3 text-sm text-white">
+          <span>Не удалось загрузить папки</span>
+          <button
+            onClick={loadFolders}
+            disabled={loadingFolders}
+            className="shrink-0 rounded-full bg-white/15 px-3 py-1.5 font-medium"
+          >
+            {loadingFolders ? "Загрузка…" : "Повторить"}
           </button>
         </div>
       )}
@@ -690,6 +793,49 @@ function MapApp({
         </div>
       )}
 
+      {/* Переключатель «Сохраненное/Папки» — узел 2289:42924, сидит НАД таббаром
+          постоянно на вкладке «Сохранённое», во всех трёх под-режимах (включая
+          список внутри конкретной папки — там он тоже виден, просто «Папки»
+          остаётся выбранным). Тот же сегмент-контрол, что уже в AddPlaceSheet
+          («Уже был»/«Планирую сходить»): bg-secondary p-1 rounded-28 h-11,
+          белая заливка активного сегмента. Ширина/позиция — по метаданным узла:
+          пилюля 332px в 399px зоне таббара (px-4 на 430px экране), гэп до
+          таббара — 4px, не общий отступ 24px, как у прочих плавающих элементов. */}
+      {tab === "notes" && (
+        <div
+          className="absolute left-0 right-0 z-20 px-4"
+          style={{ bottom: "calc(var(--mappy-floating-bottom) + 64px)" }}
+        >
+          <div
+            className="mx-auto flex h-11 items-center rounded-[28px] p-1"
+            style={{ width: 332, backgroundColor: "var(--mappy-surface-secondary)" }}
+          >
+            {(
+              [
+                ["list", "Сохраненное"],
+                ["folders", "Папки"],
+              ] as [SavedView["kind"], string][]
+            ).map(([kind, label]) => (
+              <button
+                key={kind}
+                type="button"
+                onClick={() => setSavedView(kind === "list" ? { kind: "list" } : { kind: "folders" })}
+                className="flex h-full flex-1 items-center justify-center overflow-hidden rounded-[28px] px-6 text-[14px] leading-[18px] font-medium tracking-[-0.6px] transition-colors"
+                style={{
+                  backgroundColor: savedView.kind === kind || (kind === "folders" && savedView.kind === "folder") ? "#fff" : "transparent",
+                  color:
+                    savedView.kind === kind || (kind === "folders" && savedView.kind === "folder")
+                      ? "var(--mappy-text-primary)"
+                      : "var(--mappy-text-secondary)",
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Таббар */}
       <div className="absolute bottom-0 left-0 right-0 z-20 px-4 pb-[var(--mappy-floating-bottom)]">
         <TabBar
@@ -699,8 +845,14 @@ function MapApp({
             // мобильное поведение. Для «Друзей» это ещё и единственный выход с
             // профиля друга, когда список его мест прокручен: «Назад» уезжает
             // вверх вместе с шапкой, а липкая строка поиска его не содержит.
+            // Для «Сохранённого» — то же самое: если человек ушёл в «Папки»
+            // или внутрь конкретной папки, повторный тап по «Сохранённое»
+            // возвращает к списку, а не оставляет висеть в подрежиме.
             if (t === tab && t === "friends") {
               setFriendsResetSignal((value) => value + 1);
+            }
+            if (t === tab && t === "notes") {
+              setSavedView({ kind: "list" });
             }
             setTab(t);
             setSelectedPlaces([]);
@@ -759,6 +911,17 @@ function MapApp({
         />
       )}
 
+      {/* «Добавить папку» с грид-экрана «Папки» — не из формы места, там свой
+          FolderPickerSheet со своим onCreateFolder (нечего сразу отмечать). */}
+      {showCreateFolder && (
+        <FolderNameSheet
+          title="Как назовем папку?"
+          confirmLabel={creatingFolder ? "Создаём…" : "Создать"}
+          onConfirm={(title) => void handleCreateFolder(title)}
+          onClose={() => setShowCreateFolder(false)}
+        />
+      )}
+
       {draftCoordinate && (
         <AddPlaceSheet
           coordinate={draftCoordinate}
@@ -775,12 +938,18 @@ function MapApp({
               ? pendingPlaceName.name
               : undefined
           }
+          folders={folders}
+          onCreateFolder={handleCreateFolder}
           onSave={async (place) => {
             const saved = await createPlace(toPlaceInput(place));
             // Новую запись сразу показываем в интерфейсе. Географический якорь
             // адресной группы определяется отдельно по createdAt, поэтому порядок
             // массива больше не способен сдвинуть уже существующий пин.
             setPlaces((prev) => [saved, ...prev]);
+            // Счётчик/обложки папок в FoldersGrid могли устареть, если место
+            // положили в папку прямо здесь — дешёвый перезапрос честнее, чем
+            // пересчитывать это на фронте вручную.
+            if (saved.folderIds && saved.folderIds.length > 0) loadFolders();
           }}
           onClose={() => {
             setDraftCoordinate(null);
@@ -829,10 +998,16 @@ function MapApp({
         <AddPlaceSheet
           coordinate={{ lat: editingPlace.latitude, lng: editingPlace.longitude }}
           initialPlace={editingPlace}
+          folders={folders}
+          onCreateFolder={handleCreateFolder}
           onSave={async (updated) => {
             const saved = await updatePlace(editingPlace.id, toPlaceInput(updated));
             setPlaces((prev) => prev.map((p) => (p.id === saved.id ? saved : p)));
             setSelectedPlaces([]);
+            // Принадлежность к папкам могла и добавиться, и пропасть —
+            // перезагружаем список папок в обоих случаях, не только когда
+            // итоговый набор не пуст.
+            loadFolders();
           }}
           onClose={() => setEditingPlace(null)}
         />

@@ -41,6 +41,9 @@ export function SwipeablePlaceCard({
   onDelete,
   onEdit,
   onShare,
+  deleteLabel = "Удалить",
+  deleteIcon: deleteIconOverride,
+  deleteBackground,
 }: {
   place: Place;
   isOpen: boolean;
@@ -50,6 +53,12 @@ export function SwipeablePlaceCard({
   onDelete: () => void;
   onEdit: () => void;
   onShare: () => void;
+  /** Подпись последнего действия свайпа — «Удалить» по умолчанию. Экран внутри
+      папки переопределяет на «Убрать»: место остаётся в «Сохранённом», меняется
+      только принадлежность к папке, поэтому «Удалить» было бы неточным. */
+  deleteLabel?: string;
+  deleteIcon?: string;
+  deleteBackground?: string;
 }) {
   const [offset, setOffset] = useState(isOpen ? -ACTIONS_WIDTH : 0);
   const [dragging, setDragging] = useState(false);
@@ -154,9 +163,9 @@ export function SwipeablePlaceCard({
           <SwipeAction
             right={ACTION_WIDTH * 2}
             zIndex={3}
-            label="Удалить"
-            background="#e7000b"
-            icon={deleteIcon}
+            label={deleteLabel}
+            background={deleteBackground ?? "#e7000b"}
+            icon={deleteIconOverride ?? deleteIcon}
             shadow="8px 2px 30.4px #e9e9e9"
             onClick={() => runAction(onDelete)}
           />

@@ -6,6 +6,11 @@ import { SwipeablePlaceCard } from "./SwipeablePlaceCard";
 /*
  * Заметки: список карточек (фото слева 180x120) либо пустое состояние
  * с иллюстрацией пина на карте по макету 1489:17755.
+ *
+ * Переиспользуется и экраном «внутри папки» (FolderDetailScreen) — оттуда
+ * приходят headerHeight (там своя более высокая шапка вместо глобального
+ * SearchFilterBar) и deleteLabel/deleteIcon (свайп убирает место из папки,
+ * а не удаляет его — см. Этап 75 в истории разработки).
  */
 export function NotesList({
   places,
@@ -14,6 +19,12 @@ export function NotesList({
   onDeletePlace,
   onEditPlace,
   onSharePlace,
+  headerHeight = "var(--mappy-search-bar-height)",
+  deleteLabel,
+  deleteIcon,
+  deleteBackground,
+  emptyTitle,
+  emptySubtitle,
 }: {
   places: Place[];
   onSelectPlace: (place: Place) => void;
@@ -21,6 +32,14 @@ export function NotesList({
   onDeletePlace: (place: Place) => void;
   onEditPlace: (place: Place) => void;
   onSharePlace: (place: Place) => void;
+  /** Высота плавающей шапки над списком — переопределяется, когда над списком
+      не глобальный SearchFilterBar (64px), а более высокая шапка с заголовком. */
+  headerHeight?: string;
+  deleteLabel?: string;
+  deleteIcon?: string;
+  deleteBackground?: string;
+  emptyTitle?: string;
+  emptySubtitle?: string;
 }) {
   const [openPlaceId, setOpenPlaceId] = useState<string | null>(null);
 
@@ -36,11 +55,15 @@ export function NotesList({
         <div className="flex flex-col items-center px-8 pt-[28vh] text-center">
           <img src={pinMap} alt="" className="mb-4 w-[110px]" />
           <p className="mb-2 text-[20px] font-semibold leading-tight" style={{ color: "var(--mappy-text-primary)" }}>
-            Вы еще не добавили мест
-            <br />с такими параметрами
+            {emptyTitle ?? (
+              <>
+                Вы еще не добавили мест
+                <br />с такими параметрами
+              </>
+            )}
           </p>
           <p className="mb-4 text-[14px]" style={{ color: "var(--mappy-text-secondary)" }}>
-            Может они не стоили того, чтоб их запоминать
+            {emptySubtitle ?? "Может они не стоили того, чтоб их запоминать"}
           </p>
           <button
             onClick={onGoToMap}
@@ -52,7 +75,10 @@ export function NotesList({
         </div>
       ) : (
         <div className="px-4 pt-[var(--mappy-floating-top)]">
-          <div className="flex flex-col gap-3 pt-[calc(var(--mappy-search-bar-height)+var(--mappy-content-gap))]">
+          <div
+            className="flex flex-col gap-3"
+            style={{ paddingTop: `calc(${headerHeight} + var(--mappy-content-gap))` }}
+          >
             {places.map((place) => (
               <SwipeablePlaceCard
                 key={place.id}
@@ -64,6 +90,9 @@ export function NotesList({
                 onDelete={() => onDeletePlace(place)}
                 onEdit={() => onEditPlace(place)}
                 onShare={() => onSharePlace(place)}
+                deleteLabel={deleteLabel}
+                deleteIcon={deleteIcon}
+                deleteBackground={deleteBackground}
               />
             ))}
           </div>
