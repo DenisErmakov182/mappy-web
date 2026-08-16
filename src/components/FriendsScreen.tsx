@@ -29,7 +29,6 @@ import { avatarGradient, avatarInitials } from "../lib/avatarGradient";
 import { CtaButton, SearchIcon } from "./primitives";
 import { PlaceRowCard } from "./PlaceRowCard";
 import friendsEmptyIllustration from "../assets/illustrations/friends-empty.webp";
-import friendsPreviewIllustration from "../assets/illustrations/friends-preview.png";
 import friendPhotoPin from "../assets/icons/friend-photo-pin.png";
 import filterIcon from "../assets/icons/filter-icon.svg";
 import dotsHorizontalIcon from "../assets/icons/dots-horizontal.svg";
@@ -295,9 +294,9 @@ export function FriendsScreen({
               Друзья <span style={{ color: "var(--mappy-text-tertiary)" }}>{friends.length}</span>
             </span>
             <img
-              src={friendsPreviewIllustration}
+              src={friendsEmptyIllustration}
               alt=""
-              className="pointer-events-none absolute -right-1 -top-2 w-[175px]"
+              className="pointer-events-none absolute -right-6 -top-6 w-[230px] rotate-[-14deg]"
             />
           </button>
         )}
