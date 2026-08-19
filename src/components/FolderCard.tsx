@@ -77,6 +77,27 @@ export function FolderCard({
         style={{ left: px(-10.18), top: py(20), width: px(215.4), maxWidth: "none" }}
       />
 
+      {/* Контактная тень под стопкой фото (узел 2353:10508, только у
+          заполненной папки). В разметке этот слой идёт ПЕРЕД фото и ПОД
+          карманом — сам блюр (12.147px в макете) частично перекрывается
+          карманом снизу, а видимый ободок остаётся мягким затемнением над
+          линией кармана, вокруг нижних краёв фото. Радиус блюра — не в px()
+          (проценты недопустимы для filter: blur), а фиксированным px:
+          у карточки нет доступа к своей же ширине в px на этом этапе рендера. */}
+      {photos.length > 0 && (
+        <span
+          className="pointer-events-none absolute block"
+          style={{
+            left: px(14),
+            top: py(75),
+            width: px(165),
+            height: py(41),
+            backgroundColor: "#4d0218",
+            filter: "blur(12px)",
+          }}
+        />
+      )}
+
       {photos.map((photo, index) => {
         const slot = PHOTO_SLOTS[index];
         if (!slot) return null;

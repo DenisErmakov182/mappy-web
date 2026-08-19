@@ -6,6 +6,7 @@ import { Button } from "./design-system/01-atoms/controls/Button";
 import { Toggle } from "./design-system/01-atoms/controls/Toggle";
 import { Chip } from "./design-system/01-atoms/controls/Chip";
 import { FolderCard } from "./FolderCard";
+import { FolderSearchBar } from "./FolderSearchBar";
 import { FolderNameSheet } from "./FolderNameSheet";
 import { FolderPickerSheet } from "./FolderPickerSheet";
 import { FoldersGrid } from "./FoldersGrid";
@@ -66,6 +67,7 @@ export function ComponentsPreviewPage() {
   const [toggleOn, setToggleOn] = useState(true);
   const [showFolderName, setShowFolderName] = useState(false);
   const [showFolderPicker, setShowFolderPicker] = useState(false);
+  const [folderSearchQuery, setFolderSearchQuery] = useState("");
   const demoFolders = [
     { id: "1", title: "Рестораны", createdAt: "", placesCount: 3, coverPhotos: [] },
     { id: "2", title: "Музеи", createdAt: "", placesCount: 1, coverPhotos: [] },
@@ -252,6 +254,19 @@ export function ComponentsPreviewPage() {
                 coverPhotos={[samplePhoto, samplePhoto]}
                 onClick={() => {}}
               />
+            </div>
+          </PreviewRow>
+        </PreviewSection>
+
+        <PreviewSection
+          title="FolderSearchBar"
+          sourcePath="src/components/FolderSearchBar.tsx"
+          description="Figma: 2289:43205. Тот же паттерн, что SearchFilterBar (790:16784): белый контейнер p-2 radius 32 с вложенным полем на --mappy-surface-secondary, без кнопки фильтра."
+        >
+          <PreviewRow label="Пусто / с текстом">
+            <div className="flex w-full max-w-sm flex-col gap-3">
+              <FolderSearchBar query="" onQueryChange={() => {}} />
+              <FolderSearchBar query={folderSearchQuery} onQueryChange={setFolderSearchQuery} />
             </div>
           </PreviewRow>
         </PreviewSection>
