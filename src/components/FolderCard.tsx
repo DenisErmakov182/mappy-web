@@ -149,9 +149,12 @@ export function FolderCard({
               width: px(PHOTO_W),
               height: py(PHOTO_H),
               transform: `rotate(${slot.rotate}deg)`,
-              // Толщина рамки и радиус тоже масштабируются: на узкой карточке
-              // фиксированные 2.8px выглядели бы толще, чем в макете.
-              borderWidth: px(2.816),
+              // borderWidth — фиксированный px, не px(): border-width не
+              // принимает проценты (как blur/spread у box-shadow и filter
+              // выше в этом файле) — с процентом рамка молча схлопывалась в
+              // 0 и оставался только border-color, без видимой толщины.
+              // borderRadius проценты принимает нормально, его не трогаем.
+              borderWidth: "2.8px",
               borderRadius: px(10.038),
             }}
           >
