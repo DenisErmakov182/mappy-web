@@ -1,6 +1,5 @@
 import folderShape from "../assets/illustrations/folder-shape.svg";
 import folderPocket from "../assets/illustrations/folder-pocket.svg";
-import folderShadow from "../assets/illustrations/folder-shadow.svg";
 import photoPlaceholder from "../assets/illustrations/photo-placeholder.webp";
 
 /*
@@ -23,7 +22,14 @@ import photoPlaceholder from "../assets/illustrations/photo-placeholder.webp";
  * Оба новых SVG — чистые плоские экспорты БЕЗ отступа под растёкшуюся тень,
  * в отличие от старого folder-back.svg (который использует остальные
  * компоненты «Папок» — FoldersGrid/FolderPickerSheet/FolderNameSheet, их не
- * трогаем, там всё работает).
+ * трогаем).
+ *
+ * folder-shadow.svg («тень-подставка») здесь больше НЕ используется —
+ * по метаданным макета это не тень снаружи, а тот же декоративный
+ * Rectangle 5177, что и внутри кармана, только по ошибке вынесенный
+ * отдельным экспортом. Теперь он уже встроен в folder-pocket.svg —
+ * отдельный слой был бы дублем. См. ту же находку и ручной фикс позиции
+ * в FolderNameSheet.tsx, где этот дубль-ассет ещё используется отдельно.
  *
  * Все размеры — из макета в системе координат 195×139, а карточка на экране
  * тянется по ширине колонки сетки. Поэтому геометрия задана в процентах от
@@ -211,17 +217,6 @@ export function FolderCard({
       >
         {placesCount}
       </span>
-
-      {/* Мягкая тень-подставка под папкой. Та же поправка на разлив тени, что
-          и раньше: фигура 176×4 в точке (10, 132), инсеты [-148.93% -3.38%]
-          растят картинку до 187.9 в ширину и сильно вверх по вертикали. Этот
-          ассет владелец не пересобирал — оставлен как есть. */}
-      <img
-        src={folderShadow}
-        alt=""
-        className="pointer-events-none absolute select-none"
-        style={{ left: px(4.05), top: py(126.04), width: px(187.9), maxWidth: "none" }}
-      />
     </button>
   );
 }

@@ -114,11 +114,20 @@ function FolderNameArt({ value, onChange, placeholder }: { value: string; onChan
         }}
       />
 
+      {/* Декоративная полоска у низа кармана (тот же Rectangle 5177, что
+          встроен в folder-pocket.svg у FolderCard, здесь — отдельным
+          файлом folder-shadow.svg). top не 208 (нижний край композиции),
+          а выше: у самой картинки ~37% высоты — прозрачный запас под блюр
+          сверху и снизу видимой линии (viewBox 187.915×15.9147, видимая
+          часть — y 5.96–9.96). При top:208 видимая линия попадала точно
+          на границу кармана и половина блюра утекала наружу, под низом
+          папки — баг, найденный владельцем визуально. 199.5 = 208.913
+          (Rectangle 5177 в макете 2289:42956) минус доля запаса сверху. */}
       <img
         src={folderShadow}
         alt=""
         className="pointer-events-none absolute select-none"
-        style={{ left: 9, top: 208, width: 296, maxWidth: "none" }}
+        style={{ left: 9, top: 199.5, width: 296, maxWidth: "none" }}
       />
     </div>
   );
