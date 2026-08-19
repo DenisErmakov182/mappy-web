@@ -274,7 +274,7 @@ export function ComponentsPreviewPage() {
         <PreviewSection
           title="FolderNameSheet"
           sourcePath="src/components/FolderNameSheet.tsx"
-          description="Figma: 2289:42934 / 2291:27724. Название печатается прямо на графике папки — настоящий <input>, не декорация."
+          description="Figma: 2289:41953 (подтверждён 19.08.2026 — та же 195×139 графика, что FolderCard, без выдуманного масштаба 1.583×). Название печатается прямо на графике папки — настоящий <input>, не декорация."
         >
           <PreviewRow label="Открыть шит (наложение поверх этой страницы, как поверх AddPlaceSheet)">
             <Button size="s" onClick={() => setShowFolderName(true)}>
