@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import type { Folder } from "../lib/api";
 import { FolderCard } from "./FolderCard";
 import folderBack from "../assets/illustrations/folder-back.svg";
@@ -96,15 +96,15 @@ function AddFolderTile({ onClick, fillsGridCell }: { onClick: () => void; fillsG
 
 export function FoldersGrid({
   folders,
+  query = "",
   onOpenFolder,
   onCreateFolder,
 }: {
   folders: Folder[];
+  query?: string;
   onOpenFolder: (folder: Folder) => void;
   onCreateFolder: () => void;
 }) {
-  const [query, setQuery] = useState("");
-
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return folders;
@@ -114,25 +114,9 @@ export function FoldersGrid({
   return (
     <div className="h-full overflow-y-auto pb-32" style={{ backgroundColor: "var(--mappy-surface-primary)" }}>
       <div className="px-4 pt-[var(--mappy-floating-top)]">
-        <label
-          className="flex h-12 items-center gap-2.5 rounded-full bg-white px-4"
-          style={{ marginTop: "var(--mappy-search-bar-height, 0px)" }}
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <circle cx="11" cy="11" r="7" stroke="var(--mappy-text-tertiary)" strokeWidth="2" />
-            <path d="M21 21L16.65 16.65" stroke="var(--mappy-text-tertiary)" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Поиск по папкам"
-            className="min-w-0 flex-1 bg-transparent text-[16px] outline-none placeholder:text-[var(--mappy-text-tertiary)]"
-            style={{ color: "var(--mappy-text-primary)" }}
-          />
-        </label>
-
-        {folders.length === 0 ? (
-          <div className="mt-3 flex items-center gap-3 overflow-hidden rounded-[28px] bg-white p-4">
+        <div style={{ paddingTop: "calc(var(--mappy-search-bar-height) + var(--mappy-content-gap))" }}>
+          {folders.length === 0 ? (
+            <div className="flex items-center gap-3 overflow-hidden rounded-[28px] bg-white p-4">
             <div className="flex-1">
               <p className="text-[20px] font-semibold" style={{ color: "var(--mappy-text-primary)" }}>
                 Папки
@@ -150,9 +134,9 @@ export function FoldersGrid({
               </button>
             </div>
             <EmptyStateIllustration />
-          </div>
-        ) : (
-          <div className="mt-3 grid grid-cols-2 gap-2">
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
             {filtered.map((folder) => (
               <FolderCard
                 key={folder.id}
@@ -165,14 +149,15 @@ export function FoldersGrid({
             {/* Ровно одна папка (без учёта фильтра поиском — кнопка не должна
                 прыгать между размерами, пока человек печатает) — тайл в сетке. */}
             {folders.length === 1 && <AddFolderTile onClick={onCreateFolder} fillsGridCell />}
-          </div>
-        )}
+            </div>
+          )}
 
-        {folders.length >= 2 && (
-          <div className="mt-2">
-            <AddFolderTile onClick={onCreateFolder} fillsGridCell={false} />
-          </div>
-        )}
+          {folders.length >= 2 && (
+            <div className="mt-2">
+              <AddFolderTile onClick={onCreateFolder} fillsGridCell={false} />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

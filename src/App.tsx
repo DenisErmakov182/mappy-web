@@ -10,6 +10,7 @@ import { PlaceDetail } from "./components/PlaceDetail";
 import { PlaceCardCarousel } from "./components/PlaceCardCarousel";
 import { NotesList } from "./components/NotesList";
 import { FoldersGrid } from "./components/FoldersGrid";
+import { FolderSearchBar } from "./components/FolderSearchBar";
 import { FolderDetailScreen } from "./components/FolderDetailScreen";
 import { FolderNameSheet } from "./components/FolderNameSheet";
 import { FriendsScreen } from "./components/FriendsScreen";
@@ -342,6 +343,7 @@ function MapApp({
   const [friendPlaces, setFriendPlaces] = useState<Place[]>([]);
   const [focusedFriendId, setFocusedFriendId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [folderQuery, setFolderQuery] = useState("");
   const [filters, setFilters] = useState<PlaceFilters>(emptyFilters());
   const [showFilters, setShowFilters] = useState(false);
   const [draftCoordinate, setDraftCoordinate] = useState<{ lat: number; lng: number } | null>(null);
@@ -588,10 +590,11 @@ function MapApp({
   };
 
   // Глобальная верхняя зона (SearchFilterBar + блюр) — только там, где нет
-  // собственной шапки: не на «Друзьях» и не в под-режимах «Папки»/внутри
-  // папки вкладки «Сохранённое» (у FoldersGrid поиск скроллится вместе со
-  // списком, у FolderDetailScreen — своя плавающая шапка).
+  // собственной шапки: не на «Друзьях» и не внутри конкретной папки.
+  // У сетки папок отдельный FolderSearchBar, но он тоже плавающий и занимает
+  // ту же геометрию, что поиск «Сохранённого».
   const showGlobalTopBar = tab !== "friends" && !(tab === "notes" && savedView.kind !== "list");
+  const showFoldersTopBar = tab === "notes" && savedView.kind === "folders";
 
   const shouldShowPwaUpdateBanner =
     pwaUpdateAvailable &&
@@ -635,6 +638,7 @@ function MapApp({
         {tab === "notes" && savedView.kind === "folders" && (
           <FoldersGrid
             folders={folders}
+            query={folderQuery}
             onOpenFolder={(folder) => setSavedView({ kind: "folder", id: folder.id, title: folder.title })}
             onCreateFolder={() => setShowCreateFolder(true)}
           />
@@ -672,7 +676,7 @@ function MapApp({
           «Папки» и экран внутри папки — тоже свой верх (грид без плавающей
           шапки, FolderDetailScreen — с собственной, рисует блюр сам, как
           FriendsListView), поэтому глобальный SearchFilterBar здесь лишний. */}
-      {showGlobalTopBar && <div className="blur-edge-top" />}
+      {(showGlobalTopBar || showFoldersTopBar) && <div className="blur-edge-top" />}
       {!detailPlace && <div className="blur-edge-bottom" />}
 
       {/* Верхняя зона: поиск + фильтр (на карте и в «Сохранённом»-списке) */}
@@ -685,6 +689,12 @@ function MapApp({
             hasActiveFilters={!filtersAreEmpty(filters)}
             onFilterTap={() => setShowFilters(true)}
           />
+        </div>
+      )}
+
+      {showFoldersTopBar && (
+        <div className="absolute left-0 right-0 top-0 z-20 px-4 pt-[var(--mappy-floating-top)]">
+          <FolderSearchBar query={folderQuery} onQueryChange={setFolderQuery} />
         </div>
       )}
 
