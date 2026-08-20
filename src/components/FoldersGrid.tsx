@@ -140,8 +140,11 @@ export function FoldersGrid({
               (узел 2293:28629, 398×59). folders.length === 0 сюда не
               попадает — эта ветка вообще не рендерится, для пустого
               состояния своя кнопка внутри карточки выше. */}
+          {/* mt-5 (20px), не mt-2 (8px) — тот же зазор, что gap-y у сетки
+              выше: тень последнего ряда карточек (см. коммент у gap-y-5)
+              так же не помещалась в 8px до этой кнопки и обрезалась. */}
           {folders.length > 0 && folders.length % 2 === 0 && (
-            <div className="mt-2">
+            <div className="mt-5">
               <AddFolderTile onClick={onCreateFolder} fillsGridCell={false} />
             </div>
           )}
