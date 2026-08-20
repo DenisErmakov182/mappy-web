@@ -91,7 +91,14 @@ export function FoldersGrid({
   }, [folders, query]);
 
   return (
-    <div className="h-full overflow-y-auto pb-32" style={{ backgroundColor: "var(--mappy-surface-primary)" }}>
+    /* overflow-x-hidden обязателен: подложка папки (FolderArt → folder-shape.svg)
+       нарочно рисуется шире и левее самой карточки под блик тени (см. комментарий
+       у SHAPE_LEFT_OFFSET в FolderArt.tsx) и у крайних колонок вылезает за px-4
+       на пару пикселей. Без явного overflow-x браузер сам продвигает его в auto
+       вслед за overflow-y (спека CSS), и эти лишние ~2px превращали список в
+       по-настоящему горизонтально прокручиваемый — на телефоне ощущалось как
+       лёгкий скролл по сторонам при обычной вертикальной прокрутке папок. */
+    <div className="h-full overflow-y-auto overflow-x-hidden pb-32" style={{ backgroundColor: "var(--mappy-surface-primary)" }}>
       <div className="px-4 pt-[var(--mappy-floating-top)]">
         <div style={{ paddingTop: "calc(var(--mappy-search-bar-height) + var(--mappy-content-gap))" }}>
           {folders.length === 0 ? (
