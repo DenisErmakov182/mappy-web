@@ -1,65 +1,31 @@
 import { useMemo } from "react";
 import type { Folder } from "../lib/api";
 import { FolderCard } from "./FolderCard";
-import folderBack from "../assets/illustrations/folder-back.svg";
+import { FolderArt, folderArtPx as px, folderArtPy as py } from "./FolderArt";
 import stickerCafe from "../assets/photos/sticker-cafe.webp";
 import stickerMuseum from "../assets/photos/sticker-museum.webp";
 import stickerRestaurant from "../assets/photos/sticker-restaurant.webp";
 
+const EMPTY_STATE_PHOTOS = [stickerCafe, stickerMuseum, stickerRestaurant];
+
 /*
- * Декоративная иллюстрация пустого состояния (узел 2289:42933) — та же
- * графика, что у FolderCard (folder-back.svg + три стикера-заглушки), но
- * не отдельная картинка: в макете это буквально Folder-компонент, целиком
- * повёрнутый на -12.35deg, в масштабе ~0.72 от базовых 195×139.
- * Название/счётчик — рыба из макета («Рестораны»/16), не настоящие данные:
+ * Декоративная иллюстрация пустого состояния (узел 2289:42933) — тот же
+ * FolderArt, что у FolderCard/FolderNameSheet, просто в фиксированной
+ * ширине 141px (вместо fluid-колонки сетки) и с поворотом -12.35deg на
+ * обёртке, как в макете. Название — рыба из макета, не настоящие данные:
  * иллюстрация ничего не показывает про реальные папки пользователя.
  */
 function EmptyStateIllustration() {
   return (
-    <div style={{ transform: "rotate(-12.35deg)", width: 141, height: 101 }} className="relative shrink-0">
-      <img
-        src={folderBack}
-        alt=""
-        className="pointer-events-none absolute select-none"
-        style={{ left: -8, top: 10, width: 155, maxWidth: "none" }}
-      />
-      {[
-        { left: 10, top: 25, w: 51, h: 43, rotate: -7.09, src: stickerCafe },
-        { left: 45, top: 22, w: 51, h: 43, rotate: 10.69, src: stickerMuseum },
-        { left: 72, top: 30, w: 51, h: 43, rotate: 0.34, src: stickerRestaurant },
-      ].map((slot, i) => (
+    <div style={{ transform: "rotate(-12.35deg)", width: 141 }} className="shrink-0">
+      <FolderArt coverPhotos={EMPTY_STATE_PHOTOS}>
         <span
-          key={i}
-          className="pointer-events-none absolute block overflow-hidden border-white bg-white"
-          style={{
-            left: slot.left,
-            top: slot.top,
-            width: slot.w,
-            height: slot.h,
-            transform: `rotate(${slot.rotate}deg)`,
-            borderWidth: 2,
-            borderRadius: 7,
-          }}
+          className="pointer-events-none absolute block truncate font-semibold text-white"
+          style={{ left: px(9), top: py(80), right: px(9), fontSize: "12px", lineHeight: "14px" }}
         >
-          <img src={slot.src} alt="" className="h-full w-full select-none object-cover" />
+          Рестораны
         </span>
-      ))}
-      <span
-        className="pointer-events-none absolute block"
-        style={{
-          left: 0,
-          top: 54,
-          width: "100%",
-          height: 46,
-          backgroundColor: "#ff2056",
-          borderBottomLeftRadius: 14,
-          borderBottomRightRadius: 14,
-          boxShadow: "inset 0 -4px 12px -2px #c10007",
-        }}
-      />
-      <span className="pointer-events-none absolute text-[12px] font-semibold text-white" style={{ left: 7, top: 57 }}>
-        Рестораны
-      </span>
+      </FolderArt>
     </div>
   );
 }

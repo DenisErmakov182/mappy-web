@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Sheet, CloseButton } from "./primitives";
 import { Icon } from "./design-system/00-foundations/Icon";
 import { FolderNameSheet } from "./FolderNameSheet";
-import folderBack from "../assets/illustrations/folder-back.svg";
+import { FolderArt } from "./FolderArt";
 import type { Folder } from "../lib/api";
 
 /*
@@ -17,31 +17,13 @@ import type { Folder } from "../lib/api";
  * человек возвращается сюда же, и новая папка уже отмечена галочкой.
  */
 function MiniFolderIcon() {
-  // Та же графика, что у FolderCard/FolderNameSheet (folder-back.svg — карман
-  // + пунктирная обводка + подложка), просто в масштабе списка (39×27.8px
-  // против базовых 195×139 — те же пропорции, узел 2291:28448). Без фото:
+  // Тот же FolderArt, что у FolderCard/FolderNameSheet, в масштабе списка
+  // (39px против базовых 195px — узел 2291:28448 подтверждает те же
+  // пропорции 195:139, поэтому обёртка просто фиксирует ширину). Без фото:
   // тут это просто иконка папки, а не превью её содержимого.
   return (
-    <span className="relative block shrink-0 overflow-hidden" style={{ width: 39, height: 27.8 }}>
-      <img
-        src={folderBack}
-        alt=""
-        className="pointer-events-none absolute select-none"
-        style={{ left: -2, top: 0, width: 43, maxWidth: "none" }}
-      />
-      <span
-        className="pointer-events-none absolute block"
-        style={{
-          left: 0,
-          top: 15,
-          width: "100%",
-          height: 12.8,
-          backgroundColor: "#ff2056",
-          borderBottomLeftRadius: 4,
-          borderBottomRightRadius: 4,
-          boxShadow: "inset 0 -1px 3.4px -2px #c10007",
-        }}
-      />
+    <span className="block shrink-0" style={{ width: 39 }}>
+      <FolderArt coverPhotos={[]} />
     </span>
   );
 }
