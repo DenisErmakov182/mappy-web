@@ -298,19 +298,24 @@ export function ComponentsPreviewPage() {
         <PreviewSection
           title="FoldersGrid"
           sourcePath="src/components/FoldersGrid.tsx"
-          description="Узлы 2289:42911 (пусто) / 2293:28526 (1 папка — кнопка тайлом сетки) / 2+ папки — кнопка отдельной строкой. Три состояния кнопки «Добавить папку», подтверждены разными узлами Figma."
+          description="Узлы 2289:42911 (пусто) / 2293:28627 (нечётное число папок — кнопка тайлом сетки рядом с последней) / 2293:28629 (чётное число — кнопка отдельной строкой на всю ширину, последний ряд уже заполнен обеими колонками)."
         >
           <PreviewRow label="Пусто">
             <div className="h-[420px] w-full max-w-sm overflow-hidden rounded-2xl border">
               <FoldersGrid folders={[]} onOpenFolder={() => {}} onCreateFolder={() => {}} />
             </div>
           </PreviewRow>
-          <PreviewRow label="1 папка (кнопка — тайл сетки)">
+          <PreviewRow label="1 папка, нечётное (кнопка — тайл сетки)">
             <div className="h-[420px] w-full max-w-sm overflow-hidden rounded-2xl border">
               <FoldersGrid folders={[demoFolders[0]]} onOpenFolder={() => {}} onCreateFolder={() => {}} />
             </div>
           </PreviewRow>
-          <PreviewRow label="3 папки (кнопка — строка снизу)">
+          <PreviewRow label="2 папки, чётное (кнопка — строка снизу)">
+            <div className="h-[420px] w-full max-w-sm overflow-hidden rounded-2xl border">
+              <FoldersGrid folders={demoFolders.slice(0, 2)} onOpenFolder={() => {}} onCreateFolder={() => {}} />
+            </div>
+          </PreviewRow>
+          <PreviewRow label="3 папки, нечётное (кнопка — тайл сетки рядом с третьей)">
             <div className="h-[420px] w-full max-w-sm overflow-hidden rounded-2xl border">
               <FoldersGrid folders={demoFolders} onOpenFolder={() => {}} onCreateFolder={() => {}} />
             </div>

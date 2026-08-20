@@ -118,13 +118,22 @@ export function FoldersGrid({
                 onClick={() => onOpenFolder(folder)}
               />
             ))}
-            {/* Ровно одна папка (без учёта фильтра поиском — кнопка не должна
-                прыгать между размерами, пока человек печатает) — тайл в сетке. */}
-            {folders.length === 1 && <AddFolderTile onClick={onCreateFolder} fillsGridCell />}
+            {/* Последний ряд сетки в 2 колонки — нечётный остаток (1, 3, 5…)
+                значит в последнем ряду одна папка, кнопка встаёт тайлом
+                рядом с ней (узел 2293:28627, 196×118 — размер ровно с
+                грид-ячейку). На числе папок, а не filtered.length — кнопка
+                не должна прыгать между размерами, пока человек печатает
+                в поиске. */}
+            {folders.length % 2 === 1 && <AddFolderTile onClick={onCreateFolder} fillsGridCell />}
             </div>
           )}
 
-          {folders.length >= 2 && (
+          {/* Чётное число папок (2, 4, 6…) — последний ряд заполнен обеими
+              колонками, кнопка уезжает отдельной строкой на всю ширину
+              (узел 2293:28629, 398×59). folders.length === 0 сюда не
+              попадает — эта ветка вообще не рендерится, для пустого
+              состояния своя кнопка внутри карточки выше. */}
+          {folders.length > 0 && folders.length % 2 === 0 && (
             <div className="mt-2">
               <AddFolderTile onClick={onCreateFolder} fillsGridCell={false} />
             </div>
