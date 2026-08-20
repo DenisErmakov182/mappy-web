@@ -10,6 +10,7 @@ import { FolderSearchBar } from "./FolderSearchBar";
 import { FolderNameSheet } from "./FolderNameSheet";
 import { FolderPickerSheet } from "./FolderPickerSheet";
 import { FoldersGrid } from "./FoldersGrid";
+import { useFolderActions } from "./FolderActions";
 import samplePhoto from "../assets/photos/sample-cafe.jpg";
 
 /*
@@ -54,6 +55,40 @@ function useComponentsPreviewAccess(): boolean {
   }, [allowed, expectedKey]);
 
   return allowed;
+}
+
+/*
+ * Демо для секции FolderActions ниже — тонкая обёртка вокруг реального
+ * useFolderActions, той же логики, что в шапке FolderDetailScreen и на
+ * карточке FolderCard. folderId фейковый: rename/delete реально бьются в
+ * API, но dev-сервер здесь поднят без mappy-api, запрос просто падает по
+ * сети — тот же путь, что уже обработан в хуке (шит остаётся открытым,
+ * не роняет страницу), ничего не мокается отдельно ради каталога.
+ */
+function FolderActionsDemo() {
+  const [title, setTitle] = useState("Рестораны");
+  const { openMenu, sheets } = useFolderActions({
+    folderId: "demo-actions",
+    folderTitle: title,
+    onRenamed: setTitle,
+    onDeleted: () => {},
+  });
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-[14px]" style={{ color: "var(--mappy-text-secondary)" }}>
+        {title}
+      </span>
+      <IconButton
+        size="xs"
+        tone="ghost"
+        icon={<Icon name="dots-vertical" />}
+        aria-label={`Действия с папкой «${title}»`}
+        onClick={openMenu}
+        className="[&_svg]:size-5"
+      />
+      {sheets}
+    </div>
+  );
 }
 
 export function ComponentsPreviewPage() {
@@ -310,6 +345,38 @@ export function ComponentsPreviewPage() {
             <Button size="s" onClick={() => setShowFolderPicker(true)}>
               Показать
             </Button>
+          </PreviewRow>
+        </PreviewSection>
+
+        <PreviewSection
+          title="FolderActions"
+          sourcePath="src/components/FolderActions.tsx"
+          description="Меню «⋮» → «Редактировать название»/«Удалить», общая логика для шапки FolderDetailScreen и карточки FolderCard (узел 2374:12645 подтвердил кнопку в обоих местах). Кнопка здесь — точный футпринт 20×20 узла 2380:12748 (шапка «внутри папки»), с иконкой на всю коробку, без отступа — как в макете."
+        >
+          <PreviewRow label="Кнопка «⋮» (кликните — открывает меню редактирования/удаления)">
+            <FolderActionsDemo />
+          </PreviewRow>
+          <PreviewRow label="Размер иконки: cva-вариант xs как есть / с оверрайдом под макет">
+            <div className="flex items-center gap-4">
+              <div className="flex flex-col items-center gap-1">
+                <IconButton aria-label="До" icon={<Icon name="dots-vertical" />} size="xs" tone="ghost" />
+                <span className="text-[11px]" style={{ color: "var(--mappy-text-tertiary)" }}>
+                  xs как есть (svg 12px)
+                </span>
+              </div>
+              <div className="flex flex-col items-center gap-1">
+                <IconButton
+                  aria-label="После"
+                  icon={<Icon name="dots-vertical" />}
+                  size="xs"
+                  tone="ghost"
+                  className="[&_svg]:size-5"
+                />
+                <span className="text-[11px]" style={{ color: "var(--mappy-text-tertiary)" }}>
+                  + [&_svg]:size-5 (20px, узел 2380:12748)
+                </span>
+              </div>
+            </div>
           </PreviewRow>
         </PreviewSection>
 

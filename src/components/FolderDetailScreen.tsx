@@ -160,12 +160,21 @@ export function FolderDetailScreen({
               {folderTitle}{" "}
               <span style={{ color: "var(--mappy-text-tertiary)" }}>{places?.length ?? ""}</span>
             </h1>
+            {/* size="xs" даёт правильный футпринт 20×20 (узел 2380:12748
+                подтвердил именно этот размер кнопки), но сама иконка внутри
+                него у cva-варианта xs — 12px (size-3), а в макете точки
+                занимают все 20×20 без отступа. Тот же класс проблемы, что
+                уже чинили на карточке (Этап 76, п.14, там кнопку целиком
+                увеличили до size="m"), но здесь футпринт расти не должен —
+                увеличиваем только саму иконку через className, не трогая
+                общий cva-вариант xs, которым пользуются другие места. */}
             <IconButton
               size="xs"
               tone="ghost"
               icon={<Icon name="dots-vertical" />}
               aria-label="Действия с папкой"
               onClick={openMenu}
+              className="[&_svg]:size-5"
             />
           </div>
 
