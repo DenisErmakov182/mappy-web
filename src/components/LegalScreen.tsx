@@ -14,12 +14,12 @@ export function LegalScreen({ document, onClose }: { document: LegalDocument; on
       >
         <button
           onClick={onClose}
-          className="text-[16px] font-medium text-[#ff2d87] shrink-0"
+          className="text-[16px] font-medium text-[color:var(--mappy-pink)] shrink-0"
           aria-label="Закрыть документ"
         >
           Назад
         </button>
-        <h1 className="text-[16px] font-semibold text-[#030712] truncate">{document.title}</h1>
+        <h1 className="text-[16px] font-semibold text-[color:var(--mappy-text-primary)] truncate">{document.title}</h1>
       </div>
 
       <div
@@ -33,7 +33,7 @@ export function LegalScreen({ document, onClose }: { document: LegalDocument; on
            * сказать, что документ не дописан: по такому документу человек не
            * сможет реализовать свои права, а именно для этого адрес и нужен.
            */
-          <div className="mb-5 rounded-[length:var(--mappy-radius-md)] bg-[#fff4e5] px-4 py-3 text-[14px] leading-[19px] text-[#8a4b00]">
+          <div className="mb-5 rounded-[length:var(--mappy-radius-md)] bg-[color:var(--color-surface-warning)] px-4 py-3 text-[14px] leading-[19px] text-[color:var(--color-text-warning)]">
             Документ подготовлен, но ещё не содержит полных реквизитов оператора. Это черновая
             редакция: она описывает, как Сервис работает на самом деле, но до публичного запуска
             будет дополнена и проверена юристом.
@@ -44,12 +44,12 @@ export function LegalScreen({ document, onClose }: { document: LegalDocument; on
 
         {document.blocks.map((block) => (
           <section key={block.heading} className="mb-6">
-            <h2 className="mb-2 text-[17px] leading-[22px] font-semibold text-[#030712]">
+            <h2 className="mb-2 text-[17px] leading-[22px] font-semibold text-[color:var(--mappy-text-primary)]">
               {block.heading}
             </h2>
 
             {block.paragraphs?.map((paragraph) => (
-              <p key={paragraph} className="mb-2 text-[16px] leading-[21px] text-[#364153]">
+              <p key={paragraph} className="mb-2 text-[16px] leading-[21px] text-[color:var(--mappy-text-secondary)]">
                 {paragraph}
               </p>
             ))}
@@ -59,7 +59,7 @@ export function LegalScreen({ document, onClose }: { document: LegalDocument; on
                 {block.list.map((item) => (
                   <li
                     key={item}
-                    className="relative pl-4 text-[16px] leading-[21px] text-[#364153]
+                    className="relative pl-4 text-[16px] leading-[21px] text-[color:var(--mappy-text-secondary)]
                                before:absolute before:left-0 before:top-[9px] before:h-1 before:w-1
                                before:rounded-full before:bg-[color:var(--mappy-text-tertiary)]"
                   >
