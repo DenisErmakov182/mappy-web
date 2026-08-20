@@ -95,14 +95,18 @@ export function FolderCard({
             на актуальном узле 2289:41766: там "Medium Close Icon" size-20,
             обёртка p-4+radius-xs = 28px итого. Раньше брал xs по устаревшей
             ссылке (2374:12580 тогда показывала другую иконку и Extra Small
-            12px). Позиция тоже с актуального узла: left:167, top:55 (не 171/59). */}
+            12px). Позиция тоже с актуального узла: left:167, top:55 (не 171/59).
+            Тёмная подложка-кружок (rgba(0,0,0,0.7)) — не из Figma (там фон
+            ghost/прозрачный), добавлена по прямому запросу владельца:
+            белые точки без подложки терялись на пёстром фоне (фото/красный). */}
         <div className="absolute" style={{ left: px(167), top: py(55) }}>
           <IconButton
             size="m"
             tone="ghost"
             icon={<Icon name="dots-vertical" />}
             aria-label={`Действия с папкой «${title}»`}
-            className="text-white"
+            className="rounded-full text-white"
+            style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
             onClick={(e) => {
               e.stopPropagation();
               openMenu();
