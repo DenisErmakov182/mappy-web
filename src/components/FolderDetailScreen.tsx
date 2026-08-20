@@ -1,77 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Place, PlaceFilters } from "../types";
 import { placeMatchesFilters } from "../types";
-import { fetchFolderPlaces, removePlaceFromFolder, renameFolder, deleteFolder } from "../lib/api";
+import { fetchFolderPlaces, removePlaceFromFolder } from "../lib/api";
 import { NotesList } from "./NotesList";
 import { BackIcon } from "./FriendsScreen";
-import { FilterIcon, SearchIcon, Sheet, CloseButton } from "./primitives";
-import { ActionSheet } from "./ActionSheet";
-import { FolderNameSheet } from "./FolderNameSheet";
+import { FilterIcon, SearchIcon } from "./primitives";
 import { IconButton } from "./design-system/01-atoms/controls/IconButton";
 import { Icon } from "./design-system/00-foundations/Icon";
+import { useFolderActions } from "./FolderActions";
 import removeFromFolderIcon from "../assets/icons/swipe-remove-folder.svg";
-
-/*
- * Подтверждение удаления папки (узел не задан отдельно владельцем — по его
- * словесному ТЗ 20.08.2026: дропдаун «…» → «Удалить» → этот шит → реальное
- * удаление). Места внутри папки НЕ удаляются — только явка папки как
- * подборки, каскад в БД уносит лишь связку folder_places (см. комментарий у
- * DELETE /folders/:id в mappy-api/src/routes/folders.ts). Подпись это
- * прямо проговаривает, чтобы не пугать человека.
- */
-function FolderDeleteConfirmSheet({
-  folderTitle,
-  deleting,
-  onConfirm,
-  onClose,
-}: {
-  folderTitle: string;
-  deleting: boolean;
-  onConfirm: () => void;
-  onClose: () => void;
-}) {
-  return (
-    <Sheet onClose={onClose}>
-      <div className="flex flex-col gap-4 px-5 pb-4">
-        <div className="flex items-start justify-between gap-3 pl-1">
-          <div className="flex flex-col gap-1">
-            <h3
-              className="text-[22px] leading-7 font-semibold tracking-[-0.6px]"
-              style={{ color: "var(--mappy-text-secondary)" }}
-            >
-              Удалить папку «{folderTitle}»?
-            </h3>
-            <p className="text-[14px] leading-[18px]" style={{ color: "var(--mappy-text-secondary)" }}>
-              Места внутри папки никуда не денутся — они останутся в «Сохранённом» и на карте.
-            </p>
-          </div>
-          <CloseButton onClick={onClose} />
-        </div>
-
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={deleting}
-            className="h-14 flex-1 rounded-[14px] text-[16px] font-medium disabled:opacity-70"
-            style={{ backgroundColor: "var(--mappy-surface-secondary)", color: "var(--mappy-text-secondary)" }}
-          >
-            Отмена
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            disabled={deleting}
-            className="h-14 flex-1 rounded-[14px] text-[16px] font-medium text-white disabled:opacity-70"
-            style={{ backgroundColor: "#fb2c36" }}
-          >
-            {deleting ? "Удаляем…" : "Удалить"}
-          </button>
-        </div>
-      </div>
-    </Sheet>
-  );
-}
 
 // Высота шапки (заголовок 44 + строка поиска 64, узел 2295:33044) — NotesList
 // использует её, чтобы сдвинуть список ровно под неё, а не под глобальный
@@ -84,6 +21,10 @@ const HEADER_HEIGHT = "108px";
  * локальным поиском+фильтром вместо глобального SearchFilterBar. Свайп места
  * убирает его из папки, а не удаляет — место остаётся в «Сохранённом» и на
  * карте (решение владельца, см. Этап 75 в истории разработки).
+ *
+ * Редактирование названия/удаление папки (кнопка «⋮» в шапке) — общая
+ * логика с такой же кнопкой прямо на карточке в FoldersGrid, см.
+ * useFolderActions в FolderActions.tsx.
  */
 export function FolderDetailScreen({
   folderId,
@@ -122,11 +63,13 @@ export function FolderDetailScreen({
   const [places, setPlaces] = useState<Place[] | null>(null);
   const [error, setError] = useState(false);
   const [query, setQuery] = useState("");
-  const [showMenu, setShowMenu] = useState(false);
-  const [showRename, setShowRename] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [renaming, setRenaming] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+
+  const { openMenu, sheets } = useFolderActions({
+    folderId,
+    folderTitle,
+    onRenamed: onFolderRenamed,
+    onDeleted: onFolderDeleted,
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -163,32 +106,6 @@ export function FolderDetailScreen({
       // Папку могли уже удалить на другом устройстве, или сеть подвела —
       // возвращаем место в список, а не оставляем интерфейс лгать.
       setPlaces((prev) => (prev ? [...prev, place] : prev));
-    }
-  };
-
-  const saveRename = async (title: string) => {
-    setRenaming(true);
-    try {
-      await renameFolder(folderId, title);
-      onFolderRenamed(title);
-      setShowRename(false);
-    } catch {
-      // Оставляем шит открытым с уже введённым текстом — сеть подвела,
-      // а не «название нельзя такое», человек может просто повторить.
-    } finally {
-      setRenaming(false);
-    }
-  };
-
-  const confirmDelete = async () => {
-    setDeleting(true);
-    try {
-      await deleteFolder(folderId);
-      onFolderDeleted();
-    } catch {
-      // Папку уже могли удалить на другом устройстве, или сеть подвела —
-      // шит остаётся открытым, человек видит «Удаляем…» пропало и пробует ещё раз.
-      setDeleting(false);
     }
   };
 
@@ -248,7 +165,7 @@ export function FolderDetailScreen({
               tone="ghost"
               icon={<Icon name="dots-vertical" />}
               aria-label="Действия с папкой"
-              onClick={() => setShowMenu(true)}
+              onClick={openMenu}
             />
           </div>
 
@@ -282,34 +199,7 @@ export function FolderDetailScreen({
         </div>
       </div>
 
-      {showMenu && (
-        <ActionSheet
-          actions={[
-            { label: "Редактировать название", onClick: () => { setShowMenu(false); setShowRename(true); } },
-            { label: "Удалить", color: "#ff3b30", onClick: () => { setShowMenu(false); setShowDeleteConfirm(true); } },
-          ]}
-          onCancel={() => setShowMenu(false)}
-        />
-      )}
-
-      {showRename && (
-        <FolderNameSheet
-          title="Переименовать папку"
-          confirmLabel={renaming ? "Сохраняем…" : "Сохранить"}
-          initialValue={folderTitle}
-          onConfirm={saveRename}
-          onClose={() => !renaming && setShowRename(false)}
-        />
-      )}
-
-      {showDeleteConfirm && (
-        <FolderDeleteConfirmSheet
-          folderTitle={folderTitle}
-          deleting={deleting}
-          onConfirm={confirmDelete}
-          onClose={() => !deleting && setShowDeleteConfirm(false)}
-        />
-      )}
+      {sheets}
     </div>
   );
 }

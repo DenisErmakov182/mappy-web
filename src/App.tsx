@@ -641,6 +641,10 @@ function MapApp({
             query={folderQuery}
             onOpenFolder={(folder) => setSavedView({ kind: "folder", id: folder.id, title: folder.title })}
             onCreateFolder={() => setShowCreateFolder(true)}
+            onFolderRenamed={(folderId, title) =>
+              setFolders((prev) => prev.map((f) => (f.id === folderId ? { ...f, title } : f)))
+            }
+            onFolderDeleted={(folderId) => setFolders((prev) => prev.filter((f) => f.id !== folderId))}
           />
         )}
         {tab === "notes" && savedView.kind === "folder" && (

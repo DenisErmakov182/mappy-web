@@ -72,11 +72,17 @@ export function FoldersGrid({
   query = "",
   onOpenFolder,
   onCreateFolder,
+  onFolderRenamed,
+  onFolderDeleted,
 }: {
   folders: Folder[];
   query?: string;
   onOpenFolder: (folder: Folder) => void;
   onCreateFolder: () => void;
+  /** Папку переименовали прямо с карточки в сетке (кнопка «⋮», не заходя внутрь). */
+  onFolderRenamed: (folderId: string, title: string) => void;
+  /** Папку удалили прямо с карточки в сетке. */
+  onFolderDeleted: (folderId: string) => void;
 }) {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -119,10 +125,13 @@ export function FoldersGrid({
             {filtered.map((folder) => (
               <FolderCard
                 key={folder.id}
+                folderId={folder.id}
                 title={folder.title}
                 placesCount={folder.placesCount}
                 coverPhotos={folder.coverPhotos}
                 onClick={() => onOpenFolder(folder)}
+                onFolderRenamed={(title) => onFolderRenamed(folder.id, title)}
+                onFolderDeleted={() => onFolderDeleted(folder.id)}
               />
             ))}
             {/* Последний ряд сетки в 2 колонки — нечётный остаток (1, 3, 5…)

@@ -236,24 +236,41 @@ export function ComponentsPreviewPage() {
         >
           <PreviewRow label="Пустая / с фото / со смешанными (null = заглушка)">
             <div className="grid w-full max-w-md grid-cols-2 gap-3">
-              <FolderCard title="Рестораны" placesCount={0} coverPhotos={[]} onClick={() => {}} />
               <FolderCard
+                folderId="demo-1"
+                title="Рестораны"
+                placesCount={0}
+                coverPhotos={[]}
+                onClick={() => {}}
+                onFolderRenamed={() => {}}
+                onFolderDeleted={() => {}}
+              />
+              <FolderCard
+                folderId="demo-2"
                 title="Италия"
                 placesCount={3}
                 coverPhotos={[samplePhoto, samplePhoto, samplePhoto]}
                 onClick={() => {}}
+                onFolderRenamed={() => {}}
+                onFolderDeleted={() => {}}
               />
               <FolderCard
+                folderId="demo-3"
                 title="Музеи"
                 placesCount={3}
                 coverPhotos={[samplePhoto, null, null]}
                 onClick={() => {}}
+                onFolderRenamed={() => {}}
+                onFolderDeleted={() => {}}
               />
               <FolderCard
+                folderId="demo-4"
                 title="Очень длинное название папки, которое не влезает"
                 placesCount={12}
                 coverPhotos={[samplePhoto, samplePhoto]}
                 onClick={() => {}}
+                onFolderRenamed={() => {}}
+                onFolderDeleted={() => {}}
               />
             </div>
           </PreviewRow>
@@ -303,22 +320,22 @@ export function ComponentsPreviewPage() {
         >
           <PreviewRow label="Пусто">
             <div className="h-[420px] w-full max-w-sm overflow-hidden rounded-2xl border">
-              <FoldersGrid folders={[]} onOpenFolder={() => {}} onCreateFolder={() => {}} />
+              <FoldersGrid folders={[]} onOpenFolder={() => {}} onCreateFolder={() => {}} onFolderRenamed={() => {}} onFolderDeleted={() => {}} />
             </div>
           </PreviewRow>
           <PreviewRow label="1 папка, нечётное (кнопка — тайл сетки)">
             <div className="h-[420px] w-full max-w-sm overflow-hidden rounded-2xl border">
-              <FoldersGrid folders={[demoFolders[0]]} onOpenFolder={() => {}} onCreateFolder={() => {}} />
+              <FoldersGrid folders={[demoFolders[0]]} onOpenFolder={() => {}} onCreateFolder={() => {}} onFolderRenamed={() => {}} onFolderDeleted={() => {}} />
             </div>
           </PreviewRow>
           <PreviewRow label="2 папки, чётное (кнопка — строка снизу)">
             <div className="h-[420px] w-full max-w-sm overflow-hidden rounded-2xl border">
-              <FoldersGrid folders={demoFolders.slice(0, 2)} onOpenFolder={() => {}} onCreateFolder={() => {}} />
+              <FoldersGrid folders={demoFolders.slice(0, 2)} onOpenFolder={() => {}} onCreateFolder={() => {}} onFolderRenamed={() => {}} onFolderDeleted={() => {}} />
             </div>
           </PreviewRow>
           <PreviewRow label="3 папки, нечётное (кнопка — тайл сетки рядом с третьей)">
             <div className="h-[420px] w-full max-w-sm overflow-hidden rounded-2xl border">
-              <FoldersGrid folders={demoFolders} onOpenFolder={() => {}} onCreateFolder={() => {}} />
+              <FoldersGrid folders={demoFolders} onOpenFolder={() => {}} onCreateFolder={() => {}} onFolderRenamed={() => {}} onFolderDeleted={() => {}} />
             </div>
           </PreviewRow>
         </PreviewSection>
