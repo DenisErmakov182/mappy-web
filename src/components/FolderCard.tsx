@@ -31,7 +31,7 @@ export function FolderCard({
           className="pointer-events-none absolute block truncate font-semibold text-white"
           style={{
             left: px(9),
-            top: py(80),
+            top: py(59),
             right: px(9),
             fontSize: "16px",
             lineHeight: "18px",
@@ -44,7 +44,7 @@ export function FolderCard({
           className="pointer-events-none absolute block"
           style={{
             left: px(10),
-            top: py(98),
+            top: py(77),
             fontSize: "16px",
             lineHeight: "18px",
             letterSpacing: "-0.6px",

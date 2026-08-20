@@ -21,7 +21,7 @@ function EmptyStateIllustration() {
       <FolderArt coverPhotos={EMPTY_STATE_PHOTOS}>
         <span
           className="pointer-events-none absolute block truncate font-semibold text-white"
-          style={{ left: px(9), top: py(80), right: px(9), fontSize: "12px", lineHeight: "14px" }}
+          style={{ left: px(9), top: py(59), right: px(9), fontSize: "12px", lineHeight: "14px" }}
         >
           Рестораны
         </span>
@@ -31,11 +31,11 @@ function EmptyStateIllustration() {
 }
 
 /*
- * Вкладка «Папки» — узлы 2289:42911 (пусто) / 2293:28526 (одна папка,
- * кнопка добавления встаёт вторым тайлом сетки) / скриншот с двумя
- * папками (кнопка уезжает отдельной строкой ниже сетки). Три разных
- * состояния кнопки «Добавить папку», не два — оба подтверждены отдельными
- * узлами Figma, не додуманы.
+ * Вкладка «Папки» — узлы 2289:42911 (пусто) / 2293:28627 (нечётное число
+ * папок — кнопка тайлом сетки рядом с последней, 196×118) / 2293:28629
+ * (чётное — кнопка отдельной строкой на всю ширину, 398×59, последний ряд
+ * уже заполнен обеими колонками). Правило — по чётности folders.length, не
+ * по конкретному числу, см. AddFolderTile ниже.
  */
 
 function AddFolderTile({ onClick, fillsGridCell }: { onClick: () => void; fillsGridCell: boolean }) {
@@ -43,15 +43,22 @@ function AddFolderTile({ onClick, fillsGridCell }: { onClick: () => void; fillsG
     <button
       type="button"
       onClick={onClick}
-      className="flex items-center justify-center rounded-[28px] border-[1.5px] border-dashed p-[10px] text-center text-[16px] font-medium"
+      className="flex items-center justify-center rounded-[var(--mappy-radius-lg)] border-[1.5px] border-dashed p-[10px] text-center text-[16px] font-medium"
       style={{
+        // border-radius — токен --mappy-radius-lg (20px), не 28px: перепроверено
+        // 20.08.2026 узлами 2293:28627/2293:28629, оба используют
+        // var(--radius/lg, 20px). 28px — это --mappy-radius-xl, другой токен,
+        // видимо перепутан по аналогии с соседними rounded-[28px] в проекте.
         borderColor: "rgba(3,7,18,0.04)",
         backgroundColor: "var(--mappy-surface-secondary)",
         color: "var(--mappy-text-secondary)",
-        // Одна папка: тайл встаёт вторым в сетке, той же высоты, что карточка
-        // (aspect-ratio 195/139, узел 2293:28526). Две и больше: отдельная
-        // строка на всю ширину, обычная высота кнопки (узел со скриншота).
-        aspectRatio: fillsGridCell ? "195 / 139" : undefined,
+        lineHeight: "18px",
+        letterSpacing: "-0.6px",
+        // Нечётный тайл: встаёт вторым в ряду, той же высоты, что карточка
+        // (aspect-ratio 195/118 — высота папки перепроверена 20.08.2026,
+        // узел 2293:28627). Чётный случай: отдельная строка на всю ширину,
+        // обычная высота кнопки (узел 2293:28629).
+        aspectRatio: fillsGridCell ? "195 / 118" : undefined,
         height: fillsGridCell ? undefined : 56,
       }}
     >

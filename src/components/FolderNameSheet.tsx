@@ -24,7 +24,7 @@ const FOLDER_TITLE_MAX = 50;
  * три стикера-заглушки, что уже есть в проекте для формы места.
  *
  * Текст названия — живой <input> поверх кармана вместо статичного <p> из
- * FolderCard, в той же точке (px(9), py(80)), тем же шрифтом — в макете
+ * FolderCard, в той же точке (px(9), py(59)), тем же шрифтом — в макете
  * название печатается прямо на самой папке.
  */
 const NAME_PHOTOS = [stickerCafe, stickerMuseum, stickerRestaurant];
@@ -43,7 +43,7 @@ function FolderNameArt({ value, onChange, placeholder }: { value: string; onChan
           className="absolute bg-transparent font-semibold text-white outline-none placeholder:text-white/70"
           style={{
             left: px(9),
-            top: py(80),
+            top: py(59),
             right: px(9),
             fontSize: "16px",
             lineHeight: "18px",
