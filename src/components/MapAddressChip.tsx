@@ -8,7 +8,7 @@ import { SplitFlapAddress } from "./SplitFlapAddress";
 export function MapAddressChip({ address }: { address: string }) {
   return (
     <div className="relative">
-      <div className="relative flex max-w-[340px] items-center justify-center rounded-[32px] bg-white px-4 py-3">
+      <div className="relative flex max-w-[340px] items-center justify-center rounded-[length:var(--mappy-radius-2xl)] bg-white px-4 py-3">
         <span
           className="text-center text-[16px] font-medium tracking-[-0.6px]"
           style={{ color: "var(--mappy-text-secondary)" }}

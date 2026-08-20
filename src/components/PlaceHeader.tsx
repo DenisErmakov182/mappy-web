@@ -76,7 +76,7 @@ export function PlaceHeader({
       {(rating > 0 || formattedDate || showSystemNameTag) && (
         <div className="flex flex-wrap items-center gap-1">
           {rating > 0 && (
-            <span className="[&>span]:h-[26px] [&>span]:rounded-[10px]">
+            <span className="[&>span]:h-[26px] [&>span]:rounded-[length:var(--mappy-radius-sm)]">
               <RatingChip rating={rating} />
             </span>
           )}

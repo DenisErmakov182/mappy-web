@@ -36,7 +36,7 @@ function formatCountdown(totalSec: number): string {
 const COLOR_HEADER = "#232323";
 const COLOR_SECONDARY = "var(--mappy-text-secondary)"; // #4a5565
 const COLOR_BRAND = "var(--mappy-pink)"; // #ff2056
-const COLOR_DANGER = "#fb2c36";
+const COLOR_DANGER = "var(--mappy-text-danger)";
 const COLOR_INPUT_TEXT = "var(--mappy-text-primary)"; // #1e2939
 const COLOR_INPUT_BG = "var(--mappy-surface-secondary)"; // #f3f4f6
 const TRACKING = "-0.6px";
@@ -104,7 +104,7 @@ function CheckRow({
       */}
       <button
         onClick={onToggle}
-        className="relative w-3.5 h-3.5 mt-0.5 rounded-[2px] shrink-0 after:absolute after:-inset-3.5 after:content-['']"
+        className="relative w-3.5 h-3.5 mt-0.5 rounded-[length:var(--mappy-radius-xxs)] shrink-0 after:absolute after:-inset-3.5 after:content-['']"
         style={{
           border: "1px solid rgba(3,7,18,0.08)",
           backgroundColor: checked ? COLOR_BRAND : "transparent",
@@ -568,7 +568,7 @@ export function AuthScreen({
                 onKeyDown={(e) => e.key === "Enter" && submitEmail()}
                 placeholder="Почта"
                 inputMode="email"
-                className="h-[50px] px-4 rounded-[14px] text-[16px] font-medium outline-none placeholder:text-[#99a1af]"
+                className="h-[50px] px-4 rounded-[length:var(--mappy-radius-md)] text-[16px] font-medium outline-none placeholder:text-[color:var(--mappy-text-tertiary)]"
                 style={emailError ? inputErrorStyle : inputStyle}
                 autoFocus
               />
@@ -664,7 +664,7 @@ export function AuthScreen({
                     inputMode="numeric"
                     maxLength={1}
                     disabled={loading}
-                    className="flex-1 min-w-0 w-0 h-[66px] rounded-[14px] text-[26px] font-medium text-center outline-none disabled:opacity-60"
+                    className="flex-1 min-w-0 w-0 h-[66px] rounded-[length:var(--mappy-radius-md)] text-[26px] font-medium text-center outline-none disabled:opacity-60"
                     style={error ? inputErrorStyle : inputStyle}
                     autoFocus={i === 0}
                   />
@@ -779,7 +779,7 @@ export function AuthScreen({
                     if (firstNameError) setFirstNameError("");
                   }}
                   placeholder="Имя"
-                  className="w-full h-[50px] px-4 rounded-[14px] text-[16px] font-medium outline-none placeholder:text-[#99a1af]"
+                  className="w-full h-[50px] px-4 rounded-[length:var(--mappy-radius-md)] text-[16px] font-medium outline-none placeholder:text-[color:var(--mappy-text-tertiary)]"
                   style={firstNameError ? inputErrorStyle : inputStyle}
                   autoFocus
                 />
@@ -793,7 +793,7 @@ export function AuthScreen({
                     if (lastNameError) setLastNameError("");
                   }}
                   placeholder="Фамилия"
-                  className="w-full h-[50px] px-4 rounded-[14px] text-[16px] font-medium outline-none placeholder:text-[#99a1af]"
+                  className="w-full h-[50px] px-4 rounded-[length:var(--mappy-radius-md)] text-[16px] font-medium outline-none placeholder:text-[color:var(--mappy-text-tertiary)]"
                   style={lastNameError ? inputErrorStyle : inputStyle}
                 />
                 {lastNameError && <FieldError text={lastNameError} />}
@@ -807,7 +807,7 @@ export function AuthScreen({
                   }}
                   onKeyDown={(e) => e.key === "Enter" && submitProfile()}
                   placeholder="Ник"
-                  className="w-full h-[50px] px-4 rounded-[14px] text-[16px] font-medium outline-none placeholder:text-[#99a1af]"
+                  className="w-full h-[50px] px-4 rounded-[length:var(--mappy-radius-md)] text-[16px] font-medium outline-none placeholder:text-[color:var(--mappy-text-tertiary)]"
                   style={usernameError ? inputErrorStyle : inputStyle}
                 />
                 {usernameError && <FieldError text={usernameError} />}
@@ -815,7 +815,7 @@ export function AuthScreen({
             </div>
 
             {error && (
-              <p className="text-[13px] text-center" style={{ color: COLOR_DANGER }}>
+              <p className="text-[14px] text-center" style={{ color: COLOR_DANGER }}>
                 {error}
               </p>
             )}

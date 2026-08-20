@@ -21,8 +21,8 @@ function AppRecoveryScreen() {
   return (
     <main className="fixed inset-0 flex flex-col items-center justify-center bg-white px-5 text-center">
       <div className="flex w-full max-w-sm flex-col items-center gap-4">
-        <h1 className="text-[28px] font-semibold leading-[32px] text-[#1e2939]">Не удалось открыть Mappy</h1>
-        <p className="max-w-[330px] text-[16px] leading-[22px] text-[#4a5565]">
+        <h1 className="text-[28px] font-semibold leading-[32px] text-[color:var(--mappy-text-primary)]">Не удалось открыть Mappy</h1>
+        <p className="max-w-[330px] text-[16px] leading-[22px] text-[color:var(--mappy-text-secondary)]">
           Обновим оболочку приложения. Аккаунт и сохранённые места останутся на месте.
         </p>
       </div>
@@ -31,7 +31,7 @@ function AppRecoveryScreen() {
         <button
           type="button"
           onClick={() => void recoverAppShell()}
-          className="h-14 w-full rounded-[14px] text-[16px] font-medium text-white"
+          className="h-14 w-full rounded-[length:var(--mappy-radius-md)] text-[16px] font-medium text-white"
           style={{ background: "var(--mappy-gradient-cta)" }}
         >
           Восстановить приложение

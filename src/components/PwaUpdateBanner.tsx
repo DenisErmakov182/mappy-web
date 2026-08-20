@@ -5,7 +5,7 @@ import { CloseButton } from "./primitives";
 export function PwaUpdateBanner({ onDismiss }: { onDismiss: () => void }) {
   return (
     <div
-      className="relative flex w-full items-start gap-[10px] overflow-hidden rounded-[28px] bg-[#101828] p-4"
+      className="relative flex w-full items-start gap-[10px] overflow-hidden rounded-[length:var(--mappy-radius-xl)] bg-[color:var(--mappy-surface-inverse)] p-4"
       role="status"
     >
       <div className="flex items-center gap-[6px]">
@@ -19,7 +19,7 @@ export function PwaUpdateBanner({ onDismiss }: { onDismiss: () => void }) {
         <CloseButton
           onClick={onDismiss}
           size={26}
-          backgroundColor="#101828"
+          backgroundColor="var(--mappy-surface-inverse)"
           iconColor="var(--mappy-text-tertiary)"
           iconStrokeWidth={1.5}
         />

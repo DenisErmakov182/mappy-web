@@ -67,7 +67,7 @@ export function NotesList({
           </p>
           <button
             onClick={onGoToMap}
-            className="rounded-[12px] px-4 py-2.5 text-[15px] font-medium"
+            className="rounded-[12px] px-4 py-2.5 text-[16px] font-medium"
             style={{ backgroundColor: "var(--mappy-brand-subtle)", color: "var(--mappy-pink)" }}
           >
             Предлагаем найти новые!

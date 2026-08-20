@@ -12,8 +12,8 @@ import starSoft from "../assets/icons/star-soft.svg";
 export function Tag({ children }: { children: ReactNode }) {
   return (
     <span
-      className="flex h-[26px] items-center rounded-[10px] px-2 text-[16px] font-medium leading-[18px] tracking-[-0.6px]"
-      style={{ backgroundColor: "var(--mappy-surface-secondary)", color: "#99a1af" }}
+      className="flex h-[26px] items-center rounded-[length:var(--mappy-radius-sm)] px-2 text-[16px] font-medium leading-[18px] tracking-[-0.6px]"
+      style={{ backgroundColor: "var(--mappy-surface-secondary)", color: "var(--mappy-text-tertiary)" }}
     >
       {children}
     </span>
@@ -196,7 +196,7 @@ export function CloseButton({
   onClick,
   size = 26,
   backgroundColor = "var(--mappy-surface-secondary)",
-  iconColor = "#4A5565",
+  iconColor = "var(--mappy-text-secondary)",
   iconStrokeWidth = 1.7,
 }: {
   onClick: () => void;
@@ -238,7 +238,7 @@ export function CtaButton({
     <button
       onClick={onClick}
       disabled={disabled}
-      className="cta-gradient w-full h-14 rounded-[14px] flex items-center justify-center gap-1 text-[16px] font-medium shrink-0"
+      className="cta-gradient w-full h-14 rounded-[length:var(--mappy-radius-md)] flex items-center justify-center gap-1 text-[16px] font-medium shrink-0"
     >
       {children}
     </button>

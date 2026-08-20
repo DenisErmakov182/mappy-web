@@ -51,7 +51,7 @@ function appendOwnerAvatar(
   if (!place.owner) return;
   const avatar = document.createElement("span");
   avatar.title = place.owner.name;
-  avatar.style.cssText = `position:absolute;left:${left}px;top:${top}px;z-index:${zIndex};box-sizing:border-box;width:${size}px;height:${size}px;border:2px solid #f3f4f6;border-radius:999px;background:#f9fafb;overflow:hidden;pointer-events:none;`;
+  avatar.style.cssText = `position:absolute;left:${left}px;top:${top}px;z-index:${zIndex};box-sizing:border-box;width:${size}px;height:${size}px;border:2px solid var(--mappy-surface-secondary);border-radius:999px;background:var(--mappy-surface-primary);overflow:hidden;pointer-events:none;`;
   if (place.owner.avatarUrl) {
     const image = document.createElement("img");
     image.src = place.owner.avatarUrl;
@@ -102,7 +102,7 @@ export function buildPinElement(place: PinPlace, onSelect?: () => void): HTMLEle
     // место, а не оставляем пустой отступ слева.
     const tag = document.createElement("span");
     const tagLeft = place.rating > 0 ? 28 : 0;
-    tag.style.cssText = `position:absolute;left:${tagLeft}px;top:${14 + topOffset}px;z-index:2;height:28px;padding:4px 8px;border-radius:999px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;`;
+    tag.style.cssText = `position:absolute;left:${tagLeft}px;top:${14 + topOffset}px;z-index:2;height:28px;padding:4px 8px;border-radius:999px;background:var(--mappy-surface-secondary);display:flex;align-items:center;justify-content:center;`;
     const icon = document.createElement("img");
     icon.src = categoryIcons[mainCategory];
     icon.style.cssText = "width:24px;height:20px;object-fit:contain;";

@@ -18,7 +18,7 @@ export function OwnerTag({ owner }: { owner: Friend }) {
 
   return (
     <div
-      className="flex w-full items-center gap-3 rounded-[28px] p-3"
+      className="flex w-full items-center gap-3 rounded-[length:var(--mappy-radius-xl)] p-3"
       style={{ backgroundColor: "var(--mappy-surface-primary)" }}
     >
       <FriendAvatar person={owner} size={40} />

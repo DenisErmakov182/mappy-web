@@ -14,8 +14,8 @@ import { PhotoPlaceholder } from "./PhotoPlaceholder";
  * Макет: Figma Place Detail, node 1868:38725 / ProgressBarContainer 1868:38717.
  */
 
-const SEGMENT_ACTIVE = "#ff637e";
-const CARD = "aspect-square w-full shrink-0 snap-center snap-always overflow-hidden rounded-[28px] shadow-[8px_2px_30.4px_#e9e9e9]";
+const SEGMENT_ACTIVE = "var(--mappy-brand-secondary)";
+const CARD = "aspect-square w-full shrink-0 snap-center snap-always overflow-hidden rounded-[length:var(--mappy-radius-xl)] shadow-[var(--mappy-shadow-card)]";
 
 export function PhotoSwiper({ photos }: { photos: Photo[] }) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -72,7 +72,7 @@ export function PhotoSwiper({ photos }: { photos: Photo[] }) {
               {photo.caption && (
                 <div
                   className="absolute inset-x-4 bottom-4 rounded-[16px] px-4 py-3 text-[14px] leading-5"
-                  style={{ backgroundColor: "rgba(255,255,255,0.92)", color: "#1e2939" }}
+                  style={{ backgroundColor: "rgba(255,255,255,0.92)", color: "var(--mappy-text-primary)" }}
                 >
                   {photo.caption}
                 </div>

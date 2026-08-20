@@ -182,7 +182,7 @@ export function FolderArt({
           top: py(55),
           width: "100%",
           height: py(64),
-          backgroundColor: "#ff2056",
+          backgroundColor: "var(--mappy-pink)",
           borderBottomLeftRadius: "var(--mappy-radius-lg)",
           borderBottomRightRadius: "var(--mappy-radius-lg)",
           boxShadow: "inset 0 -4.964px 16.967px -1.928px #c10007",

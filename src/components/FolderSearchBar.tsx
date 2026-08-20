@@ -11,9 +11,9 @@ import { SearchIcon } from "./primitives";
  */
 export function FolderSearchBar({ query, onQueryChange }: { query: string; onQueryChange: (query: string) => void }) {
   return (
-    <div className="flex gap-1 rounded-[32px] bg-white p-2">
+    <div className="flex gap-1 rounded-[length:var(--mappy-radius-2xl)] bg-white p-2">
       <label
-        className="flex h-12 flex-1 items-center gap-2.5 rounded-[32px] px-4"
+        className="flex h-12 flex-1 items-center gap-2.5 rounded-[length:var(--mappy-radius-2xl)] px-4"
         style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
       >
         <SearchIcon

@@ -22,7 +22,7 @@ import { Sheet, CloseButton, CtaButton } from "./primitives";
  */
 function chipStyle(isSelected: boolean) {
   return {
-    backgroundColor: isSelected ? "#101828" : "var(--mappy-surface-primary)",
+    backgroundColor: isSelected ? "var(--mappy-surface-inverse)" : "var(--mappy-surface-primary)",
     color: isSelected ? "#fff" : "var(--mappy-text-secondary)",
   };
 }
@@ -84,7 +84,7 @@ export function FilterSheet({
           <button
             onClick={() => setDraft(emptyFilters())}
             className="text-[20px] leading-6 font-medium"
-            style={{ color: "#99a1af" }}
+            style={{ color: "var(--mappy-text-tertiary)" }}
           >
             Сбросить
           </button>
@@ -103,7 +103,7 @@ export function FilterSheet({
                 <button
                   key={category}
                   onClick={() => toggleCategory(category)}
-                  className="flex items-center gap-1 pl-2 pr-3 py-3 rounded-[14px] text-[16px] font-medium"
+                  className="flex items-center gap-1 pl-2 pr-3 py-3 rounded-[length:var(--mappy-radius-md)] text-[16px] font-medium"
                   style={chipStyle(isSelected)}
                 >
                   <CategoryIcon category={category} />
@@ -125,10 +125,10 @@ export function FilterSheet({
                 <button
                   key={rating}
                   onClick={() => toggleRating(rating)}
-                  className="flex items-center gap-0.5 h-[40px] px-2 rounded-[10px] text-[16px] font-medium"
+                  className="flex items-center gap-0.5 h-[40px] px-2 rounded-[length:var(--mappy-radius-sm)] text-[16px] font-medium"
                   style={chipStyle(isSelected)}
                 >
-                  {rating} <span className="text-[13px]">★</span>
+                  {rating} <span className="text-[14px]">★</span>
                 </button>
               );
             })}
@@ -146,7 +146,7 @@ export function FilterSheet({
                 <button
                   key={status}
                   onClick={() => toggleStatus(status)}
-                  className="h-[42px] px-3 rounded-[14px] text-[16px] font-medium"
+                  className="h-[42px] px-3 rounded-[length:var(--mappy-radius-md)] text-[16px] font-medium"
                   style={chipStyle(isSelected)}
                 >
                   {visitStatusLabel[status]}
@@ -170,12 +170,12 @@ export function FilterSheet({
             </span>
             <span
               className="relative h-7 w-[53px] rounded-full transition-colors"
-              style={{ backgroundColor: draft.includeFriendPlaces ? "#ff637e" : "#f3f4f6" }}
+              style={{ backgroundColor: draft.includeFriendPlaces ? "var(--mappy-brand-secondary)" : "var(--mappy-surface-secondary)" }}
             >
               <span
                 className="absolute top-[3px] h-[22px] w-[22px] rounded-full transition-transform"
                 style={{
-                  backgroundColor: draft.includeFriendPlaces ? "white" : "#99a1af",
+                  backgroundColor: draft.includeFriendPlaces ? "white" : "var(--mappy-text-tertiary)",
                   transform: draft.includeFriendPlaces ? "translateX(28px)" : "translateX(3px)",
                 }}
               />

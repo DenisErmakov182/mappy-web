@@ -57,14 +57,14 @@ function PrivacyToggle({ checked, onChange }: { checked: boolean; onChange: (che
       aria-checked={checked}
       aria-label="Личная заметка"
       onClick={() => onChange(!checked)}
-      className="relative h-[28px] w-[53px] shrink-0 overflow-hidden rounded-[32px] transition-colors duration-200"
-      style={{ backgroundColor: checked ? "#ff637e" : "#f3f4f6" }}
+      className="relative h-[28px] w-[53px] shrink-0 overflow-hidden rounded-[length:var(--mappy-radius-2xl)] transition-colors duration-200"
+      style={{ backgroundColor: checked ? "var(--mappy-brand-secondary)" : "var(--mappy-surface-secondary)" }}
     >
       <span
-        className="absolute top-[3px] h-[22px] w-[22px] rounded-[32px] transition-[left,background-color] duration-200"
+        className="absolute top-[3px] h-[22px] w-[22px] rounded-[length:var(--mappy-radius-2xl)] transition-[left,background-color] duration-200"
         style={{
           left: checked ? 28 : 3,
-          backgroundColor: checked ? "var(--mappy-surface-primary)" : "#99a1af",
+          backgroundColor: checked ? "var(--mappy-surface-primary)" : "var(--mappy-text-tertiary)",
         }}
       />
     </button>
@@ -380,7 +380,7 @@ export function AddPlaceSheet({
       footer={
         <>
           {saveError && (
-            <p className="mb-2 text-[13px] text-center" style={{ color: "#fb2c36" }}>
+            <p className="mb-2 text-[14px] text-center" style={{ color: "var(--mappy-text-danger)" }}>
               {saveError}
             </p>
           )}
@@ -405,7 +405,7 @@ export function AddPlaceSheet({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Название"
-            className="h-[46px] px-4 rounded-[14px] text-[16px] outline-none placeholder:text-[#99a1af]"
+            className="h-[46px] px-4 rounded-[length:var(--mappy-radius-md)] text-[16px] outline-none placeholder:text-[color:var(--mappy-text-tertiary)]"
             style={inputStyle}
           />
           <div className="relative">
@@ -420,7 +420,7 @@ export function AddPlaceSheet({
               placeholder={addressLoading ? "Определяем адрес…" : addressError ? "Введите адрес вручную" : "Адрес"}
               disabled={addressLoading}
               aria-label="Адрес"
-              className="h-[46px] w-full px-4 rounded-[14px] text-[16px] outline-none placeholder:text-[#99a1af] disabled:opacity-100"
+              className="h-[46px] w-full px-4 rounded-[length:var(--mappy-radius-md)] text-[16px] outline-none placeholder:text-[color:var(--mappy-text-tertiary)] disabled:opacity-100"
               style={{
                 ...inputStyle,
                 color: showAddressAnimation ? "transparent" : inputStyle.color,
@@ -429,7 +429,7 @@ export function AddPlaceSheet({
             />
             {showAddressAnimation && (
               <span
-                className="pointer-events-none absolute inset-0 flex items-center overflow-hidden rounded-[14px] px-4 text-[16px]"
+                className="pointer-events-none absolute inset-0 flex items-center overflow-hidden rounded-[length:var(--mappy-radius-md)] px-4 text-[16px]"
                 style={{ color: "var(--mappy-text-primary)" }}
                 aria-hidden="true"
               >
@@ -447,10 +447,10 @@ export function AddPlaceSheet({
         {/* Подсказка из GPS-метки фото — только если явно отличается от текущей точки */}
         {photoLocationSuggestion && (
           <div
-            className="flex items-center gap-3 rounded-[14px] px-4 py-3"
+            className="flex items-center gap-3 rounded-[length:var(--mappy-radius-md)] px-4 py-3"
             style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
           >
-            <p className="min-w-0 flex-1 text-[13px] leading-[18px]" style={{ color: "var(--mappy-text-primary)" }}>
+            <p className="min-w-0 flex-1 text-[14px] leading-[18px]" style={{ color: "var(--mappy-text-primary)" }}>
               Судя по фото, это здесь:{" "}
               <span className="font-medium">{photoLocationSuggestion.address}</span>
             </p>
@@ -458,7 +458,7 @@ export function AddPlaceSheet({
               <button
                 type="button"
                 onClick={dismissPhotoLocation}
-                className="flex h-8 items-center rounded-[10px] px-3 text-[13px] font-medium"
+                className="flex h-8 items-center rounded-[length:var(--mappy-radius-sm)] px-3 text-[14px] font-medium"
                 style={{ color: "var(--mappy-text-secondary)" }}
               >
                 Нет
@@ -466,8 +466,8 @@ export function AddPlaceSheet({
               <button
                 type="button"
                 onClick={acceptPhotoLocation}
-                className="flex h-8 items-center rounded-[10px] px-3 text-[13px] font-medium text-white"
-                style={{ backgroundColor: "#ff637e" }}
+                className="flex h-8 items-center rounded-[length:var(--mappy-radius-sm)] px-3 text-[14px] font-medium text-white"
+                style={{ backgroundColor: "var(--mappy-brand-secondary)" }}
               >
                 Да
               </button>
@@ -477,7 +477,7 @@ export function AddPlaceSheet({
 
         {/* Сегмент-контрол 390x44, полное скругление — по макету */}
         <div
-          className="flex h-[44px] items-center p-1 rounded-[28px]"
+          className="flex h-[44px] items-center p-1 rounded-[length:var(--mappy-radius-xl)]"
           style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
         >
           {(
@@ -489,7 +489,7 @@ export function AddPlaceSheet({
             <button
               key={value}
               onClick={() => setStatus(value)}
-              className="flex flex-1 h-full items-center justify-center overflow-hidden px-6 rounded-[28px] text-[14px] leading-[18px] font-medium tracking-[-0.6px] transition-colors"
+              className="flex flex-1 h-full items-center justify-center overflow-hidden px-6 rounded-[length:var(--mappy-radius-xl)] text-[14px] leading-[18px] font-medium tracking-[-0.6px] transition-colors"
               style={{
                 backgroundColor: status === value ? "#fff" : "transparent",
                 color: status === value ? "var(--mappy-text-primary)" : "var(--mappy-text-secondary)",
@@ -524,7 +524,7 @@ export function AddPlaceSheet({
               </p>
               <p
                 className="text-[14px] leading-[18px] tracking-[-0.6px]"
-                style={{ color: "#99a1af" }}
+                style={{ color: "var(--mappy-text-tertiary)" }}
               >
                 Только вы увидите это место
               </p>
@@ -583,8 +583,8 @@ export function AddPlaceSheet({
             <button
               type="button"
               onClick={pickPhotos}
-              className="relative z-10 flex h-14 w-full shrink-0 items-center justify-center gap-1 rounded-[14px] text-[16px] leading-[18px] font-medium tracking-[-0.6px] text-white"
-              style={{ backgroundColor: "#ff637e" }}
+              className="relative z-10 flex h-14 w-full shrink-0 items-center justify-center gap-1 rounded-[length:var(--mappy-radius-md)] text-[16px] leading-[18px] font-medium tracking-[-0.6px] text-white"
+              style={{ backgroundColor: "var(--mappy-brand-secondary)" }}
             >
               <PlusIcon size={20} />
               <span>Добавить фото</span>
@@ -620,7 +620,7 @@ export function AddPlaceSheet({
                       <img
                         src={photos[i].url}
                         alt=""
-                        className="w-full h-full object-cover rounded-[20px]"
+                        className="w-full h-full object-cover rounded-[length:var(--mappy-radius-lg)]"
                         style={{
                           // Вырез под крестик в углу — не картинка поверх фото, а сама
                           // фигура фото с "откушенным" кругом (макет 1928:38243).
@@ -658,7 +658,7 @@ export function AddPlaceSheet({
                       type="button"
                       onClick={() => setCaptionSlotIndex(i)}
                       aria-label={photos[i].caption ? `Подпись: ${photos[i].caption}` : "Добавить подпись"}
-                      className="flex h-[34px] w-full items-center justify-center overflow-hidden rounded-[14px] px-2 text-[14px] font-medium leading-[18px] tracking-[-0.6px]"
+                      className="flex h-[34px] w-full items-center justify-center overflow-hidden rounded-[length:var(--mappy-radius-md)] px-2 text-[14px] font-medium leading-[18px] tracking-[-0.6px]"
                       style={{ backgroundColor: "var(--mappy-surface-secondary)", color: "var(--mappy-text-secondary)" }}
                     >
                       Подпись
@@ -669,7 +669,7 @@ export function AddPlaceSheet({
                     key={i}
                     type="button"
                     onClick={pickPhotos}
-                    className="flex aspect-square items-center justify-center rounded-[14px]"
+                    className="flex aspect-square items-center justify-center rounded-[length:var(--mappy-radius-md)]"
                     style={{
                       border: "1px dashed rgba(3, 7, 18, 0.08)",
                       backgroundColor: "var(--mappy-surface-primary)",
@@ -714,7 +714,7 @@ export function AddPlaceSheet({
               {[...categories].map((category) => (
                 <span
                   key={category}
-                  className="inline-flex items-center gap-1 rounded-[14px] py-3 pl-2 pr-3 text-[16px] leading-[18px] font-medium tracking-[-0.6px]"
+                  className="inline-flex items-center gap-1 rounded-[length:var(--mappy-radius-md)] py-3 pl-2 pr-3 text-[16px] leading-[18px] font-medium tracking-[-0.6px]"
                   style={{ backgroundColor: "var(--mappy-surface-primary)", color: "var(--mappy-text-primary)" }}
                 >
                   <CategoryIcon category={category} size={20} />
@@ -760,7 +760,7 @@ export function AddPlaceSheet({
                 return (
                   <span
                     key={id}
-                    className="inline-flex items-center rounded-[14px] py-3 px-3 text-[16px] leading-[18px] font-medium tracking-[-0.6px]"
+                    className="inline-flex items-center rounded-[length:var(--mappy-radius-md)] py-3 px-3 text-[16px] leading-[18px] font-medium tracking-[-0.6px]"
                     style={{ backgroundColor: "var(--mappy-surface-primary)", color: "var(--mappy-text-primary)" }}
                   >
                     {folder.title}
@@ -778,19 +778,19 @@ export function AddPlaceSheet({
           >
             {status === "been" ? "Поделитесь впечатлениями" : "Поделитесь планами"}
           </h3>
-          <div className="flex flex-col gap-2 rounded-[14px] p-4" style={inputStyle}>
+          <div className="flex flex-col gap-2 rounded-[length:var(--mappy-radius-md)] p-4" style={inputStyle}>
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value.slice(0, NOTE_MAX))}
               placeholder={status === "been" ? "Расскажите, как вам место?" : "Почему хотите посетить это место?"}
               rows={5}
               maxLength={NOTE_MAX}
-              className="w-full bg-transparent text-[16px] outline-none resize-none placeholder:text-[#99a1af]"
+              className="w-full bg-transparent text-[16px] outline-none resize-none placeholder:text-[color:var(--mappy-text-tertiary)]"
               style={{ color: inputStyle.color }}
             />
             <span
               className="self-end text-[12px] leading-4 font-medium"
-              style={{ color: "#99a1af" }}
+              style={{ color: "var(--mappy-text-tertiary)" }}
             >
               {note.length}/{NOTE_MAX}
             </span>

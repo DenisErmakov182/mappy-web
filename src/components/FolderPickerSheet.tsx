@@ -41,7 +41,7 @@ function FolderRow({
     <button
       type="button"
       onClick={onToggle}
-      className="flex w-full items-center gap-2.5 overflow-hidden rounded-[10px] p-2 text-left"
+      className="flex w-full items-center gap-2.5 overflow-hidden rounded-[length:var(--mappy-radius-sm)] p-2 text-left"
       style={{
         backgroundColor: selected ? "var(--mappy-brand-subtle)" : "white",
         border: selected ? "1.5px solid var(--mappy-pink)" : "1.5px solid transparent",
@@ -116,7 +116,7 @@ export function FolderPickerSheet({
           <button
             type="button"
             onClick={() => setShowNewFolder(true)}
-            className="flex items-center justify-center gap-1 rounded-[14px] px-3 py-2 text-[14px] font-medium"
+            className="flex items-center justify-center gap-1 rounded-[length:var(--mappy-radius-md)] px-3 py-2 text-[14px] font-medium"
             style={{ backgroundColor: "var(--mappy-brand-subtle)", color: "var(--mappy-pink)" }}
           >
             <Icon name="plus" className="size-4" />
@@ -124,7 +124,7 @@ export function FolderPickerSheet({
           </button>
 
           <div
-            className="flex max-h-[45vh] flex-col gap-2 overflow-y-auto rounded-[14px] p-2.5"
+            className="flex max-h-[45vh] flex-col gap-2 overflow-y-auto rounded-[length:var(--mappy-radius-md)] p-2.5"
             style={{ backgroundColor: "var(--mappy-surface-primary)" }}
           >
             {localFolders.map((folder) => (
@@ -140,7 +140,7 @@ export function FolderPickerSheet({
           <button
             type="button"
             onClick={() => onSave(Array.from(selected))}
-            className="cta-gradient h-14 w-full shrink-0 rounded-[14px] text-[16px] font-medium"
+            className="cta-gradient h-14 w-full shrink-0 rounded-[length:var(--mappy-radius-md)] text-[16px] font-medium"
           >
             Сохранить
           </button>

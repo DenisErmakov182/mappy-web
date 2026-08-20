@@ -48,7 +48,7 @@ function AddFolderTile({ onClick, fillsGridCell }: { onClick: () => void; fillsG
         // border-radius — токен --mappy-radius-lg (20px), не 28px: перепроверено
         // 20.08.2026 узлами 2293:28627/2293:28629, оба используют
         // var(--radius/lg, 20px). 28px — это --mappy-radius-xl, другой токен,
-        // видимо перепутан по аналогии с соседними rounded-[28px] в проекте.
+        // видимо перепутан по аналогии с соседними rounded-[length:var(--mappy-radius-xl)] в проекте.
         borderColor: "rgba(3,7,18,0.04)",
         backgroundColor: "var(--mappy-surface-secondary)",
         color: "var(--mappy-text-secondary)",
@@ -102,7 +102,7 @@ export function FoldersGrid({
       <div className="px-4 pt-[var(--mappy-floating-top)]">
         <div style={{ paddingTop: "calc(var(--mappy-search-bar-height) + var(--mappy-content-gap))" }}>
           {folders.length === 0 ? (
-            <div className="flex items-center gap-3 overflow-hidden rounded-[28px] bg-white p-4">
+            <div className="flex items-center gap-3 overflow-hidden rounded-[length:var(--mappy-radius-xl)] bg-white p-4">
             <div className="flex-1">
               <p className="text-[20px] font-semibold" style={{ color: "var(--mappy-text-primary)" }}>
                 Папки
@@ -113,7 +113,7 @@ export function FoldersGrid({
               <button
                 type="button"
                 onClick={onCreateFolder}
-                className="mt-4 rounded-[12px] px-4 py-2.5 text-[15px] font-medium"
+                className="mt-4 rounded-[12px] px-4 py-2.5 text-[16px] font-medium"
                 style={{ backgroundColor: "var(--mappy-brand-subtle)", color: "var(--mappy-pink)" }}
               >
                 Добавить папку

@@ -128,7 +128,7 @@ export function SharedPlaceScreen({
   const saveCta = (
     <>
       {saveError && (
-        <p className="px-1 text-center text-[14px] font-medium" style={{ color: "#fb2c36" }}>
+        <p className="px-1 text-center text-[14px] font-medium" style={{ color: "var(--mappy-text-danger)" }}>
           {saveError}
         </p>
       )}
@@ -171,7 +171,7 @@ export function SharedPlaceScreen({
               {place.categories.map((category) => (
                 <span
                   key={category}
-                  className="inline-flex items-center justify-center gap-1 rounded-[14px] py-3 pl-2 pr-3 text-[16px] font-medium leading-[18px]"
+                  className="inline-flex items-center justify-center gap-1 rounded-[length:var(--mappy-radius-md)] py-3 pl-2 pr-3 text-[16px] font-medium leading-[18px]"
                   style={{ backgroundColor: "var(--mappy-surface-primary)", color: "var(--mappy-text-primary)" }}
                 >
                   <CategoryIcon category={category} />

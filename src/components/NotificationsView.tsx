@@ -58,13 +58,13 @@ export function NotificationsView({
       >
         <div className="px-4">
           {loading && items.length === 0 && (
-            <p className="pt-6 text-center text-[15px]" style={{ color: "var(--mappy-text-secondary)" }}>
+            <p className="pt-6 text-center text-[16px]" style={{ color: "var(--mappy-text-secondary)" }}>
               Загружаем…
             </p>
           )}
 
           {!loading && items.length === 0 && (
-            <div className="rounded-[28px] bg-white px-6 py-8 text-center">
+            <div className="rounded-[length:var(--mappy-radius-xl)] bg-white px-6 py-8 text-center">
               <p className="text-[20px] font-semibold text-[var(--mappy-text-primary)]">Пока пусто</p>
               <p className="mt-2 text-[14px] text-[var(--mappy-text-secondary)]">
                 Здесь появятся запросы в друзья и новости об обновлениях
@@ -89,14 +89,14 @@ export function NotificationsView({
           justify-between/justify-center давали смещённый по центру заголовок
           (уточнено 14.08.2026). */}
       <div
-        className="absolute left-4 right-4 z-20 flex items-center justify-between rounded-[28px] bg-white px-1 py-4 shadow-[0_20px_40px_rgba(30,41,57,0.12)]"
+        className="absolute left-4 right-4 z-20 flex items-center justify-between rounded-[length:var(--mappy-radius-xl)] bg-white px-1 py-4 shadow-[0_20px_40px_rgba(30,41,57,0.12)]"
         style={{ top: "calc(env(safe-area-inset-top) + 16px)" }}
       >
         <button
           type="button"
           onClick={onBack}
           aria-label="Назад"
-          className="inline-flex items-center text-[#99a1af]"
+          className="inline-flex items-center text-[color:var(--mappy-text-tertiary)]"
         >
           <BackIcon />
         </button>
@@ -149,7 +149,7 @@ function NotificationCard({
     );
 
   const card = (
-    <div className="flex w-full flex-col gap-2 rounded-[28px] bg-white p-4 text-left">
+    <div className="flex w-full flex-col gap-2 rounded-[length:var(--mappy-radius-xl)] bg-white p-4 text-left">
       <div className="flex items-center gap-2">
         <Tag>{category}</Tag>
         {when && <Tag>{when}</Tag>}

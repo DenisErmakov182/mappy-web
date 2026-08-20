@@ -140,7 +140,7 @@ export function SwipeablePlaceCard({
   };
 
   return (
-    <div className="relative h-[148px] w-full overflow-hidden rounded-[28px] bg-white [touch-action:pan-y]">
+    <div className="relative h-[148px] w-full overflow-hidden rounded-[length:var(--mappy-radius-xl)] bg-white [touch-action:pan-y]">
       {!isFriendPlace && (
         <div className="absolute inset-y-0 right-0 flex w-[240px]">
           <SwipeAction
@@ -157,7 +157,7 @@ export function SwipeablePlaceCard({
             label="Редактировать"
             background="var(--mappy-surface-primary)"
             icon={editIcon}
-            shadow="8px 2px 30.4px #e9e9e9"
+            shadow="var(--mappy-shadow-card)"
             onClick={() => runAction(onEdit)}
           />
           <SwipeAction
@@ -166,14 +166,14 @@ export function SwipeablePlaceCard({
             label={deleteLabel}
             background={deleteBackground ?? "#e7000b"}
             icon={deleteIconOverride ?? deleteIcon}
-            shadow="8px 2px 30.4px #e9e9e9"
+            shadow="var(--mappy-shadow-card)"
             onClick={() => runAction(onDelete)}
           />
         </div>
       )}
 
       <div
-        className="absolute inset-0 z-10 rounded-[28px]"
+        className="absolute inset-0 z-10 rounded-[length:var(--mappy-radius-xl)]"
         style={{
           transform: `translate3d(${offset}px, 0, 0)`,
           transition: dragging ? "none" : "transform 360ms cubic-bezier(0.2, 0.7, 0.2, 1)",
@@ -196,7 +196,7 @@ export function SwipeablePlaceCard({
       >
         <button
           type="button"
-          className="flex h-full w-full items-start gap-2 rounded-[28px] bg-white p-2 text-left"
+          className="flex h-full w-full items-start gap-2 rounded-[length:var(--mappy-radius-xl)] bg-white p-2 text-left"
           onClick={(event) => {
             if (suppressClick.current) {
               event.preventDefault();
@@ -209,7 +209,7 @@ export function SwipeablePlaceCard({
           aria-label={`Открыть место ${place.title}`}
         >
           <div
-            className="relative h-[132px] min-w-0 flex-1 overflow-hidden rounded-[20px]"
+            className="relative h-[132px] min-w-0 flex-1 overflow-hidden rounded-[length:var(--mappy-radius-lg)]"
             style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
           >
             {place.photos?.[0] ? (
@@ -244,7 +244,7 @@ export function SwipeablePlaceCard({
                 {place.address}
               </p>
               {createdAt && (
-                <p className="w-full min-w-0 truncate px-1 text-[12px] font-medium leading-[16px]" style={{ color: "#99a1af" }}>
+                <p className="w-full min-w-0 truncate px-1 text-[12px] font-medium leading-[16px]" style={{ color: "var(--mappy-text-tertiary)" }}>
                   {createdAt}
                 </p>
               )}
@@ -252,13 +252,13 @@ export function SwipeablePlaceCard({
 
             <div className="flex items-center gap-1">
               {place.rating > 0 && (
-                <span className="[&>span]:rounded-[10px]">
+                <span className="[&>span]:rounded-[length:var(--mappy-radius-sm)]">
                   <RatingChip rating={place.rating} />
                 </span>
               )}
               {place.categories[0] && (
                 <span
-                  className="inline-flex h-[28px] items-center justify-center rounded-[10px] px-2"
+                  className="inline-flex h-[28px] items-center justify-center rounded-[length:var(--mappy-radius-sm)] px-2"
                   style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
                 >
                   <CategoryIcon category={place.categories[0]} size={24} />
@@ -292,7 +292,7 @@ function SwipeAction({
   return (
     <button
       type="button"
-      className="absolute inset-y-0 flex w-[144px] items-center justify-end rounded-r-[28px] px-8"
+      className="absolute inset-y-0 flex w-[144px] items-center justify-end rounded-r-[length:var(--mappy-radius-xl)] px-8"
       style={{
         right,
         zIndex,

@@ -109,7 +109,7 @@ export function ReorderPhotosSheet({
                 // Место, откуда фото временно "унесли" пальцем — тот же стиль
                 // пустого слота, что и у "+" в основной сетке добавления фото.
                 <div
-                  className="h-full w-full rounded-[20px]"
+                  className="h-full w-full rounded-[length:var(--mappy-radius-lg)]"
                   style={{
                     border: "1px dashed rgba(3, 7, 18, 0.08)",
                     backgroundColor: "var(--mappy-surface-primary)",
@@ -120,7 +120,7 @@ export function ReorderPhotosSheet({
                   src={photo.url}
                   alt=""
                   draggable={false}
-                  className="h-full w-full rounded-[20px] object-cover"
+                  className="h-full w-full rounded-[length:var(--mappy-radius-lg)] object-cover"
                 />
               )}
               {i === 0 && draggingIndex !== i && (
@@ -141,7 +141,7 @@ export function ReorderPhotosSheet({
           src={draggedPhoto.url}
           alt=""
           draggable={false}
-          className="pointer-events-none fixed z-[70] rounded-[20px] object-cover shadow-[0_12px_24px_rgba(0,0,0,0.25)]"
+          className="pointer-events-none fixed z-[70] rounded-[length:var(--mappy-radius-lg)] object-cover shadow-[0_12px_24px_rgba(0,0,0,0.25)]"
           style={{
             width: itemSize,
             height: itemSize,

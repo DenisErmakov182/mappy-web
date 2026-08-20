@@ -157,7 +157,7 @@ export function SearchOverlay({
       {/* Единая белая капсула: [назад][поле] — по макету Bar focused (1489:16188) */}
       <div className="px-4 pt-[max(env(safe-area-inset-top),12px)] pb-2">
         <div
-          className="flex gap-1 p-2 bg-white rounded-[32px] overflow-hidden"
+          className="flex gap-1 p-2 bg-white rounded-[length:var(--mappy-radius-2xl)] overflow-hidden"
           style={{
             // Токен «shadow m» из дизайн-системы (нода 2216:15782) — пять
             // слоёв drop-shadow нарастающего радиуса и убывающей плотности.
@@ -170,18 +170,18 @@ export function SearchOverlay({
         >
           <button
             onClick={onClose}
-            className="w-[56px] h-12 rounded-l-[32px] rounded-r-[10px] flex items-center justify-center shrink-0"
+            className="w-[56px] h-12 rounded-l-[length:var(--mappy-radius-2xl)] rounded-r-[length:var(--mappy-radius-sm)] flex items-center justify-center shrink-0"
             style={{ backgroundColor: "rgba(3,7,18,0.04)" }}
             aria-label="Назад"
           >
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <path d="M9 14L4 9L9 4" stroke="#4A5565" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M4 9H14.5C17.5 9 20 11.5 20 14.5C20 17.5 17.5 20 14.5 20H8" stroke="#4A5565" strokeWidth="2" strokeLinecap="round" />
+              <path d="M9 14L4 9L9 4" stroke="var(--mappy-text-secondary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M4 9H14.5C17.5 9 20 11.5 20 14.5C20 17.5 17.5 20 14.5 20H8" stroke="var(--mappy-text-secondary)" strokeWidth="2" strokeLinecap="round" />
             </svg>
           </button>
 
           <div
-            className="flex items-center gap-2 flex-1 h-12 pl-3 pr-3 rounded-l-[10px] rounded-r-[32px] overflow-hidden"
+            className="flex items-center gap-2 flex-1 h-12 pl-3 pr-3 rounded-l-[length:var(--mappy-radius-sm)] rounded-r-[length:var(--mappy-radius-2xl)] overflow-hidden"
             style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
           >
             <SearchIcon
@@ -199,7 +199,7 @@ export function SearchOverlay({
                 }
               }}
               placeholder="Поиск по адресу, названию"
-              className="flex-1 min-w-0 bg-transparent outline-none text-[16px] font-medium placeholder:text-[#99a1af]"
+              className="flex-1 min-w-0 bg-transparent outline-none text-[16px] font-medium placeholder:text-[color:var(--mappy-text-tertiary)]"
               style={{ color: "var(--mappy-text-primary)" }}
             />
             {query && (
@@ -213,7 +213,7 @@ export function SearchOverlay({
                 aria-label="Очистить"
               >
                 <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
-                  <path d="M12 4L4 12M4 4L12 12" stroke="#4A5565" strokeWidth="2" strokeLinecap="round" />
+                  <path d="M12 4L4 12M4 4L12 12" stroke="var(--mappy-text-secondary)" strokeWidth="2" strokeLinecap="round" />
                 </svg>
               </button>
             )}
@@ -241,7 +241,7 @@ export function SearchOverlay({
             <p className="text-[16px] font-medium" style={{ color: "var(--mappy-text-primary)" }}>
               {place.title}
             </p>
-            <p className="text-[13px]" style={{ color: "var(--mappy-text-secondary)" }}>
+            <p className="text-[14px]" style={{ color: "var(--mappy-text-secondary)" }}>
               {place.address}
             </p>
           </button>
@@ -251,7 +251,7 @@ export function SearchOverlay({
           <>
             {results.length > 0 && (
               <p
-                className="pt-2 pb-1 text-[13px] font-medium"
+                className="pt-2 pb-1 text-[14px] font-medium"
                 style={{ color: "var(--mappy-text-tertiary)" }}
               >
                 Адреса
@@ -273,7 +273,7 @@ export function SearchOverlay({
                     {title}
                   </p>
                   {context && (
-                    <p className="text-[13px]" style={{ color: "var(--mappy-text-secondary)" }}>
+                    <p className="text-[14px]" style={{ color: "var(--mappy-text-secondary)" }}>
                       {context}
                     </p>
                   )}

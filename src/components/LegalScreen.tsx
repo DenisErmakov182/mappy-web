@@ -33,14 +33,14 @@ export function LegalScreen({ document, onClose }: { document: LegalDocument; on
            * сказать, что документ не дописан: по такому документу человек не
            * сможет реализовать свои права, а именно для этого адрес и нужен.
            */
-          <div className="mb-5 rounded-[14px] bg-[#fff4e5] px-4 py-3 text-[14px] leading-[19px] text-[#8a4b00]">
+          <div className="mb-5 rounded-[length:var(--mappy-radius-md)] bg-[#fff4e5] px-4 py-3 text-[14px] leading-[19px] text-[#8a4b00]">
             Документ подготовлен, но ещё не содержит полных реквизитов оператора. Это черновая
             редакция: она описывает, как Сервис работает на самом деле, но до публичного запуска
             будет дополнена и проверена юристом.
           </div>
         )}
 
-        <p className="mb-5 text-[13px] leading-[18px] text-[#99a1af]">Редакция {document.version}</p>
+        <p className="mb-5 text-[14px] leading-[18px] text-[color:var(--mappy-text-tertiary)]">Редакция {document.version}</p>
 
         {document.blocks.map((block) => (
           <section key={block.heading} className="mb-6">
@@ -49,7 +49,7 @@ export function LegalScreen({ document, onClose }: { document: LegalDocument; on
             </h2>
 
             {block.paragraphs?.map((paragraph) => (
-              <p key={paragraph} className="mb-2 text-[15px] leading-[21px] text-[#364153]">
+              <p key={paragraph} className="mb-2 text-[16px] leading-[21px] text-[#364153]">
                 {paragraph}
               </p>
             ))}
@@ -59,9 +59,9 @@ export function LegalScreen({ document, onClose }: { document: LegalDocument; on
                 {block.list.map((item) => (
                   <li
                     key={item}
-                    className="relative pl-4 text-[15px] leading-[21px] text-[#364153]
+                    className="relative pl-4 text-[16px] leading-[21px] text-[#364153]
                                before:absolute before:left-0 before:top-[9px] before:h-1 before:w-1
-                               before:rounded-full before:bg-[#99a1af]"
+                               before:rounded-full before:bg-[color:var(--mappy-text-tertiary)]"
                   >
                     {item}
                   </li>

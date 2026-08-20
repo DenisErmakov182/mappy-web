@@ -15,10 +15,10 @@ interface Props {
 
 export function SearchFilterBar({ query, onOpenSearch, onClearQuery, hasActiveFilters, onFilterTap }: Props) {
   return (
-    <div className="flex gap-1 p-2 bg-white rounded-[32px]">
+    <div className="flex gap-1 p-2 bg-white rounded-[length:var(--mappy-radius-2xl)]">
       <button
         onClick={onOpenSearch}
-        className="flex items-center gap-2.5 flex-1 h-12 px-4 rounded-l-[32px] rounded-r-[10px] text-left"
+        className="flex items-center gap-2.5 flex-1 h-12 px-4 rounded-l-[length:var(--mappy-radius-2xl)] rounded-r-[length:var(--mappy-radius-sm)] text-left"
         style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
       >
         <SearchIcon
@@ -42,7 +42,7 @@ export function SearchFilterBar({ query, onOpenSearch, onClearQuery, hasActiveFi
             aria-label="Очистить"
           >
             <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
-              <path d="M12 4L4 12M4 4L12 12" stroke="#4A5565" strokeWidth="2" strokeLinecap="round" />
+              <path d="M12 4L4 12M4 4L12 12" stroke="var(--mappy-text-secondary)" strokeWidth="2" strokeLinecap="round" />
             </svg>
           </span>
         )}
@@ -50,11 +50,11 @@ export function SearchFilterBar({ query, onOpenSearch, onClearQuery, hasActiveFi
 
       <button
         onClick={onFilterTap}
-        className="relative h-12 px-4 rounded-r-[32px] rounded-l-[10px] flex items-center justify-center"
+        className="relative h-12 px-4 rounded-r-[length:var(--mappy-radius-2xl)] rounded-l-[length:var(--mappy-radius-sm)] flex items-center justify-center"
         style={{ backgroundColor: hasActiveFilters ? "var(--mappy-brand-subtle)" : "rgba(3,7,18,0.04)" }}
         aria-label="Фильтры"
       >
-        <FilterIcon className="w-6 h-6" color={hasActiveFilters ? "var(--mappy-pink)" : "#4A5565"} />
+        <FilterIcon className="w-6 h-6" color={hasActiveFilters ? "var(--mappy-pink)" : "var(--mappy-text-secondary)"} />
       </button>
     </div>
   );

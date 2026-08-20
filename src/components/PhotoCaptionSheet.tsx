@@ -29,7 +29,7 @@ export function PhotoCaptionSheet({
         </div>
 
         <div
-          className="flex flex-col gap-2 rounded-[14px] p-4"
+          className="flex flex-col gap-2 rounded-[length:var(--mappy-radius-md)] p-4"
           style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
         >
           <textarea
@@ -39,12 +39,12 @@ export function PhotoCaptionSheet({
             rows={3}
             maxLength={CAPTION_MAX}
             autoFocus
-            className="w-full bg-transparent text-[16px] outline-none resize-none placeholder:text-[#99a1af]"
+            className="w-full bg-transparent text-[16px] outline-none resize-none placeholder:text-[color:var(--mappy-text-tertiary)]"
             style={{ color: "var(--mappy-text-primary)" }}
           />
           <span
             className="self-end text-[12px] leading-4 font-medium"
-            style={{ color: "#99a1af" }}
+            style={{ color: "var(--mappy-text-tertiary)" }}
           >
             {caption.length}/{CAPTION_MAX}
           </span>

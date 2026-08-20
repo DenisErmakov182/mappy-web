@@ -43,7 +43,7 @@ export function CategoriesSheet({
               <button
                 key={category}
                 onClick={() => toggle(category)}
-                className="flex items-center gap-1 pl-2 pr-3 py-3 rounded-[14px] text-[16px] font-medium"
+                className="flex items-center gap-1 pl-2 pr-3 py-3 rounded-[length:var(--mappy-radius-md)] text-[16px] font-medium"
                 style={{
                   backgroundColor: isSelected ? "var(--mappy-brand-subtle)" : "var(--mappy-surface-primary)",
                   color: isSelected ? "var(--mappy-pink)" : "var(--mappy-text-primary)",

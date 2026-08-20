@@ -235,7 +235,7 @@ export function FriendsScreen({
         <button
           type="button"
           onClick={openNotifications}
-          className="flex h-14 w-full items-center justify-between rounded-[28px] bg-white px-4 text-left"
+          className="flex h-14 w-full items-center justify-between rounded-[length:var(--mappy-radius-xl)] bg-white px-4 text-left"
         >
           <span className="text-[16px] font-medium" style={{ color: "var(--mappy-text-primary)" }}>
             Уведомления
@@ -243,7 +243,7 @@ export function FriendsScreen({
           {unreadCount > 0 && (
             <span
               className="flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-[16px] font-medium text-white"
-              style={{ backgroundColor: "#ff637e" }}
+              style={{ backgroundColor: "var(--mappy-brand-secondary)" }}
             >
               {unreadCount}
             </span>
@@ -261,7 +261,7 @@ export function FriendsScreen({
           <button
             type="button"
             onClick={() => setView({ kind: "list" })}
-            className="flex w-full flex-col items-start gap-2 rounded-[28px] bg-white p-4 text-left"
+            className="flex w-full flex-col items-start gap-2 rounded-[length:var(--mappy-radius-xl)] bg-white p-4 text-left"
           >
             <span className="text-[16px] font-medium" style={{ color: "var(--mappy-text-primary)" }}>
               Друзья
@@ -282,7 +282,7 @@ export function FriendsScreen({
           <button
             type="button"
             onClick={() => setView({ kind: "list" })}
-            className="relative flex h-[68px] w-full items-start overflow-hidden rounded-[28px] bg-white p-4 text-left"
+            className="relative flex h-[68px] w-full items-start overflow-hidden rounded-[length:var(--mappy-radius-xl)] bg-white p-4 text-left"
           >
             {/* Уточнение 15.08.2026 (узел 2026:57183, get_metadata): текст
                 стоит в левом верхнем углу карточки (x=16,y=16 в рамке
@@ -301,7 +301,7 @@ export function FriendsScreen({
           </button>
         )}
 
-        {error && <p className="px-1 text-center text-[13px] text-[#fb2c36]">{error}</p>}
+        {error && <p className="px-1 text-center text-[14px] text-[color:var(--mappy-text-danger)]">{error}</p>}
       </div>
 
       {showAccount && (
@@ -397,7 +397,7 @@ function FriendsListView({
       >
         {friends.length === 0 && !loading && !hasSearch ? (
           <div className="flex flex-1 items-center justify-center px-4">
-            <section className="rounded-[28px] bg-white px-6 py-8 text-center">
+            <section className="rounded-[length:var(--mappy-radius-xl)] bg-white px-6 py-8 text-center">
               <p className="text-[20px] font-semibold leading-6" style={{ color: "var(--mappy-text-primary)" }}>
                 Вы еще не добавили друзей
               </p>
@@ -413,7 +413,7 @@ function FriendsListView({
         // между самими блоками (по просьбе владельца 15.08.2026).
         <div className="px-4 pt-6">
           {hasSearch ? (
-            <section className="rounded-[28px] bg-white p-4">
+            <section className="rounded-[length:var(--mappy-radius-xl)] bg-white p-4">
               {searching && <EmptyLine>Ищем…</EmptyLine>}
               {!searching && searchResults.length === 0 && <EmptyLine>Никого не нашли</EmptyLine>}
               {!searching && searchResults.map((person, index) => (
@@ -428,18 +428,18 @@ function FriendsListView({
             </section>
           ) : (
             // Каждый друг — своя карточка (плашка), как PersonRow в RequestsView
-            // (padded={false}, section rounded-[28px] p-4), а не общая белая
+            // (padded={false}, section rounded-[length:var(--mappy-radius-xl)] p-4), а не общая белая
             // секция с разделителями между строками, как было раньше.
             <div className="flex flex-col gap-3">
               {friends.map((friend) => (
-                <section key={friend.id} className="rounded-[28px] bg-white p-4">
+                <section key={friend.id} className="rounded-[length:var(--mappy-radius-xl)] bg-white p-4">
                   <PersonRow person={friend} padded={false} onClick={() => onOpenProfile(friend)} />
                 </section>
               ))}
             </div>
           )}
 
-          {error && <p className="mt-3 px-1 text-center text-[13px] text-[#fb2c36]">{error}</p>}
+          {error && <p className="mt-3 px-1 text-center text-[14px] text-[color:var(--mappy-text-danger)]">{error}</p>}
         </div>
         )}
       </div>
@@ -471,7 +471,7 @@ function FriendsListView({
           «Запросы», в коде остаётся только иконка с `aria-label` для
           доступности. */}
       <div
-        className="absolute left-4 right-4 z-20 rounded-[28px] bg-white shadow-[0_20px_40px_rgba(30,41,57,0.12)]"
+        className="absolute left-4 right-4 z-20 rounded-[length:var(--mappy-radius-xl)] bg-white shadow-[0_20px_40px_rgba(30,41,57,0.12)]"
         style={{ top: "calc(env(safe-area-inset-top) + 16px)" }}
       >
         <div className="flex items-center justify-between px-1 pb-1 pt-4">
@@ -479,7 +479,7 @@ function FriendsListView({
             type="button"
             onClick={onBack}
             aria-label="Назад"
-            className="inline-flex w-[91px] shrink-0 items-center text-[#99a1af]"
+            className="inline-flex w-[91px] shrink-0 items-center text-[color:var(--mappy-text-tertiary)]"
           >
             <BackIcon />
           </button>
@@ -560,7 +560,7 @@ function RequestsView({
       >
         {active.length === 0 ? (
           <div className="flex flex-1 items-center justify-center px-4">
-            <div className="rounded-[28px] bg-white px-6 py-8 text-center">
+            <div className="rounded-[length:var(--mappy-radius-xl)] bg-white px-6 py-8 text-center">
               <p className="text-[20px] font-semibold text-[var(--mappy-text-primary)]">Запросов нет</p>
               <p className="mt-2 text-[14px] text-[var(--mappy-text-secondary)]">
                 Вероятно, вы уже со всеми подружились!
@@ -571,7 +571,7 @@ function RequestsView({
           <div className="px-4">
             <div className="flex flex-col gap-3">
               {active.map((person) => (
-                <section key={person.id} className="rounded-[28px] bg-white p-4">
+                <section key={person.id} className="rounded-[length:var(--mappy-radius-xl)] bg-white p-4">
                   <PersonRow person={person} padded={false} onClick={() => onOpenProfile(person)} />
                 </section>
               ))}
@@ -588,7 +588,7 @@ function RequestsView({
           p-2 на вкладках) и невидимый спейсер справа для центровки —
           точно по узлу, не на глаз (уточнено 14.08.2026). */}
       <div
-        className="absolute left-4 right-4 z-20 rounded-[28px] bg-white shadow-[0_20px_40px_rgba(30,41,57,0.12)]"
+        className="absolute left-4 right-4 z-20 rounded-[length:var(--mappy-radius-xl)] bg-white shadow-[0_20px_40px_rgba(30,41,57,0.12)]"
         style={{ top: "calc(env(safe-area-inset-top) + 16px)" }}
       >
         <div className="flex items-center justify-between px-1 pb-1 pt-4">
@@ -596,7 +596,7 @@ function RequestsView({
             type="button"
             onClick={onBack}
             aria-label="Назад"
-            className="inline-flex items-center text-[#99a1af]"
+            className="inline-flex items-center text-[color:var(--mappy-text-tertiary)]"
           >
             <BackIcon />
           </button>
@@ -635,7 +635,7 @@ function RequestsTabControl({
   onChange: (tab: "outgoing" | "incoming") => void;
 }) {
   return (
-    <div className="flex h-11 w-full items-center gap-1 rounded-[28px] bg-[var(--mappy-surface-secondary)] p-1">
+    <div className="flex h-11 w-full items-center gap-1 rounded-[length:var(--mappy-radius-xl)] bg-[var(--mappy-surface-secondary)] p-1">
       <RequestsTab label="Отправленные" count={outgoingCount} isActive={active === "outgoing"} onClick={() => onChange("outgoing")} />
       <RequestsTab label="Полученные" count={incomingCount} isActive={active === "incoming"} onClick={() => onChange("incoming")} />
     </div>
@@ -657,11 +657,11 @@ function RequestsTab({
     <button
       type="button"
       onClick={onClick}
-      className="flex h-full flex-1 items-center justify-center gap-1 rounded-[28px] px-6 text-[14px] font-medium tracking-[-0.6px]"
+      className="flex h-full flex-1 items-center justify-center gap-1 rounded-[length:var(--mappy-radius-xl)] px-6 text-[14px] font-medium tracking-[-0.6px]"
       style={{ backgroundColor: isActive ? "var(--mappy-surface-canvas)" : "transparent" }}
     >
       <span style={{ color: isActive ? "var(--mappy-text-primary)" : "var(--mappy-text-secondary)" }}>{label}</span>
-      <span style={{ color: "#99a1af" }}>{count}</span>
+      <span style={{ color: "var(--mappy-text-tertiary)" }}>{count}</span>
     </button>
   );
 }
@@ -784,7 +784,7 @@ function FriendProfileView({
                 setShowMenu(false);
                 setConfirmRemove(true);
               }}
-              className="absolute right-0 top-10 w-[190px] rounded-[16px] bg-white px-4 py-3 text-left text-[15px] font-medium text-[#fb2c36] shadow-[0_12px_40px_rgba(30,41,57,0.14)]"
+              className="absolute right-0 top-10 w-[190px] rounded-[16px] bg-white px-4 py-3 text-left text-[16px] font-medium text-[color:var(--mappy-text-danger)] shadow-[0_12px_40px_rgba(30,41,57,0.14)]"
             >
               Удалить из друзей
             </button>
@@ -878,7 +878,7 @@ function FriendProfileView({
                   );
                 })}
                 {visiblePlaces.length === 0 && (
-                  <div className="rounded-[16px] bg-white px-5 py-8 text-center text-[14px] text-[#99a1af]">
+                  <div className="rounded-[16px] bg-white px-5 py-8 text-center text-[14px] text-[color:var(--mappy-text-tertiary)]">
                     {places.length === 0 ? "У друга пока нет публичных мест" : "Ничего не найдено"}
                   </div>
                 )}
@@ -886,7 +886,7 @@ function FriendProfileView({
             </div>
           )}
 
-          {error && <p className="mt-3 text-center text-[13px] text-[#fb2c36]">{error}</p>}
+          {error && <p className="mt-3 text-center text-[14px] text-[color:var(--mappy-text-danger)]">{error}</p>}
         </div>
       </div>
 
@@ -953,11 +953,11 @@ function FriendPlacesSearchBar({
 }) {
   return (
     <div
-      className={`flex h-16 w-full items-center gap-1 rounded-[32px] bg-white p-2 transition-shadow duration-200 ${
+      className={`flex h-16 w-full items-center gap-1 rounded-[length:var(--mappy-radius-2xl)] bg-white p-2 transition-shadow duration-200 ${
         elevated ? "shadow-[0_8px_24px_rgba(30,41,57,0.10)]" : ""
       }`}
     >
-      <label className="flex h-12 min-w-0 flex-1 items-center gap-2.5 rounded-l-[32px] rounded-r-[10px] bg-[var(--mappy-surface-secondary)] px-4 py-3">
+      <label className="flex h-12 min-w-0 flex-1 items-center gap-2.5 rounded-l-[length:var(--mappy-radius-2xl)] rounded-r-[length:var(--mappy-radius-sm)] bg-[var(--mappy-surface-secondary)] px-4 py-3">
         <SearchIcon
           className="h-6 w-6 shrink-0"
           color={value ? "var(--mappy-text-primary)" : "var(--mappy-text-tertiary)"}
@@ -974,7 +974,7 @@ function FriendPlacesSearchBar({
         onClick={onFilterTap}
         aria-label="Фильтры мест"
         aria-pressed={hasActiveFilters}
-        className="relative flex h-12 shrink-0 items-center justify-center rounded-l-[10px] rounded-r-[32px] px-4"
+        className="relative flex h-12 shrink-0 items-center justify-center rounded-l-[length:var(--mappy-radius-sm)] rounded-r-[length:var(--mappy-radius-2xl)] px-4"
         style={{ backgroundColor: hasActiveFilters ? "var(--mappy-brand-subtle)" : "rgba(3,7,18,0.04)" }}
       >
         <img src={filterIcon} alt="" className="h-6 w-6" />
@@ -1012,7 +1012,7 @@ function PersonRow({
       <SmallAvatar person={person} />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p className="truncate text-[16px] font-semibold leading-[18px] text-[var(--mappy-text-primary)]">{displayName(person)}</p>
-        {person.username && <p className="truncate text-[13px] leading-4 text-[var(--mappy-text-secondary)]">@{person.username}</p>}
+        {person.username && <p className="truncate text-[14px] leading-4 text-[var(--mappy-text-secondary)]">@{person.username}</p>}
       </div>
       {suffix}
     </button>
@@ -1022,7 +1022,7 @@ function PersonRow({
 function RelationLabel({ relation }: { relation: ApiFriendProfile["relation"] }) {
   const labels = { none: "", friend: "В друзьях", incoming: "Входящий", outgoing: "Отправлен" };
   if (relation === "none") return <span className="text-[20px] text-[var(--mappy-pink)]">＋</span>;
-  return <span className="text-[12px] text-[#99a1af]">{labels[relation]}</span>;
+  return <span className="text-[12px] text-[color:var(--mappy-text-tertiary)]">{labels[relation]}</span>;
 }
 
 function ProfileHeader({ user, onOpenAccount }: { user: ApiUser; onOpenAccount: () => void }) {
@@ -1034,7 +1034,7 @@ function ProfileHeader({ user, onOpenAccount }: { user: ApiUser; onOpenAccount: 
     relation: "none" as const,
   };
   return (
-    <button type="button" onClick={onOpenAccount} className="relative mt-4 w-full rounded-[28px] bg-white px-6 py-4 text-left">
+    <button type="button" onClick={onOpenAccount} className="relative mt-4 w-full rounded-[length:var(--mappy-radius-xl)] bg-white px-6 py-4 text-left">
       <div className="relative flex items-center justify-between">
         <div className="max-w-[70%]">
           <p className="truncate text-[24px] font-semibold leading-7 text-[var(--mappy-text-primary)]">{displayName(person)}</p>
@@ -1042,7 +1042,7 @@ function ProfileHeader({ user, onOpenAccount }: { user: ApiUser; onOpenAccount: 
         </div>
         <div className="relative shrink-0">
           <SmallAvatar person={person} size={74} />
-          <span className="absolute -right-1 -top-1 flex h-[30px] w-[30px] items-center justify-center rounded-full border-[3px] border-white bg-[#e5e7eb]">
+          <span className="absolute -right-1 -top-1 flex h-[30px] w-[30px] items-center justify-center rounded-full border-[3px] border-white bg-[color:var(--color-surface-tertiary)]">
             <SettingsGearIcon />
           </span>
         </div>
@@ -1058,14 +1058,14 @@ function ProfileAvatar({ person }: { person: ApiFriendProfile }) {
     <div className="relative flex items-center justify-center" style={{ width: 163, height: 163 }}>
       <div style={{ transform: "rotate(-6.28deg)" }}>
         <div
-          className="relative rounded-[20px]"
-          style={{ width: 148, height: 148, border: "4px solid #f9fafb", boxShadow: "8px 2px 30px #e9e9e9" }}
+          className="relative rounded-[length:var(--mappy-radius-lg)]"
+          style={{ width: 148, height: 148, border: "4px solid var(--mappy-surface-primary)", boxShadow: "var(--mappy-shadow-card)" }}
         >
           <span
             className="flex h-full w-full items-center justify-center overflow-hidden rounded-[16px] font-semibold text-white"
             style={{
               fontSize: 41,
-              background: person.avatarUrl ? "#e5e7eb" : avatarGradient(person.id),
+              background: person.avatarUrl ? "var(--color-surface-tertiary)" : avatarGradient(person.id),
             }}
           >
             {person.avatarUrl ? <img src={person.avatarUrl} alt="" className="h-full w-full object-cover" /> : initials}
@@ -1088,7 +1088,7 @@ export function ScreenBackButton({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="absolute left-4 top-[calc(env(safe-area-inset-top)+20px)] z-20 inline-flex items-center gap-1 text-[16px] font-medium text-[#99a1af]"
+      className="absolute left-4 top-[calc(env(safe-area-inset-top)+20px)] z-20 inline-flex items-center gap-1 text-[16px] font-medium text-[color:var(--mappy-text-tertiary)]"
     >
       <BackIcon /> Назад
     </button>
@@ -1109,7 +1109,7 @@ function BrandActionButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="flex h-14 w-full items-center justify-center rounded-[14px] bg-[#ff637e] text-[16px] font-medium text-white"
+      className="flex h-14 w-full items-center justify-center rounded-[length:var(--mappy-radius-md)] bg-[color:var(--mappy-brand-secondary)] text-[16px] font-medium text-white"
     >
       {children}
     </button>
@@ -1130,7 +1130,7 @@ function NeutralActionButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="flex h-14 w-full items-center justify-center rounded-[14px] bg-[var(--mappy-surface-secondary)] text-[16px] font-medium text-[var(--mappy-text-secondary)] disabled:opacity-70"
+      className="flex h-14 w-full items-center justify-center rounded-[length:var(--mappy-radius-md)] bg-[var(--mappy-surface-secondary)] text-[16px] font-medium text-[var(--mappy-text-secondary)] disabled:opacity-70"
     >
       {children}
     </button>
@@ -1138,7 +1138,7 @@ function NeutralActionButton({
 }
 
 function EmptyLine({ children }: { children: ReactNode }) {
-  return <p className="py-6 text-center text-[14px] text-[#99a1af]">{children}</p>;
+  return <p className="py-6 text-center text-[14px] text-[color:var(--mappy-text-tertiary)]">{children}</p>;
 }
 
 export function BackIcon() {
@@ -1153,7 +1153,7 @@ function ChevronRightIcon() {
 /* Значок настроек поверх аватара — по макету 1821:34749 (Correct Button / settings-02) */
 function SettingsGearIcon() {
   return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4A5565" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--mappy-text-secondary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="3" />
       <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z" />
     </svg>

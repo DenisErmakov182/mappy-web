@@ -5,9 +5,9 @@ import tabFriends from "../assets/icons/tab-friends.webp";
 export type AppTab = "map" | "notes" | "friends";
 
 const tabs: { id: AppTab; icon: string; corners: string }[] = [
-  { id: "map", icon: tabMap, corners: "rounded-l-[32px] rounded-r-[10px]" },
-  { id: "notes", icon: tabNotes, corners: "rounded-[10px]" },
-  { id: "friends", icon: tabFriends, corners: "rounded-r-[32px] rounded-l-[10px]" },
+  { id: "map", icon: tabMap, corners: "rounded-l-[length:var(--mappy-radius-2xl)] rounded-r-[length:var(--mappy-radius-sm)]" },
+  { id: "notes", icon: tabNotes, corners: "rounded-[length:var(--mappy-radius-sm)]" },
+  { id: "friends", icon: tabFriends, corners: "rounded-r-[length:var(--mappy-radius-2xl)] rounded-l-[length:var(--mappy-radius-sm)]" },
 ];
 
 interface Props {
@@ -17,7 +17,7 @@ interface Props {
 
 export function TabBar({ selection, onSelect }: Props) {
   return (
-    <div className="flex gap-1 p-2 bg-white rounded-[32px]">
+    <div className="flex gap-1 p-2 bg-white rounded-[length:var(--mappy-radius-2xl)]">
       {tabs.map((tab) => {
         const isSelected = tab.id === selection;
         return (

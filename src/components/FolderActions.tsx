@@ -63,7 +63,7 @@ export function useFolderActions({
         <ActionSheet
           actions={[
             { label: "Редактировать название", onClick: () => { setShowMenu(false); setShowRename(true); } },
-            { label: "Удалить", color: "#ff3b30", onClick: () => { setShowMenu(false); setShowDeleteConfirm(true); } },
+            { label: "Удалить", color: "var(--mappy-text-danger)", onClick: () => { setShowMenu(false); setShowDeleteConfirm(true); } },
           ]}
           onCancel={() => setShowMenu(false)}
         />
@@ -135,7 +135,7 @@ function FolderDeleteConfirmSheet({
             type="button"
             onClick={onClose}
             disabled={deleting}
-            className="h-14 flex-1 rounded-[14px] text-[16px] font-medium disabled:opacity-70"
+            className="h-14 flex-1 rounded-[length:var(--mappy-radius-md)] text-[16px] font-medium disabled:opacity-70"
             style={{ backgroundColor: "var(--mappy-surface-secondary)", color: "var(--mappy-text-secondary)" }}
           >
             Отмена
@@ -144,8 +144,8 @@ function FolderDeleteConfirmSheet({
             type="button"
             onClick={onConfirm}
             disabled={deleting}
-            className="h-14 flex-1 rounded-[14px] text-[16px] font-medium text-white disabled:opacity-70"
-            style={{ backgroundColor: "#fb2c36" }}
+            className="h-14 flex-1 rounded-[length:var(--mappy-radius-md)] text-[16px] font-medium text-white disabled:opacity-70"
+            style={{ backgroundColor: "var(--mappy-text-danger)" }}
           >
             {deleting ? "Удаляем…" : "Удалить"}
           </button>

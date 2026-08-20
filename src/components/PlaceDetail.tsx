@@ -110,9 +110,9 @@ export function PlaceDetail({
             aria-label={place.owner ? `Действия с местом ${place.owner.name}` : "Действия с местом"}
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <circle cx="5" cy="12" r="1.5" fill="#1e2939" />
-              <circle cx="12" cy="12" r="1.5" fill="#1e2939" />
-              <circle cx="19" cy="12" r="1.5" fill="#1e2939" />
+              <circle cx="5" cy="12" r="1.5" fill="var(--mappy-text-primary)" />
+              <circle cx="12" cy="12" r="1.5" fill="var(--mappy-text-primary)" />
+              <circle cx="19" cy="12" r="1.5" fill="var(--mappy-text-primary)" />
             </svg>
           </button>
         </div>
@@ -137,7 +137,7 @@ export function PlaceDetail({
                 {place.categories.map((category) => (
                   <span
                     key={category}
-                    className="inline-flex items-center justify-center gap-1 rounded-[14px] py-3 pl-2 pr-3 text-[16px] font-medium leading-[18px]"
+                    className="inline-flex items-center justify-center gap-1 rounded-[length:var(--mappy-radius-md)] py-3 pl-2 pr-3 text-[16px] font-medium leading-[18px]"
                     style={{ backgroundColor: "var(--mappy-surface-primary)", color: "var(--mappy-text-primary)" }}
                   >
                     <CategoryIcon category={category} />
@@ -149,7 +149,7 @@ export function PlaceDetail({
 
             {place.note && (
               <div
-                className="w-full whitespace-pre-wrap rounded-[20px] p-4 text-[16px] leading-5 tracking-[-0.6px] [overflow-wrap:anywhere]"
+                className="w-full whitespace-pre-wrap rounded-[length:var(--mappy-radius-lg)] p-4 text-[16px] leading-5 tracking-[-0.6px] [overflow-wrap:anywhere]"
                 style={{ backgroundColor: "var(--mappy-surface-secondary)", color: "var(--mappy-text-primary)" }}
               >
                 {place.note}

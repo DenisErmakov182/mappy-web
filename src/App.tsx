@@ -724,7 +724,7 @@ function MapApp({
 
       {/* Баннер ошибки загрузки мест — данные не потеряны, просто не подгрузились */}
       {placesError && (
-        <div className="absolute top-[var(--mappy-floating-top)] left-4 right-4 z-50 mt-14 flex items-center justify-between gap-3 rounded-2xl bg-[#1e2939] px-4 py-3 text-sm text-white">
+        <div className="absolute top-[var(--mappy-floating-top)] left-4 right-4 z-50 mt-14 flex items-center justify-between gap-3 rounded-2xl bg-[color:var(--mappy-text-primary)] px-4 py-3 text-sm text-white">
           <span>Не удалось загрузить места</span>
           <button
             onClick={loadPlaces}
@@ -738,7 +738,7 @@ function MapApp({
 
       {/* Баннер ошибки загрузки папок — виден только там, где папки на экране */}
       {foldersError && tab === "notes" && savedView.kind !== "list" && (
-        <div className="absolute top-[var(--mappy-floating-top)] left-4 right-4 z-50 mt-14 flex items-center justify-between gap-3 rounded-2xl bg-[#1e2939] px-4 py-3 text-sm text-white">
+        <div className="absolute top-[var(--mappy-floating-top)] left-4 right-4 z-50 mt-14 flex items-center justify-between gap-3 rounded-2xl bg-[color:var(--mappy-text-primary)] px-4 py-3 text-sm text-white">
           <span>Не удалось загрузить папки</span>
           <button
             onClick={loadFolders}
@@ -808,7 +808,7 @@ function MapApp({
           <button
             type="button"
             onClick={() => setShareNotice("")}
-            className="w-full rounded-2xl bg-[#1e2939] px-4 py-3 text-left text-sm [overflow-wrap:anywhere] text-white"
+            className="w-full rounded-2xl bg-[color:var(--mappy-text-primary)] px-4 py-3 text-left text-sm [overflow-wrap:anywhere] text-white"
           >
             {shareNotice}
           </button>
@@ -829,7 +829,7 @@ function MapApp({
           style={{ bottom: "calc(var(--mappy-floating-bottom) + 64px)" }}
         >
           <div
-            className="mx-auto flex h-11 items-center rounded-[28px] p-1"
+            className="mx-auto flex h-11 items-center rounded-[length:var(--mappy-radius-xl)] p-1"
             style={{ width: 332, backgroundColor: "var(--mappy-surface-secondary)" }}
           >
             {(
@@ -842,7 +842,7 @@ function MapApp({
                 key={kind}
                 type="button"
                 onClick={() => setSavedView(kind === "list" ? { kind: "list" } : { kind: "folders" })}
-                className="flex h-full flex-1 items-center justify-center overflow-hidden rounded-[28px] px-6 text-[14px] leading-[18px] font-medium tracking-[-0.6px] transition-colors"
+                className="flex h-full flex-1 items-center justify-center overflow-hidden rounded-[length:var(--mappy-radius-xl)] px-6 text-[14px] leading-[18px] font-medium tracking-[-0.6px] transition-colors"
                 style={{
                   backgroundColor: savedView.kind === kind || (kind === "folders" && savedView.kind === "folder") ? "#fff" : "transparent",
                   color:

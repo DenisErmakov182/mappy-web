@@ -128,7 +128,7 @@ export function FolderDetailScreen({
           headerHeight={HEADER_HEIGHT}
           deleteLabel="Убрать"
           deleteIcon={removeFromFolderIcon}
-          deleteBackground="#4a5565"
+          deleteBackground="var(--mappy-text-secondary)"
           emptyTitle="В этой папке пока нет мест"
           emptySubtitle="Сохраните место и добавьте его в эту папку"
         />
@@ -137,19 +137,19 @@ export function FolderDetailScreen({
       <div className="blur-edge-top" />
 
       {/* Шапка: назад + название папки + счётчик, и строка поиска+фильтра —
-          слиты в одну карточку с тенью (узел 2295:33044), 8px 2px 30.4px
-          #e9e9e9 — та же тень, что уже используется в SwipeablePlaceCard. */}
+          слиты в одну карточку с тенью (узел 2295:33044) — var(--mappy-shadow-card),
+          та же тень, что уже используется в SwipeablePlaceCard. */}
       <div className="absolute top-0 left-0 right-0 z-20 px-4 pt-[var(--mappy-floating-top)]">
         <div
-          className="rounded-[28px] bg-white"
-          style={{ boxShadow: "8px 2px 30.4px #e9e9e9" }}
+          className="rounded-[length:var(--mappy-radius-xl)] bg-white"
+          style={{ boxShadow: "var(--mappy-shadow-card)" }}
         >
           <div className="flex items-center justify-between px-1 pb-1 pt-4">
             <button
               type="button"
               onClick={onBack}
               aria-label="Назад"
-              className="-m-2 inline-flex shrink-0 items-center p-2 text-[#99a1af]"
+              className="-m-2 inline-flex shrink-0 items-center p-2 text-[color:var(--mappy-text-tertiary)]"
             >
               <BackIcon />
             </button>
@@ -180,7 +180,7 @@ export function FolderDetailScreen({
 
           <div className="flex gap-1 p-2">
             <label
-              className="flex h-12 flex-1 items-center gap-2.5 rounded-l-[32px] rounded-r-[10px] px-4"
+              className="flex h-12 flex-1 items-center gap-2.5 rounded-l-[length:var(--mappy-radius-2xl)] rounded-r-[length:var(--mappy-radius-sm)] px-4"
               style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
             >
               <SearchIcon
@@ -198,11 +198,11 @@ export function FolderDetailScreen({
             <button
               type="button"
               onClick={onFilterTap}
-              className="relative flex h-12 items-center justify-center rounded-r-[32px] rounded-l-[10px] px-4"
+              className="relative flex h-12 items-center justify-center rounded-r-[length:var(--mappy-radius-2xl)] rounded-l-[length:var(--mappy-radius-sm)] px-4"
               style={{ backgroundColor: hasActiveFilters ? "var(--mappy-brand-subtle)" : "rgba(3,7,18,0.04)" }}
               aria-label="Фильтры"
             >
-              <FilterIcon className="h-6 w-6" color={hasActiveFilters ? "var(--mappy-pink)" : "#4A5565"} />
+              <FilterIcon className="h-6 w-6" color={hasActiveFilters ? "var(--mappy-pink)" : "var(--mappy-text-secondary)"} />
             </button>
           </div>
         </div>

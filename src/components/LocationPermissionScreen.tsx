@@ -59,7 +59,7 @@ export function LocationPermissionScreen({
             Последняя позиция сохранится только на этом устройстве для следующего запуска.
           </p>
           {error && (
-            <p className="mt-4 text-[14px] leading-[19px] font-medium" style={{ color: "#fb2c36" }}>
+            <p className="mt-4 text-[14px] leading-[19px] font-medium" style={{ color: "var(--mappy-text-danger)" }}>
               {error}
             </p>
           )}
@@ -70,7 +70,7 @@ export function LocationPermissionScreen({
         <button
           onClick={onContinueWithoutLocation}
           disabled={status === "requesting"}
-          className="w-full h-14 rounded-[14px] text-[16px] font-medium disabled:opacity-50"
+          className="w-full h-14 rounded-[length:var(--mappy-radius-md)] text-[16px] font-medium disabled:opacity-50"
           style={{ backgroundColor: "rgba(3,7,18,0.04)", color: "var(--mappy-text-primary)" }}
         >
           Открыть карту без геолокации

@@ -21,7 +21,7 @@ export function FriendAvatarOnPhoto({ person }: { person: AvatarPerson }) {
   return (
     <FriendAvatar
       person={person}
-      className="absolute left-[5px] top-[5px] z-10 border-2 border-[#f3f4f6]"
+      className="absolute left-[5px] top-[5px] z-10 border-2 border-[color:var(--mappy-surface-secondary)]"
     />
   );
 }
@@ -47,7 +47,7 @@ export function FriendAvatar({
         fontSize: Math.max(14, Math.round(size * 0.28)),
         // Под фото подложка не нужна, но серый фон остаётся: пока картинка
         // грузится, цветной круг мигал бы и сменялся фотографией.
-        background: person.avatarUrl ? "#e5e7eb" : avatarGradient(person.id),
+        background: person.avatarUrl ? "var(--color-surface-tertiary)" : avatarGradient(person.id),
       }}
       title={name}
     >

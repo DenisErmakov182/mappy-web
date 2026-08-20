@@ -172,12 +172,12 @@ function MiniSearchBar({ active }: { active: boolean }) {
  */
 function FixedTabBar({ active }: { active: "map" | "notes" | "friends" }) {
   const items: { id: "map" | "notes" | "friends"; icon: string; corners: string }[] = [
-    { id: "map", icon: tabMap, corners: "rounded-l-[18px] rounded-r-[6px]" },
-    { id: "notes", icon: tabNotes, corners: "rounded-[6px]" },
-    { id: "friends", icon: tabFriends, corners: "rounded-r-[18px] rounded-l-[6px]" },
+    { id: "map", icon: tabMap, corners: "rounded-l-[18px] rounded-r-[length:var(--mappy-radius-xs)]" },
+    { id: "notes", icon: tabNotes, corners: "rounded-[length:var(--mappy-radius-xs)]" },
+    { id: "friends", icon: tabFriends, corners: "rounded-r-[18px] rounded-l-[length:var(--mappy-radius-xs)]" },
   ];
   return (
-    <div className="absolute left-[11px] flex gap-1 bg-white p-1.5 rounded-[20px] z-20" style={{ bottom: 12, width: 293 }}>
+    <div className="absolute left-[11px] flex gap-1 bg-white p-1.5 rounded-[length:var(--mappy-radius-lg)] z-20" style={{ bottom: 12, width: 293 }}>
       {items.map((item) => (
         <div
           key={item.id}
@@ -369,10 +369,10 @@ function OnboardingPreview({ step }: { step: number }) {
     // вместо скругления — отсюда были и обрубленная тень, и «выемки» в углах
     // блюра. overflow-hidden оставляем только на внутреннем контейнере.
     <div
-      className="relative rounded-[20px] shrink-0"
+      className="relative rounded-[length:var(--mappy-radius-lg)] shrink-0"
       style={{ width: CARD_W, height: CARD_H, boxShadow: "0 24px 40px -12px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.08)" }}
     >
-      <div className="relative w-full h-full rounded-[20px] overflow-hidden">
+      <div className="relative w-full h-full rounded-[length:var(--mappy-radius-lg)] overflow-hidden">
         <div
           className="flex h-full transition-transform duration-500 ease-out"
           style={{ width: CARD_W * 3, transform: `translate3d(-${pageIndex * CARD_W}px, 0, 0)`, backfaceVisibility: "hidden" }}

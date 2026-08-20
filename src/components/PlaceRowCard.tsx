@@ -40,12 +40,12 @@ export function PlaceRowCard({
   return (
     <button
       onClick={onClick}
-      className={`flex h-[148px] items-start gap-2 p-2 bg-white rounded-[28px] w-full text-left ${
+      className={`flex h-[148px] items-start gap-2 p-2 bg-white rounded-[length:var(--mappy-radius-xl)] w-full text-left ${
         elevated ? "shadow-[0_8px_24px_rgba(0,0,0,0.10)]" : ""
       }`}
     >
       <div
-        className="relative h-[132px] min-w-0 flex-1 overflow-hidden rounded-[20px]"
+        className="relative h-[132px] min-w-0 flex-1 overflow-hidden rounded-[length:var(--mappy-radius-lg)]"
         style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
       >
         {place.photos?.[0] ? (
@@ -80,7 +80,7 @@ export function PlaceRowCard({
             {place.address}
           </p>
           {createdAt && (
-            <p className="w-full min-w-0 truncate px-1 text-[12px] font-medium leading-[16px]" style={{ color: "#99a1af" }}>
+            <p className="w-full min-w-0 truncate px-1 text-[12px] font-medium leading-[16px]" style={{ color: "var(--mappy-text-tertiary)" }}>
               {createdAt}
             </p>
           )}
@@ -90,7 +90,7 @@ export function PlaceRowCard({
           <RatingChipSquare place={place} />
           {place.categories[0] && (
             <span
-              className="inline-flex h-[28px] items-center justify-center px-2 rounded-[10px]"
+              className="inline-flex h-[28px] items-center justify-center px-2 rounded-[length:var(--mappy-radius-sm)]"
               style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
             >
               <CategoryIcon category={place.categories[0]} size={24} />
@@ -106,7 +106,7 @@ export function PlaceRowCard({
 function RatingChipSquare({ place }: { place: Place }) {
   if (place.rating === 0) return null;
   return (
-    <span className="[&>span]:rounded-[10px]">
+    <span className="[&>span]:rounded-[length:var(--mappy-radius-sm)]">
       <RatingChip rating={place.rating} />
     </span>
   );

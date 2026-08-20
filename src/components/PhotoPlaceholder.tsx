@@ -43,7 +43,7 @@ export function PhotoPlaceholder({ compact = false }: { compact?: boolean }) {
           >
             Нет фото
           </p>
-          <p className="mt-1 text-[14px] leading-[18px]" style={{ color: "#99a1af" }}>
+          <p className="mt-1 text-[14px] leading-[18px]" style={{ color: "var(--mappy-text-tertiary)" }}>
             С ним было бы лучше!
           </p>
         </>

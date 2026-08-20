@@ -98,7 +98,7 @@ function BackPillButton({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="flex items-center gap-1 rounded-[10px] p-2"
+      className="flex items-center gap-1 rounded-[length:var(--mappy-radius-sm)] p-2"
       style={{ backgroundColor: "#fff" }}
     >
       <span
@@ -108,7 +108,7 @@ function BackPillButton({ onClick }: { onClick: () => void }) {
         Назад
       </span>
       <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-        <path d="M7.5 4.5L13 10l-5.5 5.5" stroke="#1e2939" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M7.5 4.5L13 10l-5.5 5.5" stroke="var(--mappy-text-primary)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     </button>
   );
@@ -563,7 +563,7 @@ export function SinglePlaceMap({
                   href={navigateUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex h-14 w-full shrink-0 items-center justify-center gap-1.5 rounded-[14px] bg-white text-[16px] font-medium"
+                  className="flex h-14 w-full shrink-0 items-center justify-center gap-1.5 rounded-[length:var(--mappy-radius-md)] bg-white text-[16px] font-medium"
                   style={{ color: "var(--mappy-text-primary)" }}
                 >
                   <RouteIcon className="h-5 w-5 shrink-0" />

@@ -136,6 +136,19 @@
   --mappy-text-secondary: #4a5565;
   --mappy-text-tertiary: #99a1af;
   --mappy-divider: rgba(3, 7, 18, 0.04);
+  --mappy-brand-secondary: #ff637e;
+  --mappy-text-danger: #fb2c36;
+  --mappy-surface-inverse: #101828;
+  /* Тень карточек мест/папок/друзей (8px 2px 30.4px) — раньше копировалась
+   * как магическая строка в 5+ мест и уже успела разойтись сама с собой
+   * (FriendsScreen держал 30px вместо 30.4px). Один источник — аудит
+   * консистентности, 20.08.2026. */
+  --mappy-shadow-card: 8px 2px 30.4px #e9e9e9;
+  /* Системный синий iOS — намеренно НЕ розовый бренда: ActionSheet.tsx
+   * рисует нативно выглядящее системное меню (осознанное решение по
+   * старому узлу Figma, сам узел с тех пор удалён из файла — переменная
+   * фиксирует цвет как решение, а не забытый magic-hex). */
+  --mappy-ios-blue: #007aff;
   --mappy-gradient-cta: linear-gradient(180deg, #ffa1ad 0%, #ff2056 99%);
   /* Pressed-состояние того же градиента — из Figma-компонента Button (1419:25008,
      Style=CTA), а не подобрано на глаз: старый CtaButton его не знал (нажатие
