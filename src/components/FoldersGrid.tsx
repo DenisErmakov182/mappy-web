@@ -102,7 +102,13 @@ export function FoldersGrid({
             <EmptyStateIllustration />
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-x-2 gap-y-5">
+            {/* gap-y больше gap-x нарочно: внешняя тень папки (FolderArt,
+                drop-shadow ~10px offset + 6.5px blur) не влезала в 8px
+                зазор между рядами — следующий ряд закрывал её собой,
+                тень обрывалась ровной линией по верхнему краю нижней
+                карточки. 20px даёт тени место дотянуть до конца, не
+                трогая горизонтальный зазор между колонками. */}
             {filtered.map((folder) => (
               <FolderCard
                 key={folder.id}
