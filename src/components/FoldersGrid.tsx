@@ -43,7 +43,7 @@ function AddFolderTile({ onClick, fillsGridCell }: { onClick: () => void; fillsG
     <button
       type="button"
       onClick={onClick}
-      className="flex items-center justify-center rounded-[var(--mappy-radius-lg)] border-[1.5px] border-dashed p-[10px] text-center text-[16px] font-medium"
+      className="flex w-full items-center justify-center rounded-[var(--mappy-radius-lg)] border-[1.5px] border-dashed p-[10px] text-center text-[16px] font-medium"
       style={{
         // border-radius — токен --mappy-radius-lg (20px), не 28px: перепроверено
         // 20.08.2026 узлами 2293:28627/2293:28629, оба используют
