@@ -40,11 +40,14 @@ export function FolderCard({
         >
           {title}
         </span>
+        {/* top py(81), не py(77): явный отступ 4px от низа бокса названия
+            (77) — по прямому указанию владельца, не по боксам из Figma
+            (там боксы названия/счётчика примыкают впритык). */}
         <span
           className="pointer-events-none absolute block"
           style={{
             left: px(10),
-            top: py(77),
+            top: py(81),
             fontSize: "16px",
             lineHeight: "18px",
             letterSpacing: "-0.6px",
