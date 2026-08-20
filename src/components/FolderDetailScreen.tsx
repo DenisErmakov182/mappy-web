@@ -131,6 +131,7 @@ export function FolderDetailScreen({
           deleteBackground="var(--mappy-text-secondary)"
           emptyTitle="В этой папке пока нет мест"
           emptySubtitle="Сохраните место и добавьте его в эту папку"
+          showFindNewCta={false}
         />
       )}
 

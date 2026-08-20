@@ -25,6 +25,7 @@ export function NotesList({
   deleteBackground,
   emptyTitle,
   emptySubtitle,
+  showFindNewCta = true,
 }: {
   places: Place[];
   onSelectPlace: (place: Place) => void;
@@ -40,6 +41,12 @@ export function NotesList({
   deleteBackground?: string;
   emptyTitle?: string;
   emptySubtitle?: string;
+  /** Кнопка «Предлагаем найти новые!» ведёт на карту — осмысленно для общего
+   *  «Сохранённого» (там правда некуда, кроме как искать), но не для пустой
+   *  папки: подпись уже объясняет, что нужно сохранить место и добавить его
+   *  сюда, а переход на карту не решает это в один шаг. Экран внутри папки
+   *  (FolderDetailScreen) отключает кнопку явно. */
+  showFindNewCta?: boolean;
 }) {
   const [openPlaceId, setOpenPlaceId] = useState<string | null>(null);
 
@@ -65,13 +72,15 @@ export function NotesList({
           <p className="mb-4 text-[14px]" style={{ color: "var(--mappy-text-secondary)" }}>
             {emptySubtitle ?? "Может они не стоили того, чтоб их запоминать"}
           </p>
-          <button
-            onClick={onGoToMap}
-            className="rounded-[12px] px-4 py-2.5 text-[16px] font-medium"
-            style={{ backgroundColor: "var(--mappy-brand-subtle)", color: "var(--mappy-pink)" }}
-          >
-            Предлагаем найти новые!
-          </button>
+          {showFindNewCta && (
+            <button
+              onClick={onGoToMap}
+              className="rounded-[12px] px-4 py-2.5 text-[16px] font-medium"
+              style={{ backgroundColor: "var(--mappy-brand-subtle)", color: "var(--mappy-pink)" }}
+            >
+              Предлагаем найти новые!
+            </button>
+          )}
         </div>
       ) : (
         <div className="px-4 pt-[var(--mappy-floating-top)]">

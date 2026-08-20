@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import type { Folder } from "../lib/api";
 import { FolderCard } from "./FolderCard";
 import { FolderArt, folderArtPx as px, folderArtPy as py } from "./FolderArt";
+import { Button } from "./design-system/01-atoms/controls/Button";
 import stickerCafe from "../assets/photos/sticker-cafe.webp";
 import stickerMuseum from "../assets/photos/sticker-museum.webp";
 import stickerRestaurant from "../assets/photos/sticker-restaurant.webp";
@@ -9,11 +10,12 @@ import stickerRestaurant from "../assets/photos/sticker-restaurant.webp";
 const EMPTY_STATE_PHOTOS = [stickerCafe, stickerMuseum, stickerRestaurant];
 
 /*
- * Декоративная иллюстрация пустого состояния (узел 2289:42933) — тот же
- * FolderArt, что у FolderCard/FolderNameSheet, просто в фиксированной
- * ширине 141px (вместо fluid-колонки сетки) и с поворотом -12.35deg на
- * обёртке, как в макете. Название — рыба из макета, не настоящие данные:
- * иллюстрация ничего не показывает про реальные папки пользователя.
+ * Декоративная иллюстрация пустого состояния (узел 2289:41595, PhotoUpload —
+ * пересверен 20.08.2026 через get_design_context, заменяет устаревшую ссылку
+ * на 2289:42933) — тот же FolderArt, что у FolderCard/FolderNameSheet, просто
+ * в фиксированной ширине 141px (вместо fluid-колонки сетки) и с поворотом
+ * -12.35deg на обёртке, как в макете. Название — рыба из макета, не настоящие
+ * данные: иллюстрация ничего не показывает про реальные папки пользователя.
  */
 function EmptyStateIllustration() {
   return (
@@ -102,24 +104,39 @@ export function FoldersGrid({
       <div className="px-4 pt-[var(--mappy-floating-top)]">
         <div style={{ paddingTop: "calc(var(--mappy-search-bar-height) + var(--mappy-content-gap))" }}>
           {folders.length === 0 ? (
-            <div className="flex items-center gap-3 overflow-hidden rounded-[length:var(--mappy-radius-xl)] bg-white p-4">
-            <div className="flex-1">
-              <p className="text-[20px] font-semibold" style={{ color: "var(--mappy-text-primary)" }}>
-                Папки
-              </p>
-              <p className="mt-1 text-[14px]" style={{ color: "var(--mappy-text-secondary)" }}>
-                Создавайте подборки из мест
-              </p>
-              <button
-                type="button"
-                onClick={onCreateFolder}
-                className="mt-4 rounded-[12px] px-4 py-2.5 text-[16px] font-medium"
-                style={{ backgroundColor: "var(--mappy-brand-subtle)", color: "var(--mappy-pink)" }}
-              >
+            /* Узел 2289:41595 (PhotoUpload), get_design_context 20.08.2026 —
+               точная пересверка заменила прежнюю ручную вёрстку (белый фон,
+               rounded-xl 28px, горизонтальный flex, кнопка 16px) на реальные
+               значения макета: серый surface-secondary, radius 24px (не
+               входит в шкалу --mappy-radius-*, взят как есть), вертикальный
+               стек текст+кнопка, папка — абсолютным блик поверх с обрезкой
+               по границе карточки (overflow-hidden). Кнопка теперь настоящий
+               атом Button (tone=brandSecondary, size=s) — тот же компонент,
+               что в Figma, а не отдельная копия стилей. */
+            <div
+              className="relative flex flex-col items-start gap-4 overflow-hidden rounded-[24px] p-4"
+              style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
+            >
+              <div className="flex flex-col gap-1.5 px-1">
+                <p
+                  className="text-[20px] font-medium leading-6 tracking-densed"
+                  style={{ color: "var(--mappy-text-primary)" }}
+                >
+                  Папки
+                </p>
+                <p
+                  className="w-[292px] max-w-full text-[14px] leading-5"
+                  style={{ color: "var(--mappy-text-secondary)", letterSpacing: "-0.32px" }}
+                >
+                  Создавайте подборки из мест
+                </p>
+              </div>
+              <Button tone="brandSecondary" size="s" onClick={onCreateFolder}>
                 Добавить папку
-              </button>
-            </div>
-            <EmptyStateIllustration />
+              </Button>
+              <div className="pointer-events-none absolute" style={{ right: "-9.44px", bottom: "-15.77px" }}>
+                <EmptyStateIllustration />
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-x-2 gap-y-5">
