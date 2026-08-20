@@ -117,6 +117,7 @@ export function ComponentsPreviewPage() {
             <IconButton aria-label="Закрыть" icon={<Icon name="x" />} />
             <IconButton aria-label="Добавить" icon={<Icon name="plus" />} />
             <IconButton aria-label="Поменять местами" icon={<Icon name="swap" />} />
+            <IconButton aria-label="Действия" icon={<Icon name="dots-vertical" />} tone="ghost" />
           </PreviewRow>
           <PreviewRow label="Disabled (нативный атрибут, не только визуал)">
             <IconButton aria-label="Пример" icon={<Icon name="x" />} tone="default" disabled />

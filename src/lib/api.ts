@@ -333,6 +333,14 @@ export function fetchFolderPlaces(id: string) {
 export function removePlaceFromFolder(folderId: string, placeId: string) {
   return request<{ ok: true }>(`/folders/${folderId}/places/${placeId}`, { method: "DELETE" });
 }
+export function renameFolder(id: string, title: string) {
+  return request<Folder>(`/folders/${id}`, { method: "PATCH", body: JSON.stringify({ title }) });
+}
+/** Удалить папку. Места внутри НЕ удаляются — каскад в схеме уносит только
+ *  связку folder_places, сами места остаются в «Сохранённом» и на карте. */
+export function deleteFolder(id: string) {
+  return request<{ ok: true }>(`/folders/${id}`, { method: "DELETE" });
+}
 
 /**
  * Публичная ссылка на своё место. Повторный вызов не плодит ссылки: сервер

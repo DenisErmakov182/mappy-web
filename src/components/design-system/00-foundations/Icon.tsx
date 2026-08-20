@@ -12,7 +12,7 @@
 
 import type { SVGProps } from "react";
 
-type IconName = "x" | "plus" | "swap" | "refresh";
+type IconName = "x" | "plus" | "swap" | "refresh" | "dots-vertical";
 
 // Единый viewBox 24×24 и единая strokeWidth для всех иконок реестра — IconButton
 // принудительно тянет svg-элемент к одному пиксельному размеру (size-*),
@@ -37,6 +37,16 @@ const paths: Record<IconName, { viewBox: string; d: string; strokeWidth: number 
     viewBox: "0 0 24 24",
     d: "M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8M21 3v5h-5M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16M3 21v-5h5",
     strokeWidth: 2,
+  },
+  // Figma: S/dots-vertical (1419:25992) — три точки-«нолики». Оригинал рисует
+  // их как крошечные stroked-круги (radius 0.667 на viewBox 2.53×11.87);
+  // тут — три вырожденных отрезка (M x y V y.01) с round linecap, тот же
+  // трюк «точка через нулевую линию», что уже возможен в этой системе
+  // (strokeLinecap="round" в Icon() ниже превращает их в кружки).
+  "dots-vertical": {
+    viewBox: "0 0 24 24",
+    d: "M12 5V5.01M12 12V12.01M12 19V19.01",
+    strokeWidth: 2.5,
   },
 };
 

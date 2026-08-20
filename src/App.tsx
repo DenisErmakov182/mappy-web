@@ -654,6 +654,14 @@ function MapApp({
             onSharePlace={sharePlace}
             onGoToMap={() => setTab("map")}
             onPlaceRemoved={() => loadFolders()}
+            onFolderRenamed={(title) => {
+              setSavedView((prev) => (prev.kind === "folder" ? { ...prev, title } : prev));
+              loadFolders();
+            }}
+            onFolderDeleted={() => {
+              setSavedView({ kind: "folders" });
+              loadFolders();
+            }}
             filters={filters}
             hasActiveFilters={!filtersAreEmpty(filters)}
             onFilterTap={() => setShowFilters(true)}

@@ -59,6 +59,7 @@ export function FolderNameSheet({
   title,
   subtitle,
   confirmLabel,
+  initialValue = "",
   onConfirm,
   onClose,
 }: {
@@ -67,10 +68,13 @@ export function FolderNameSheet({
   subtitle?: string;
   /** «Назвать» / «Создать» — тоже зависит от контекста. */
   confirmLabel: string;
+  /** Переименование: текущее название папки, поле не пустое при открытии.
+   *  Создание (по умолчанию) — пустая строка, как раньше. */
+  initialValue?: string;
   onConfirm: (title: string) => void;
   onClose: () => void;
 }) {
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState(initialValue);
   const trimmed = value.trim();
 
   return (
