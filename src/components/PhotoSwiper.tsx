@@ -68,7 +68,7 @@ export function PhotoSwiper({ photos }: { photos: Photo[] }) {
         >
           {photos.map((photo, index) => (
             <div key={`${photo.url}-${index}`} data-photo-card className={`${CARD} relative`}>
-              <img src={photo.url} alt="" className="h-full w-full object-cover" />
+              <img src={photo.url} alt="" loading="lazy" className="h-full w-full object-cover" />
               {photo.caption && (
                 <div
                   className="absolute inset-x-4 bottom-4 rounded-[16px] px-4 py-3 text-[14px] leading-5"

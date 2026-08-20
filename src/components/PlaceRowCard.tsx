@@ -49,7 +49,7 @@ export function PlaceRowCard({
         style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
       >
         {place.photos?.[0] ? (
-          <img src={place.photos[0].url} alt="" className="w-full h-full object-cover" />
+          <img src={place.photos[0].url} alt="" loading="lazy" className="w-full h-full object-cover" />
         ) : (
           <PhotoPlaceholder compact />
         )}

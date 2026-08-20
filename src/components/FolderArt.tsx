@@ -163,7 +163,7 @@ export function FolderArt({
               borderRadius: px(10.038),
             }}
           >
-            <img src={photo ?? photoPlaceholder} alt="" className="h-full w-full select-none object-cover" />
+            <img src={photo ?? photoPlaceholder} alt="" loading="lazy" className="h-full w-full select-none object-cover" />
           </span>
         );
       })}

@@ -213,7 +213,7 @@ export function SwipeablePlaceCard({
             style={{ backgroundColor: "var(--mappy-surface-secondary)" }}
           >
             {place.photos?.[0] ? (
-              <img src={place.photos[0].url} alt="" className="h-full w-full object-cover" />
+              <img src={place.photos[0].url} alt="" loading="lazy" className="h-full w-full object-cover" />
             ) : (
               <PhotoPlaceholder compact />
             )}

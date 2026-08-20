@@ -259,7 +259,13 @@ export async function uploadAvatar(file: File): Promise<ApiUser> {
   const { uploadUrl, publicUrl } = await getAvatarUploadUrl(contentType);
   const uploadResponse = await fetch(uploadUrl, {
     method: "PUT",
-    headers: { "Content-Type": contentType },
+    // Cache-Control должен совпадать со значением, подписанным на бэкенде
+    // (IMMUTABLE_CACHE_CONTROL в mappy-api/src/lib/s3.ts) — но не потому,
+    // что иначе развалится подпись (в X-Amz-SignedHeaders этого presigned
+    // URL только host, проверено вручную). Без заголовка PUT пройдёт
+    // штатно, просто S3 молча сохранит файл без кэширования — рассинхрон
+    // не упадёт с ошибкой, а тихо сведёт правку на нет.
+    headers: { "Content-Type": contentType, "Cache-Control": "public, max-age=31536000, immutable" },
     body: file,
   });
   if (!uploadResponse.ok) throw new Error("Не удалось загрузить фотографию");
@@ -450,7 +456,13 @@ export async function uploadPhoto(file: File): Promise<string> {
   const { uploadUrl, publicUrl } = await getPhotoUploadUrl(prepared.type);
   const res = await fetch(uploadUrl, {
     method: "PUT",
-    headers: { "Content-Type": prepared.type },
+    // Cache-Control должен совпадать со значением, подписанным на бэкенде
+    // (IMMUTABLE_CACHE_CONTROL в mappy-api/src/lib/s3.ts) — но не потому,
+    // что иначе развалится подпись (в X-Amz-SignedHeaders этого presigned
+    // URL только host, проверено вручную). Без заголовка PUT пройдёт
+    // штатно, просто S3 молча сохранит файл без кэширования — рассинхрон
+    // не упадёт с ошибкой, а тихо сведёт правку на нет.
+    headers: { "Content-Type": prepared.type, "Cache-Control": "public, max-age=31536000, immutable" },
     body: prepared,
   });
   if (!res.ok) throw new Error("Не удалось загрузить фото");
